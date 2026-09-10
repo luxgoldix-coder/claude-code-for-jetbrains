@@ -22,8 +22,8 @@ class SessionTimerContractTest {
     }
 
     @Test
-    fun `shutdown hands off to PollSchedule#stopAll`() {
-        listOf("fun shutdown(").forEach { signature ->
+    fun `stop and shutdown both hand off to PollSchedule#stopAll`() {
+        listOf("fun stop(", "fun shutdown(").forEach { signature ->
             val from = sessionLines.indexOfFirst { it.trimStart().startsWith(signature) }
             assertTrue(from >= 0) { "no `$signature` in $SESSION_SOURCE_NAME" }
             val length = sessionLines.drop(from).indexOfFirst { it == CLOSING_BRACE }

@@ -241,6 +241,7 @@ class SessionLifecycle(
     fun stop() {
         generation++
         s.flushDeltas()
+        s.poll.stopAll()
         s.turnControl.cancelPendingElicitations()
         process?.terminate()
         process = null
