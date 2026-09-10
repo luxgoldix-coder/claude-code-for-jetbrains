@@ -4,6 +4,63 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.0.0] — Unreleased
+
+**A polish release.** Nothing new to learn: the plugin is restructured inside, it can finally be
+traced, and a handful of bugs found on the way are fixed.
+
+### Added
+- **A Log view in the chat's view row.** The plugin's own log, filtered by level, with a *Copy* button
+  that puts a report-ready text on the clipboard. Credentials, prompts and other people's paths never
+  reach it. A *Debug* switch in the same view turns detailed tracing on for this IDE session.
+
+### Changed
+- **The code is restructured, one responsibility per file.** The session orchestrator, the chat
+  bridge, the page host and the guard are split along their seams and every comment is gone. No
+  behaviour changes; the test suite and a new package-dependency gate say so.
+- **The chat page is written in TypeScript**, one small file per concern, compiled into the same
+  scripts the page always loaded. Nothing changes on screen.
+- **Logging is consistent.** One level vocabulary across the plugin: `warn` means something went
+  wrong, `info` marks a lifecycle step, `debug` is the trace. The binary's stderr and the page's own
+  errors are recorded instead of dropped.
+
+### Fixed
+- **Closing the last chat, or opening the only one, could leave a blank panel** — no composer, no
+  tabs, "loading" forever — until *Open previous session* brought a chat back. The page host gave up
+  on a browser that was still starting and fell back to two delivery routes its own navigation guard
+  refused. The first route now waits for the browser to exist, and the dead routes are gone.
+- **A page reloaded after a failed delivery kept the loading screen up**, because three of the states
+  the host re-sends were remembered as "already sent".
+- **JavaScript errors in the chat page never reached the IDE log.** The page reported them under a
+  message name the host did not parse.
+- **The model, effort and thinking pills did not survive a new chat**, unlike the mode pill next to
+  them: they changed the running session and never the stored setting.
+- **A prompt typed while a turn was running was sent at once**, so the queue it was meant to wait in
+  never held anything. It now waits, shows as a chip you can remove, and goes out when the turn ends.
+- **Fork Session resumed the original session's id**, so both chats wrote into one transcript.
+- **Closing a chat while its sign-in was still open left a `claude` process running** with no tab
+  to stop it.
+- **The Workloads view leaked a pair of mouse listeners on every redraw.**
+- **`Shift+Tab` in the prompt could not leave it**, and `Escape` with the find bar open was swallowed
+  before the settings menu, the attach tree or the palette saw it.
+- **Switching chats with a search open left the find bar showing a count for a search that was no
+  longer running.**
+
+### Security
+- **The guard's test suite is hardened**: assertions pin the verdict a rule must give, not the one the
+  code happened to give, and Windows paths and commands get their own cases across every rule
+  family. The guard's own code is restructured under those tests with no verdict changed.
+- **The guard sees more of Windows.** Writes into the Startup folder and PowerShell profiles are
+  judged by their content; `copy`, `move`, `del`, `Set-Content`, `Out-File` and friends count as file
+  writes with no diff; 8.3 short names and NTFS alternate data streams no longer slip past the project
+  boundary; a caret-split command (`p^owershell`) is read as what it runs. And four Windows false
+  positives are gone: `set "X=…"` binds its variable, a PowerShell backtick no longer hides the next
+  token, `PATH` splits on `;`, and a `\\?\C:\` long path inside the project is inside the project.
+- **A link written by the model cannot open a file outside the project.** Markdown in a reply, a tool
+  result or an advisory could carry a `jb://open` link to any file under your home; the page now only
+  honours the links the host resolved. And *View diff* on a pending card refuses a path outside the
+  project instead of reading it.
+
 ## [5.8.1] — 2026-08-30
 
 ### Fixed

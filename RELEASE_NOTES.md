@@ -1,3 +1,35 @@
+## v6.0.0 — Unreleased
+
+**A polish release.** No new way of working: the plugin is restructured inside, it can be traced,
+and the bugs found on the way are fixed.
+
+**You can read the plugin's log without leaving the chat.** A Log view sits in the view row next to
+Guard and Vulnerabilities: the plugin's own entries, filtered by level, with a *Copy* button that
+puts a report-ready text on the clipboard. Nothing sensitive gets in — credentials, prompts and
+paths outside the project are kept out before a line is stored. A *Debug* switch in the same view
+turns detailed tracing on for the current IDE session, which is what to flip before reporting a bug.
+
+**Closing your last chat no longer leaves you staring at a blank panel.** The page host gave a
+starting browser two and a half seconds, then fell back to delivery routes its own navigation guard
+refused — so the page never ran, the composer never appeared, and only *Open previous session*
+brought a chat back. It now waits for the browser to exist and the dead routes are gone. Reloads
+after a failed delivery also come back with their state, instead of the loading screen.
+
+**Small things that now do what they say.** The model, effort and thinking pills survive a new
+chat; a prompt typed mid-turn waits in the queue as a chip and goes out when the turn ends; Fork
+Session gets its own session id; closing a chat mid sign-in leaves no process behind; `Shift+Tab`
+leaves the prompt; `Escape` closes what you opened even with the find bar up.
+
+**Under the hood.** The session orchestrator, the chat bridge, the page host and the guard are split
+one responsibility per file, the page is TypeScript in small files, every comment is gone, and a
+package-dependency gate keeps the layering honest. Logging uses one level vocabulary across the
+plugin, and the binary's stderr and the page's own errors are recorded instead of dropped. The
+guard's tests pin the verdict each rule must give — with Windows paths and commands in every rule
+family — its Windows coverage grows (Startup and profile writes, the Windows write verbs, 8.3 names,
+alternate data streams, caret-split commands), four Windows false positives are gone, and its code
+is restructured under those tests with no verdict changed. A link written by the model can no longer
+open a file outside the project.
+
 ## v5.8.1 — 2026-08-30
 
 **Closing your last chat no longer raises an internal error.** If the chat you closed was the
