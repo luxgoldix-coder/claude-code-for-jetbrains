@@ -6,7 +6,25 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 
-enum class AgentStatus { RUNNING, COMPLETED, FAILED, STOPPED }
+enum class AgentStatus {
+    RUNNING,
+    COMPLETED,
+    FAILED,
+    STOPPED,
+    ;
+
+    companion object {
+        fun parse(status: String): AgentStatus = when (status.lowercase()) {
+            "completed", "complete", "done", "finished", "success", "succeeded" -> COMPLETED
+
+            "", "running", "in_progress", "in-progress", "started", "starting", "pending", "queued", "paused" -> RUNNING
+
+            "stopped", "cancelled", "canceled", "interrupted", "aborted", "killed" -> STOPPED
+
+            else -> FAILED
+        }
+    }
+}
 
 data class AgentNode(
     val meta: AgentMeta,

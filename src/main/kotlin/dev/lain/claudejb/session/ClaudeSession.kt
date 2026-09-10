@@ -6,11 +6,8 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.AppExecutorUtil
 import dev.lain.claudejb.context.Attachment
-import dev.lain.claudejb.diff.DiffPresenter
 import dev.lain.claudejb.diff.EditSnapshot
-import dev.lain.claudejb.permission.ElicitationCard
 import dev.lain.claudejb.permission.PendingPermission
-import dev.lain.claudejb.permission.ToolInputScanner
 import dev.lain.claudejb.process.ClaudeBinaryLocator
 import dev.lain.claudejb.process.ClaudeProcess
 import dev.lain.claudejb.protocol.AccountInfo
@@ -20,18 +17,11 @@ import dev.lain.claudejb.protocol.ClaudeEvent
 import dev.lain.claudejb.protocol.ClaudeJson
 import dev.lain.claudejb.protocol.ContextUsage
 import dev.lain.claudejb.protocol.ControlProtocol
-import dev.lain.claudejb.protocol.DialogResponder
-import dev.lain.claudejb.protocol.ElicitationRequest
 import dev.lain.claudejb.protocol.InitializeResponse
 import dev.lain.claudejb.protocol.ModelInfo
 import dev.lain.claudejb.protocol.RateLimitInfo
 import dev.lain.claudejb.protocol.SlashCommand
 import dev.lain.claudejb.protocol.TaskProgressInfo
-import dev.lain.claudejb.protocol.UsageReport
-import dev.lain.claudejb.protocol.isHiddenUsageWindow
-import dev.lain.claudejb.protocol.parseElicitationFields
-import dev.lain.claudejb.protocol.parseUsageReport
-import dev.lain.claudejb.protocol.str
 import dev.lain.claudejb.settings.ClaudeSettings
 import dev.lain.claudejb.settings.LaunchDefaults
 import dev.lain.claudejb.settings.Provider
@@ -39,16 +29,8 @@ import dev.lain.claudejb.settings.RemoteMounts
 import dev.lain.claudejb.settings.SecretStore
 import dev.lain.claudejb.settings.guardSuspended
 import dev.lain.claudejb.settings.resolveEnv
-import dev.lain.claudejb.util.PluginIdentity
 import dev.lain.claudejb.util.edt
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.booleanOrNull
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.put
 import java.io.File
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -60,13 +42,13 @@ class ClaudeSession(
 
     private val log = thisLogger()
 
-    private val notifier = SessionNotifier(project)
+    internal val notifier = SessionNotifier(project)
 
     val transcript = TranscriptModel()
 
-    private val tokens = TokenAccountant()
-    private val taskTracker = TaskTracker()
-    private val reconciler = TranscriptReconciler(transcript)
+    internal val tokens = TokenAccountant()
+    internal val taskTracker = TaskTracker()
+    internal val reconciler = TranscriptReconciler(transcript)
 
     internal val diffs = DiffLifecycleManager(project)
     private val rollback = RollbackManager(project, diffs, reseedReadState = { p, m -> queries.seedReadState(p, m) })
@@ -112,8 +94,7 @@ class ClaudeSession(
         firePermissions = ::firePermissions,
         fireAttention = ::fireAttention,
     )
-    private val hookBroker = HookBroker()
-    private val hookNarrator = HookActivityNarrator(transcript)
+    internal val hookNarrator = HookActivityNarrator(transcript)
 
     val login = LoginCoordinator(
         project,
@@ -129,21 +110,21 @@ class ClaudeSession(
         internal set
 
     @Volatile var outputStyle: String = "default"
-        private set
+        internal set
 
     val turn = TurnState()
 
     @Volatile var rateLimit: RateLimitInfo? = null
-        private set
+        internal set
 
     @Volatile var rateLimits: Map<String, RateLimitInfo> = emptyMap()
-        private set
+        internal set
 
     @Volatile var sessionState: String? = null
-        private set
+        internal set
 
     @Volatile var authStatus: AuthStatusInfo? = null
-        private set
+        internal set
 
     val subagentTasks: Map<String, TaskProgressInfo> get() = taskTracker.tasks
 
@@ -151,7 +132,7 @@ class ClaudeSession(
 
     val backgroundTaskRegistry = BackgroundTaskRegistry()
 
-    private val agentScanner: AgentScanner = AgentScanner(
+    internal val agentScanner: AgentScanner = AgentScanner(
         project = project,
         agents = runningAgents,
         tasks = backgroundTaskRegistry,
@@ -159,7 +140,7 @@ class ClaudeSession(
         ownerOfTask = ::ownerAgentOfTask,
         ui = object : AgentScanner.Ui {
             override fun labelCards() {
-                labelAgentCards()
+                toolEvents.labelAgentCards()
                 poll.ensureAgentRevivalPoll()
             }
             override fun onFresh(fresh: List<String>) = fireAgents(fresh)
@@ -189,7 +170,7 @@ class ClaudeSession(
 
     fun totalTokens(): Int = tokens.totalTokens()
 
-    @Volatile private var ready = false
+    @Volatile internal var ready = false
 
     private val stream = StreamBuffer()
 
@@ -207,7 +188,7 @@ class ClaudeSession(
     @Volatile internal var cachedEnv: Map<String, String>? = null
 
     var commands: List<SlashCommand> = emptyList()
-        private set
+        internal set
     var models: List<ModelInfo> = emptyList()
         private set
     var agents: List<AgentInfo> = emptyList()
@@ -289,6 +270,12 @@ class ClaudeSession(
         fireAttention = ::fireAttention,
     )
 
+    internal val toolEvents = ToolEvents(this, ::edt, ::fireState)
+    private val taskEvents = TaskEvents(this, ::edt, ::fireState)
+    private val signalEvents = SignalEvents(this, ::edt, ::fireState, ::fireMetadata)
+    private val controlEvents = ControlEvents(this, ::edt)
+    internal val conversation = ConversationEvents(this, project, ::edt, ::fireState, ::fireAttention)
+
     fun addListener(listener: SessionListener) {
         listeners.add(listener)
         edt { poll.pollQuota() }
@@ -346,9 +333,9 @@ class ClaudeSession(
 
     @Volatile
     var needsLogin: Boolean = false
-        private set
+        internal set
 
-    private fun onLoginNeeded() {
+    internal fun onLoginNeeded() {
         needsLogin = true
         edt { fireState() }
         login.maybePrompt()
@@ -618,7 +605,7 @@ class ClaudeSession(
         }
     }
 
-    private fun recordOpenAndTitle(id: String) {
+    internal fun recordOpenAndTitle(id: String) {
         AppExecutorUtil.getAppExecutorService().execute {
             if (!gitIntegration) titling.resolve(id)
             SessionHistory.getInstance(project).setOpenSessions(
@@ -678,330 +665,13 @@ class ClaudeSession(
         }
         flushDeltas()
         when (event) {
-            is ClaudeEvent.Conversation -> onConversation(event)
-            is ClaudeEvent.Control -> onControl(event)
-            is ClaudeEvent.Task -> onTask(event)
-            is ClaudeEvent.SessionSignal -> onSessionSignal(event)
-            is ClaudeEvent.HookTelemetry -> onHookTelemetry(event)
+            is ClaudeEvent.Conversation -> conversation.onConversation(event)
+            is ClaudeEvent.Control -> controlEvents.onControl(event)
+            is ClaudeEvent.Task -> taskEvents.onTask(event)
+            is ClaudeEvent.SessionSignal -> signalEvents.onSessionSignal(event)
+            is ClaudeEvent.HookTelemetry -> controlEvents.onHookTelemetry(event)
             is ClaudeEvent.Notice -> notices.onNotice(event)
             is ClaudeEvent.Stream -> {}
-        }
-    }
-
-    private fun onConversation(event: ClaudeEvent.Conversation) {
-        when (event) {
-            is ClaudeEvent.Init -> onInit(event)
-
-            is ClaudeEvent.ToolUse -> onToolUse(event)
-
-            is ClaudeEvent.ToolResult -> onToolResult(event)
-
-            is ClaudeEvent.Result -> onTurnResult(event)
-
-            is ClaudeEvent.AssistantThinking -> edt {
-                reconciler.finalizeThinking(event.text, event.parentToolUseId)
-            }
-
-            is ClaudeEvent.MessageStart -> edt {
-                tokens.foldIntoSession()
-                turn.liveThinkingTokens = 0
-                reconciler.onMessageBoundary()
-            }
-
-            is ClaudeEvent.LocalCommandOutput -> edt {
-                if (event.content.isNotBlank()) transcript.add(Speaker.SYSTEM, event.content)
-            }
-
-            is ClaudeEvent.AssistantText -> edt {
-                reconciler.finalizeAssistant(event.text, event.parentToolUseId)
-            }
-        }
-    }
-
-    private fun onInit(event: ClaudeEvent.Init) {
-        sessionId = event.info.sessionId
-        agentScanner.restoreAdmitted(onTasksReplayed = ::fireState)
-        launch = launch.copy(model = launch.model ?: event.info.model.ifBlank { null }, fork = false)
-        if (event.info.outputStyle.isNotBlank()) outputStyle = event.info.outputStyle
-        val ours = SessionLauncher.binaryPermissionMode(launch.permissionMode)
-        if (event.info.permissionMode.isNotBlank() && event.info.permissionMode != ours) {
-            write(ControlProtocol.setPermissionModeRequest(ControlProtocol.newRequestId(), ours))
-        }
-        ready = true
-        edt {
-            systemNotice("Connected · ${event.info.model.ifBlank { "claude" }} · ${event.info.cwd}")
-            fireState()
-            prompts.pump()
-        }
-    }
-
-    private fun onToolUse(event: ClaudeEvent.ToolUse) = edt {
-        if (event.parentToolUseId != null) {
-            if (event.name in DiffPresenter.REVIEWABLE_TOOLS) {
-                diffs.captureForReview(event.name, event.input, event.id)
-            }
-            return@edt
-        }
-        reconciler.onMessageBoundary()
-        transcript.add(
-            Speaker.TOOL,
-            ToolNaming.formatToolUse(event.name, event.input, workingDir),
-            meta = event.name,
-            toolUseId = event.id,
-            parentToolUseId = event.parentToolUseId,
-            toolState = ToolState.LOADING,
-            filePath = ToolNaming.toolFilePath(event.name, event.input, workingDir),
-            commandText = ToolInputScanner.commandText(event.input),
-            messageText = ToolInputScanner.messageText(event.input),
-        )
-        if (event.name in DiffPresenter.REVIEWABLE_TOOLS) {
-            diffs.captureForReview(event.name, event.input, event.id)
-            prompts.bindTool(event.id)
-        }
-    }
-
-    private fun onToolResult(event: ClaudeEvent.ToolResult) = edt {
-        if (runningAgents.nodes.values.none { it.meta.toolUseId == event.toolUseId }) {
-            transcript.setToolState(
-                event.toolUseId,
-                if (event.isError) ToolState.ERROR else ToolState.FINISHED,
-            )
-        }
-        if (backgroundTaskRegistry.observe(event)) {
-            poll.ensureOutputTail()
-            fireState()
-        }
-        val snap = diffs.onToolResult(event.toolUseId)
-        if (!event.isError) {
-            diffs.refreshTouched()
-            if (ToolNaming.mayHaveWrittenUnknownFiles(transcript.toolNameOf(event.toolUseId))) {
-                diffs.refreshProjectTree()
-            }
-        }
-        val diff = if (snap != null && snap.toolName in DiffPresenter.REVIEWABLE_TOOLS) {
-            DiffPresenter.proposedContent(snap.toolName, snap.input, snap.beforeText)
-                ?.let { DiffPresenter.unifiedDiff(snap.beforeText, it) }
-                ?.takeIf { it.isNotBlank() }
-        } else {
-            null
-        }
-        if (event.parentToolUseId != null) return@edt
-        if (diff != null) {
-            transcript.addToolOutput(event.toolUseId, diff, parentToolUseId = event.parentToolUseId, meta = "diff")
-        } else {
-            val text = event.content.trim()
-            if (text.isNotBlank()) {
-                val tags = buildList {
-                    if (transcript.isCommandCall(event.toolUseId)) add("command")
-                    if (event.isError) add("error")
-                }
-                transcript.addToolOutput(
-                    event.toolUseId,
-                    text,
-                    parentToolUseId = event.parentToolUseId,
-                    meta = tags.joinToString(" ").ifBlank { null },
-                )
-            }
-        }
-    }
-
-    private fun onTurnResult(event: ClaudeEvent.Result) = edt {
-        tokens.foldIntoSession()
-        reconciler.onMessageBoundary()
-        turn.reset()
-        poll.pollQuota()
-        if (event.result.isError) {
-            val message = event.result.result.ifBlank {
-                event.result.errors.joinToString("\n").ifBlank { "Turn ended with error: ${event.result.subtype}" }
-            }
-            surfaceAuthFailure(message, message)
-        } else {
-            needsLogin = false
-            login.onCleanResult()
-            ReviewPrompt.onSuccessfulTurn(project)
-        }
-        diffs.refreshTouched()
-        agentScanner.scan()
-        fireState()
-        prompts.pump()
-        sessionId?.let { id -> recordOpenAndTitle(id) }
-        fireAttention(if (event.result.isError) AttentionReason.ERROR else AttentionReason.TURN_DONE)
-    }
-
-    private fun surfaceAuthFailure(failureText: String, display: String) {
-        when (LoginDetection.resolve(failureText, auth::canRenewCredential)) {
-            AuthFailure.EXPIRED -> {
-                transcript.add(Speaker.SYSTEM, EXPIRED_TOKEN_NOTICE)
-                renewRejectedCredential()
-            }
-
-            AuthFailure.NO_IDENTITY -> {
-                transcript.add(Speaker.ERROR, display)
-                onLoginNeeded()
-            }
-
-            AuthFailure.NONE -> transcript.add(Speaker.ERROR, display)
-        }
-    }
-
-    private fun renewRejectedCredential() {
-        ApplicationManager.getApplication().executeOnPooledThread {
-            val settings = ClaudeSettings.getInstance(project)
-            val binary = ClaudeBinaryLocator.locate(settings.claudePath) ?: return@executeOnPooledThread
-            if (!auth.renewRejected(binary, settings)) return@executeOnPooledThread
-            log.info("the rejected credential was renewed; restarting the session on the new one")
-            edt { restart() }
-        }
-    }
-
-    private fun onControl(event: ClaudeEvent.Control) {
-        when (event) {
-            is ClaudeEvent.PermissionRequest -> guard.broker.handle(event.requestId, event.request)
-
-            is ClaudeEvent.HookCallback -> handleHookCallback(event.requestId, event.request)
-
-            is ClaudeEvent.UserDialogRequest -> {
-                write(DialogResponder.response(event.requestId))
-                systemNotice(DialogResponder.notice(event.dialogKind))
-            }
-
-            is ClaudeEvent.Elicitation -> cards.presentElicitation(event.requestId, event.request)
-
-            is ClaudeEvent.UnsupportedControlRequest -> guard.broker.rejectUnsupported(event.requestId, event.subtype)
-
-            is ClaudeEvent.ControlCancel -> edt { cards.withdraw(event.requestId) }
-
-            is ClaudeEvent.ControlResult -> controlClient.onControlResult(event)
-        }
-    }
-
-    private fun onTask(event: ClaudeEvent.Task) {
-        when (event) {
-            is ClaudeEvent.TaskStarted -> edt {
-                runningAgents.observeSpawn(event.info.toolUseId)
-                agentScanner.scan()
-                if (taskTracker.onStarted(event.info)) fireState()
-            }
-
-            is ClaudeEvent.TaskProgress -> edt {
-                runningAgents.observeSpawn(event.info.toolUseId)
-                settleFromLifecycle(event.info.toolUseId, event.info.status)
-                agentScanner.scan()
-                taskTracker.onProgress(event.info)
-                fireState()
-            }
-
-            is ClaudeEvent.TaskUpdated -> edt {
-                taskTracker.onUpdated(event.info)
-                val ended = settleFromLifecycle(taskTracker.tasks[event.info.taskId]?.toolUseId, event.info.patch.status)
-                if (ended) agentScanner.scan()
-                fireState()
-            }
-
-            is ClaudeEvent.TaskNotification -> edt {
-                runningAgents.observeSettled(event.info.toolUseId, agentStatusOf(event.info.status))
-                backgroundTaskRegistry.observeOutputFile(event.info.taskId, event.info.outputFile)
-                backgroundTaskRegistry.settle(event.info.taskId, event.info.status)
-                agentScanner.tailNow()
-                agentScanner.scan()
-                if (taskTracker.onNotification(event.info)) {
-                    val head = SubagentNotice.headline(event.info.summary)
-                    systemNotice("Subagent ${event.info.status}" + (head?.let { ": $it" } ?: ""))
-                }
-                fireState()
-            }
-
-            is ClaudeEvent.ToolProgress -> edt {
-                transcript.setToolState(event.info.toolUseId, ToolState.RUNNING, event.info.elapsedTimeSeconds)
-            }
-
-            is ClaudeEvent.ToolUseSummary -> edt {
-                if (event.info.summary.isNotBlank()) transcript.add(Speaker.SYSTEM, "↳ ${event.info.summary}")
-            }
-
-            is ClaudeEvent.BackgroundTasksChanged -> edt {
-                taskTracker.replaceBackgroundTasks(event.info.tasks)
-                backgroundTaskRegistry.observeLevel(event.info.tasks)
-                poll.ensureOutputTail()
-                fireState()
-            }
-        }
-    }
-
-    private fun onSessionSignal(event: ClaudeEvent.SessionSignal) {
-        when (event) {
-            is ClaudeEvent.RateLimit -> onRateLimit(event)
-
-            is ClaudeEvent.AuthStatus -> onAuthStatus(event)
-
-            is ClaudeEvent.ControlRequestProgress -> onControlRequestProgress(event)
-
-            is ClaudeEvent.SessionStateChanged -> {
-                sessionState = event.info.state
-                edt { fireState() }
-            }
-
-            is ClaudeEvent.ThinkingTokens -> edt {
-                turn.liveThinkingTokens = event.info.estimatedTokens
-                fireState()
-            }
-
-            is ClaudeEvent.ApiRetry -> {
-                val of = if (event.info.maxRetries > 0) "/${event.info.maxRetries}" else ""
-                systemNotice("Retrying (attempt ${event.info.attempt}$of)…")
-            }
-
-            is ClaudeEvent.CommandsChanged -> edt {
-                commands = event.info.commands
-                fireMetadata()
-            }
-
-            is ClaudeEvent.PromptSuggestion -> prompts.suggest(event.info.suggestion)
-        }
-    }
-
-    private fun onRateLimit(event: ClaudeEvent.RateLimit) {
-        val incoming = event.info
-        log.debug(
-            "rate_limit_event: window=${incoming.rateLimitType} status=${incoming.status}" +
-                " utilization=${incoming.utilization} -> pct=${incoming.utilizationPercent()}",
-        )
-        val window = incoming.rateLimitType
-        if (isHiddenUsageWindow(window)) return
-        val previous = window?.let { rateLimits[it] } ?: rateLimit.takeIf { it?.rateLimitType == window }
-        val merged = if (incoming.utilization == null) {
-            incoming.copy(utilization = previous?.utilization)
-        } else {
-            incoming
-        }
-        rateLimit = merged
-        if (window != null) rateLimits = rateLimits + (window to merged)
-        edt { fireState() }
-    }
-
-    private fun onAuthStatus(event: ClaudeEvent.AuthStatus) {
-        authStatus = event.info
-        event.info.error?.takeIf { it.isNotBlank() }?.let {
-            edt { surfaceAuthFailure(it, "Authentication error: $it") }
-        }
-        edt { fireState() }
-    }
-
-    private fun onControlRequestProgress(event: ClaudeEvent.ControlRequestProgress) {
-        val i = event.info
-        if (i.status == "api_retry") {
-            val of = (i.maxRetries ?: 0).takeIf { it > 0 }?.let { "/$it" } ?: ""
-            systemNotice("Retrying (attempt ${i.attempt ?: 1}$of)…")
-        } else {
-            log.debug("control_request_progress: ${i.status} for ${i.requestId}")
-        }
-    }
-
-    private fun onHookTelemetry(event: ClaudeEvent.HookTelemetry) = edt {
-        when (event) {
-            is ClaudeEvent.HookStarted -> hookNarrator.onStarted(event.info)
-            is ClaudeEvent.HookProgress -> hookNarrator.onProgress(event.info)
-            is ClaudeEvent.HookResponse -> hookNarrator.onResponse(event.info)
         }
     }
 
@@ -1040,71 +710,9 @@ class ClaudeSession(
 
     internal fun write(line: String): Boolean = process?.writeLine(line) ?: false
 
-    private fun handleHookCallback(requestId: String, request: JsonObject) {
-        val ctx = hookBroker.parse(request)
-        if (ctx == null) {
-            write(ControlProtocol.error(requestId, "Malformed hook_callback (missing input/hook_event_name)"))
-            return
-        }
-        write(ControlProtocol.success(requestId, hookBroker.buildResponse(ctx.callbackId)))
-        val effects = hookBroker.sideEffects(ctx)
-        if (effects.isEmpty()) return
-        edt {
-            for (effect in effects) {
-                when (effect) {
-                    is HookSideEffect.NotifyUser -> notifier.info(effect.message)
-
-                    is HookSideEffect.RefreshFile -> {
-                        diffs.markForRefresh(effect.path)
-                        diffs.refreshTouched()
-                    }
-
-                    is HookSideEffect.TranscriptNote -> transcript.add(Speaker.SYSTEM, effect.text)
-
-                    is HookSideEffect.Marker -> log.debug("hook marker ${effect.event} ${effect.detail ?: ""}")
-                }
-            }
-        }
-    }
-
     internal fun systemNotice(message: String) = edt { transcript.add(Speaker.SYSTEM, message) }
 
     fun scanAgents() = agentScanner.scan()
-
-    private fun labelAgentCards() {
-        runningAgents.nodes.values.forEach { node ->
-            val toolUseId = node.meta.toolUseId ?: return@forEach
-            transcript.toolNameOf(toolUseId) ?: return@forEach
-            transcript.setToolState(
-                toolUseId,
-                when (node.status) {
-                    AgentStatus.RUNNING -> ToolState.RUNNING
-                    AgentStatus.COMPLETED -> ToolState.FINISHED
-                    else -> ToolState.ERROR
-                },
-            )
-            val label = node.meta.description?.takeIf { it.isNotBlank() } ?: return@forEach
-            transcript.setToolTitle(toolUseId, "${node.kindLabel} ($label)")
-        }
-    }
-
-    private fun settleFromLifecycle(toolUseId: String?, status: String?): Boolean {
-        if (toolUseId.isNullOrBlank() || status.isNullOrBlank()) return false
-        val ending = agentStatusOf(status).takeIf { it != AgentStatus.RUNNING } ?: return false
-        runningAgents.observeSettled(toolUseId, ending)
-        return true
-    }
-
-    private fun agentStatusOf(status: String): AgentStatus = when (status.lowercase()) {
-        "completed", "complete", "done", "finished", "success", "succeeded" -> AgentStatus.COMPLETED
-
-        "", "running", "in_progress", "in-progress", "started", "starting", "pending", "queued", "paused",
-        -> AgentStatus.RUNNING
-
-        "stopped", "cancelled", "canceled", "interrupted", "aborted", "killed" -> AgentStatus.STOPPED
-
-        else -> AgentStatus.FAILED
-    }
 
     private fun fireAgents(fresh: List<String>) = listeners.forEach { it.onAgentsChanged(fresh) }
 
