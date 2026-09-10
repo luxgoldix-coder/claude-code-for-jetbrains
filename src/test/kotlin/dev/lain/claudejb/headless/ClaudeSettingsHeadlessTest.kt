@@ -19,8 +19,6 @@ import kotlinx.serialization.json.JsonPrimitive
 class ClaudeSettingsHeadlessTest : BasePlatformTestCase() {
 
     private val settings get() = ClaudeSettings.getInstance(project)
-    private val emptyInput = JsonObject(emptyMap())
-
     private val credentialRead = JsonObject(
         mapOf("command" to JsonPrimitive("cat ${System.getProperty("user.home")}/.ssh/id_rsa")),
     )
@@ -173,12 +171,12 @@ class ClaudeSettingsHeadlessTest : BasePlatformTestCase() {
     }
 
     fun `test remember and forget always-allow tool`() {
-        assertFalse(settings.isToolAlwaysAllowed("Bash", emptyInput))
+        assertFalse(settings.isToolAlwaysAllowed("Bash"))
         settings.alwaysAllow.remember("Bash")
-        assertTrue(settings.isToolAlwaysAllowed("Bash", emptyInput))
+        assertTrue(settings.isToolAlwaysAllowed("Bash"))
         assertTrue("Bash" in settings.alwaysAllow.all())
         settings.alwaysAllow.forget("Bash")
-        assertFalse(settings.isToolAlwaysAllowed("Bash", emptyInput))
+        assertFalse(settings.isToolAlwaysAllowed("Bash"))
         assertFalse("Bash" in settings.alwaysAllow.all())
     }
 

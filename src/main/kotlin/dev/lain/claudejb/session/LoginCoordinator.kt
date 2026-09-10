@@ -20,9 +20,7 @@ import java.io.File
 class LoginCoordinator(
     private val project: Project,
     private val edt: (() -> Unit) -> Unit,
-    private val notifyInfo: (String) -> Unit,
-    private val notifyError: (String) -> Unit,
-    private val notifyMissingBinary: () -> Unit,
+    private val notifier: SessionNotifier,
     private val restartSession: () -> Unit,
 ) {
 
@@ -117,14 +115,14 @@ class LoginCoordinator(
         loginMode = mode
         val settings = ClaudeSettings.getInstance(project)
         if (settings.provider != Provider.ANTHROPIC) {
-            notifyInfo(
+            notifier.info(
                 "Sign-in is only for the Anthropic provider. You're on ${settings.provider.label} — " +
                     "set its API key in Settings instead.",
             )
             return
         }
         val binary = ClaudeBinaryLocator.locate(settings.claudePath) ?: run {
-            notifyMissingBinary()
+            notifier.missingBinary()
             return
         }
         val cardUi = ui
@@ -133,10 +131,10 @@ class LoginCoordinator(
             if (openTerminal(binary)) return@edt
             log.info("IDE terminal unavailable for /login — falling back to the dialog-driven PTY flow")
             if (startNativePtyFlow(binary)) {
-                notifyInfo("Signing in… your browser should open. Approve access there to finish.")
+                notifier.info("Signing in… your browser should open. Approve access there to finish.")
                 return@edt
             }
-            notifyError(
+            notifier.error(
                 "Couldn't start the sign-in flow. Run this in a terminal, then restart the chat:\n" +
                     TerminalLauncher.loginCommand(binary.absolutePath, loginMode.args),
             )
@@ -167,7 +165,7 @@ class LoginCoordinator(
                 if (success) {
                     completeSignIn(binary) { ok, text ->
                         cardUi.onLoginResult(ok, if (ok) message else text)
-                        if (ok) notifyInfo(text) else notifyError(text)
+                        if (ok) notifier.info(text) else notifier.error(text)
                     }
                 } else {
                     signingIn = false
@@ -215,10 +213,10 @@ class LoginCoordinator(
                 flow = null
                 authUrl = null
                 if (success) {
-                    completeSignIn(binary) { ok, text -> if (ok) notifyInfo(text) else notifyError(text) }
+                    completeSignIn(binary) { ok, text -> if (ok) notifier.info(text) else notifier.error(text) }
                 } else {
                     signingIn = false
-                    notifyError(message)
+                    notifier.error(message)
                 }
             }
         })
@@ -272,7 +270,7 @@ class LoginCoordinator(
         if (code.isNullOrBlank()) {
             ptyFlow.cancel()
             flow = null
-            notifyInfo("Login canceled.")
+            notifier.info("Login canceled.")
         } else {
             ptyFlow.submitCode(code.trim())
         }

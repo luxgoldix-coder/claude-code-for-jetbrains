@@ -1,14 +1,9 @@
 package dev.lain.claudejb.session
 
-import com.intellij.notification.NotificationAction
-import com.intellij.notification.NotificationGroupManager
-import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.Messages
 import com.intellij.util.concurrency.AppExecutorUtil
 import dev.lain.claudejb.context.Attachment
 import dev.lain.claudejb.diff.DiffPresenter
@@ -48,10 +43,8 @@ import dev.lain.claudejb.settings.Provider
 import dev.lain.claudejb.settings.RemoteMounts
 import dev.lain.claudejb.settings.SecretStore
 import dev.lain.claudejb.settings.guardSuspended
-import dev.lain.claudejb.settings.requiresTrustPrompt
 import dev.lain.claudejb.settings.resolveEnv
 import dev.lain.claudejb.settings.sensitiveDecision
-import dev.lain.claudejb.settings.setExecutionTrusted
 import dev.lain.claudejb.util.PluginIdentity
 import dev.lain.claudejb.util.edt
 import kotlinx.serialization.json.JsonArray
@@ -72,6 +65,8 @@ class ClaudeSession(
 ) : Disposable {
 
     private val log = thisLogger()
+
+    private val notifier = SessionNotifier(project)
 
     val transcript = TranscriptModel()
 
@@ -96,7 +91,7 @@ class ClaudeSession(
         isRunning = ::isRunning,
         edt = ::edt,
         write = ::write,
-        quota = QuotaWarnings(log, QuotaWarnings.Announce(inTranscript = ::systemNotice, asNotification = ::notifyInfo)),
+        quota = QuotaWarnings(log, QuotaWarnings.Announce(inTranscript = ::systemNotice, asNotification = notifier::info)),
     )
 
     private val titling = SessionTitling(
@@ -110,7 +105,7 @@ class ClaudeSession(
         log = log,
         systemNotice = ::systemNotice,
         addRow = { speaker, text, meta -> transcript.add(speaker, text, meta = meta) },
-        notifyInfo = ::notifyInfo,
+        notifyInfo = notifier::info,
         edt = ::edt,
     )
 
@@ -129,9 +124,7 @@ class ClaudeSession(
     val login = LoginCoordinator(
         project,
         edt = ::edt,
-        notifyInfo = ::notifyInfo,
-        notifyError = ::notifyError,
-        notifyMissingBinary = ::notifyMissingBinary,
+        notifier = notifier,
         restartSession = { restart() },
     )
 
@@ -214,41 +207,17 @@ class ClaudeSession(
 
     @Volatile private var ready = false
 
-    private val deltaLock = Any()
-    private val deltaRuns = ArrayList<Pair<Boolean, StringBuilder>>()
-
-    private var pendingUsage: IntArray? = null
-
-    private fun bufferDelta(isThinking: Boolean, text: String) = synchronized(deltaLock) {
-        val last = deltaRuns.lastOrNull()
-        if (last != null && last.first == isThinking) {
-            last.second.append(text)
-        } else {
-            deltaRuns.add(isThinking to StringBuilder(text))
-        }
-    }
-
-    private fun bufferUsage(input: Int, cacheCreation: Int, cacheRead: Int, output: Int) = synchronized(deltaLock) {
-        pendingUsage = intArrayOf(input, cacheCreation, cacheRead, output)
-    }
+    private val stream = StreamBuffer()
 
     private fun flushDeltas() {
-        val runs: List<Pair<Boolean, String>>
-        val usage: IntArray?
-        synchronized(deltaLock) {
-            if (deltaRuns.isEmpty() && pendingUsage == null) return
-            runs = if (deltaRuns.isEmpty()) emptyList() else deltaRuns.map { it.first to it.second.toString() }
-            usage = pendingUsage
-            deltaRuns.clear()
-            pendingUsage = null
-        }
+        val drained = stream.drain() ?: return
         val apply = {
-            for ((isThinking, text) in runs) {
+            for ((isThinking, text) in drained.runs) {
                 if (isThinking) reconciler.appendThinking(text) else reconciler.appendAssistant(text)
             }
-            if (usage != null) tokens.onLiveUsage(usage[0], usage[1], usage[2], usage[3])
+            drained.usage?.let { tokens.onLiveUsage(it[0], it[1], it[2], it[3]) }
         }
-        if (com.intellij.openapi.application.ApplicationManager.getApplication().isDispatchThread) apply() else edt { apply() }
+        if (ApplicationManager.getApplication().isDispatchThread) apply() else edt { apply() }
     }
 
     @Volatile internal var cachedEnv: Map<String, String>? = null
@@ -339,7 +308,7 @@ class ClaudeSession(
             present = ::presentPermission,
             onAutoReviewed = diffs::autoOpenDiff,
             projectRoot = project.basePath,
-            isRemembered = { toolName, input -> ClaudeSettings.getInstance(project).isToolAlwaysAllowed(toolName, input) },
+            isRemembered = { toolName, _ -> ClaudeSettings.getInstance(project).isToolAlwaysAllowed(toolName) },
             forceAsk = { gitIntegration },
             sensitiveDecision = { input ->
                 ClaudeSettings.getInstance(project).sensitiveDecision(input, project.basePath)
@@ -530,7 +499,7 @@ class ClaudeSession(
         val binary = ClaudeBinaryLocator.locate(settings.claudePath) ?: run {
             binaryMissing = true
             fireState()
-            notifyMissingBinary()
+            notifier.missingBinary()
             return null
         }
         binaryMissing = false
@@ -541,7 +510,7 @@ class ClaudeSession(
     }
 
     private fun passesLaunchGates(settings: ClaudeSettings): Boolean {
-        if (!ensureExecTrust(settings)) return false
+        if (!notifier.ensureExecTrust(settings)) return false
         if (RemoteMounts.isRemote(project.basePath)) {
             refuseRemoteProject(project.basePath)
             return false
@@ -583,7 +552,7 @@ class ClaudeSession(
         if (started.isFailure) {
             process = null
             log.warn("Failed to start the claude process", started.exceptionOrNull())
-            notifyError("Failed to start Claude Code: ${started.exceptionOrNull()?.message ?: "unknown error"}")
+            notifier.error("Failed to start Claude Code: ${started.exceptionOrNull()?.message ?: "unknown error"}")
             return
         }
         if (launchGen != generation) {
@@ -908,9 +877,9 @@ class ClaudeSession(
         val name = java.io.File(snapshot.filePath).name
         val ok = rollback.revertEdit(snapshot)
         if (ok) {
-            notifyInfo("Reverted $name to its state before this edit.")
+            notifier.info("Reverted $name to its state before this edit.")
         } else {
-            notifyError("Couldn't revert $name (the file may be outside the project, missing, or locked).")
+            notifier.error("Couldn't revert $name (the file may be outside the project, missing, or locked).")
         }
         return ok
     }
@@ -932,7 +901,7 @@ class ClaudeSession(
 
     private fun onEvent(event: ClaudeEvent) {
         if (event is ClaudeEvent.Stream) {
-            bufferStream(event)
+            stream.buffer(event)
             return
         }
         flushDeltas()
@@ -944,23 +913,6 @@ class ClaudeSession(
             is ClaudeEvent.HookTelemetry -> onHookTelemetry(event)
             is ClaudeEvent.Notice -> notices.onNotice(event)
             is ClaudeEvent.Stream -> {}
-        }
-    }
-
-    private fun bufferStream(event: ClaudeEvent.Stream) {
-        when (event) {
-            is ClaudeEvent.TextDelta ->
-                if (TranscriptReconciler.belongsHere(event.parentToolUseId)) {
-                    bufferDelta(isThinking = false, text = event.text)
-                }
-
-            is ClaudeEvent.ThinkingDelta ->
-                if (TranscriptReconciler.belongsHere(event.parentToolUseId)) {
-                    bufferDelta(isThinking = true, text = event.text)
-                }
-
-            is ClaudeEvent.LiveUsage ->
-                bufferUsage(event.inputTokens, event.cacheCreationTokens, event.cacheReadTokens, event.outputTokens)
         }
     }
 
@@ -1312,7 +1264,7 @@ class ClaudeSession(
             }
             if (exitCode != 0) {
                 transcript.add(Speaker.ERROR, "Claude Code exited (code $exitCode).")
-                notifyError("Claude Code exited unexpectedly (code $exitCode).")
+                notifier.error("Claude Code exited unexpectedly (code $exitCode).")
                 fireAttention(AttentionReason.ERROR)
             } else {
                 systemNotice("Session ended.")
@@ -1343,7 +1295,7 @@ class ClaudeSession(
         edt {
             for (effect in effects) {
                 when (effect) {
-                    is HookSideEffect.NotifyUser -> notifyInfo(effect.message)
+                    is HookSideEffect.NotifyUser -> notifier.info(effect.message)
 
                     is HookSideEffect.RefreshFile -> {
                         diffs.markForRefresh(effect.path)
@@ -1437,69 +1389,14 @@ class ClaudeSession(
         listeners.forEach { it.onAttention(reason, landing) }
     private fun fireTitleChanged() = listeners.forEach { it.onTitleChanged() }
 
-    private fun notifyError(content: String) {
-        NotificationGroupManager.getInstance()
-            .getNotificationGroup(PluginIdentity.NOTIFICATION_GROUP)
-            .createNotification("Claude Code", content, NotificationType.ERROR)
-            .notify(project)
-    }
-
-    private fun notifyInfo(content: String) {
-        NotificationGroupManager.getInstance()
-            .getNotificationGroup(PluginIdentity.NOTIFICATION_GROUP)
-            .createNotification("Claude Code", content, NotificationType.INFORMATION)
-            .notify(project)
-    }
-
     private fun refuseRemoteProject(root: String?) {
-        val where = root ?: "this location"
-        val msg = "Claude Code will not run on a network or remote drive ($where). Running an autonomous agent " +
-            "rooted on shared storage is a security risk it refuses by design — move the project to a local disk. " +
-            "For unrestricted use, run the `claude` CLI directly."
+        val msg = SessionNotifier.remoteProjectRefusal(root)
         edt {
             transcript.add(Speaker.ERROR, msg)
             fireState()
         }
-        notifyError(msg)
+        notifier.error(msg)
         starting = false
-    }
-
-    private fun ensureExecTrust(settings: ClaudeSettings): Boolean {
-        if (!settings.requiresTrustPrompt()) return true
-        val choice = Messages.showYesNoDialog(
-            project,
-            "This project is configured to run an environment script and/or a custom MCP server when a Claude " +
-                "Code session starts. These execute code on your machine. Only allow this if you trust this " +
-                "project. Run them?",
-            "Trust Claude Code Execution Config?",
-            "Trust and run",
-            "Cancel",
-            Messages.getWarningIcon(),
-        )
-        return if (choice == Messages.YES) {
-            settings.setExecutionTrusted(true)
-            true
-        } else {
-            notifyError("Launch cancelled. Review the source script / custom MCP servers in Settings, then try again.")
-            false
-        }
-    }
-
-    private fun notifyMissingBinary() {
-        NotificationGroupManager.getInstance()
-            .getNotificationGroup(PluginIdentity.NOTIFICATION_GROUP)
-            .createNotification(
-                "Claude Code",
-                "The 'claude' binary was not found on PATH or in a typical location. " +
-                    "Install Claude Code (https://claude.com/code), or set the executable path manually.",
-                NotificationType.ERROR,
-            )
-            .addAction(
-                NotificationAction.createSimple("Configure paths…") {
-                    ShowSettingsUtil.getInstance().showSettingsDialog(project, PluginIdentity.SETTINGS_ID)
-                },
-            )
-            .notify(project)
     }
 
     override fun dispose() {

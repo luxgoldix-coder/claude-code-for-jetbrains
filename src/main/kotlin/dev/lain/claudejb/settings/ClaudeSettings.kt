@@ -9,7 +9,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.AppExecutorUtil
 import dev.lain.claudejb.permission.SensitiveGuard
-import kotlinx.serialization.json.JsonObject
 
 @Service(Service.Level.PROJECT)
 class ClaudeSettings(internal val project: Project? = null) {
@@ -221,8 +220,11 @@ class ClaudeSettings(internal val project: Project? = null) {
 
     val alwaysAllow = AlwaysAllowTools(this)
 
-    @Suppress("UNUSED_PARAMETER")
-    fun isToolAlwaysAllowed(toolName: String, input: JsonObject): Boolean = toolName in alwaysAllow
+    fun isToolAlwaysAllowed(toolName: String): Boolean = toolName in alwaysAllow
+
+    fun warm() {
+        state
+    }
 
     companion object {
         const val DEFAULT_GUARD_LOG_RETENTION_DAYS = 30

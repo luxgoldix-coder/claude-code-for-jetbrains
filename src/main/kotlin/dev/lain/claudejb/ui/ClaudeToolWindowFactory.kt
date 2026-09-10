@@ -27,6 +27,8 @@ import javax.swing.JComponent
 class ClaudeToolWindowFactory : ToolWindowFactory, DumbAware {
 
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
+        val settings = ClaudeSettings.getInstance(project)
+        com.intellij.util.concurrency.AppExecutorUtil.getAppExecutorService().execute { settings.warm() }
         val manager = ChatSessionManager.getInstance(project)
         val cm = toolWindow.contentManager
 
