@@ -1,7 +1,6 @@
 package dev.lain.claudejb.ui
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.options.ShowSettingsUtil
@@ -23,6 +22,7 @@ import dev.lain.claudejb.ui.jcef.JcefSettingsMenu
 import dev.lain.claudejb.ui.jcef.JcefTranscriptPayload
 import dev.lain.claudejb.ui.jcef.JcefTreeData
 import dev.lain.claudejb.ui.jcef.JcefVulnData
+import dev.lain.claudejb.util.edt
 import dev.lain.claudejb.vuln.VulnService
 import kotlinx.serialization.json.JsonObject
 import java.awt.datatransfer.StringSelection
@@ -433,7 +433,7 @@ internal class ChatBridgeRouter(private val panel: JcefChatPanel) {
                 logger.warn("Claude Code: $lost of ${wanted.size} attached paths name nothing inside this project")
             }
             if (files.isEmpty()) return@executeOnPooledThread
-            app.invokeLater({ tray.addPaths(files) }, ModalityState.any())
+            edt { tray.addPaths(files) }
         }
     }
 
@@ -446,7 +446,7 @@ internal class ChatBridgeRouter(private val panel: JcefChatPanel) {
             val payload = runCatching(build)
                 .onFailure { logger.warn("Claude Code: $method could not be answered", it) }
                 .getOrNull() ?: return@executeOnPooledThread
-            app.invokeLater({ panel.host.exec("$method && $method($payload)") }, ModalityState.any())
+            edt { panel.host.exec("$method && $method($payload)") }
         }
     }
 
@@ -607,11 +607,11 @@ internal class ChatBridgeRouter(private val panel: JcefChatPanel) {
                 LinkResolver.resolvePaths(project, m.paths) + LinkResolver.resolveSymbols(project, m.symbols)
             }.getOrDefault(emptyList())
             if (resolved.isEmpty()) return@executeOnPooledThread
-            ApplicationManager.getApplication().invokeLater({
+            edt {
                 panel.host.exec(
                     "window.cc.links && window.cc.links(" + JcefTranscriptPayload.linksJson(m.rowId, resolved) + ")",
                 )
-            }, ModalityState.any())
+            }
         }
     }
 

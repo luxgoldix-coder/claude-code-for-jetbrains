@@ -1,12 +1,12 @@
 package dev.lain.claudejb.vuln
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import dev.lain.claudejb.settings.ClaudeSettings
+import dev.lain.claudejb.util.edt
 import java.io.File
 
 @Service(Service.Level.PROJECT)
@@ -174,9 +174,7 @@ internal class VulnService(private val project: Project) {
         else -> VulnViewState.NEVER
     }
 
-    private fun edt(block: () -> Unit) = ApplicationManager.getApplication().invokeLater({
-        if (!project.isDisposed) block()
-    }, ModalityState.any())
+    private fun edt(block: () -> Unit) = edt(project, block)
 
     companion object {
 

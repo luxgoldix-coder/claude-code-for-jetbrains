@@ -4,7 +4,6 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -14,6 +13,7 @@ import dev.lain.claudejb.context.EditorContextProvider
 import dev.lain.claudejb.git.GitCommitInfo
 import dev.lain.claudejb.git.GitHistoryService
 import dev.lain.claudejb.git.GitLogNavigator
+import dev.lain.claudejb.util.edt
 import javax.swing.JList
 
 internal object GitContextActions {
@@ -61,9 +61,7 @@ internal object GitContextActions {
                 val branch = history.currentBranch()
                 val head = history.headRevision()
                 val commits = history.recentCommits()
-                ApplicationManager.getApplication().invokeLater({
-                    if (!project.isDisposed) present(branch, head, commits)
-                }, ModalityState.any())
+                edt(project) { present(branch, head, commits) }
             }
         }
 

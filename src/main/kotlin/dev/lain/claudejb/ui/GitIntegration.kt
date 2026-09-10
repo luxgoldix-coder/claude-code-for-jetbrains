@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.AnActionResult
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -34,6 +33,7 @@ import dev.lain.claudejb.session.AttentionReason
 import dev.lain.claudejb.session.ClaudeSession
 import dev.lain.claudejb.session.SessionListener
 import dev.lain.claudejb.ui.jcef.JcefGitData
+import dev.lain.claudejb.util.edt
 import java.awt.datatransfer.StringSelection
 import java.io.File
 
@@ -309,9 +309,7 @@ internal class GitIntegration(private val project: Project) {
         onChanged()
     }
 
-    private fun edt(block: () -> Unit) = ApplicationManager.getApplication().invokeLater({
-        if (!project.isDisposed) block()
-    }, ModalityState.any())
+    private fun edt(block: () -> Unit) = edt(project, block)
 
     companion object {
 

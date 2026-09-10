@@ -5,7 +5,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import dev.lain.claudejb.permission.SensitiveGuard
-import dev.lain.claudejb.session.ClaudeSession
+import dev.lain.claudejb.util.PluginIdentity
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import java.io.File
@@ -38,7 +38,7 @@ internal object SourceScriptAudit {
         if (app.isUnitTestMode || app.isHeadlessEnvironment) return
         app.invokeLater {
             NotificationGroupManager.getInstance()
-                .getNotificationGroup(ClaudeSession.NOTIFICATION_GROUP)
+                .getNotificationGroup(PluginIdentity.NOTIFICATION_GROUP)
                 .createNotification(
                     "Claude Code did not run your environment script",
                     "<b>$scriptPath</b> was not sourced, so this session starts without the environment it " +

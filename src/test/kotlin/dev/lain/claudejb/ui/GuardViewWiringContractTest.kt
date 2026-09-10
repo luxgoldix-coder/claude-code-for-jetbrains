@@ -38,7 +38,7 @@ class GuardViewWiringContractTest {
             "GuardFeed reads the alert log on whatever thread asked for it. That read decodes the whole " +
                 "stored array, and every UI mutation here is on the EDT."
         }
-        assertTrue(feed.contains("invokeLater")) {
+        assertTrue(feed.contains("edt(panel.project)")) {
             "GuardFeed does not come back to the EDT to draw."
         }
     }

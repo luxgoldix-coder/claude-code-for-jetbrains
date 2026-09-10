@@ -6,8 +6,8 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
-import dev.lain.claudejb.session.ClaudeSession
 import dev.lain.claudejb.settings.SecretStore
+import dev.lain.claudejb.util.PluginIdentity
 
 object ReviewPrompt {
 
@@ -52,7 +52,7 @@ object ReviewPrompt {
 
     private fun show(project: Project) {
         NotificationGroupManager.getInstance()
-            .getNotificationGroup(ClaudeSession.NOTIFICATION_GROUP)
+            .getNotificationGroup(PluginIdentity.NOTIFICATION_GROUP)
             .createNotification(
                 "Enjoying Claude Code Native?",
                 "A quick review on the JetBrains Marketplace genuinely helps other developers find it. " +

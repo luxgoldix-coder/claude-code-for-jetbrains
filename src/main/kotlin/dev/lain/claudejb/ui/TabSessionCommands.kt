@@ -1,7 +1,6 @@
 package dev.lain.claudejb.ui
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -15,6 +14,7 @@ import dev.lain.claudejb.session.SessionStore
 import dev.lain.claudejb.session.SessionTitleReader
 import dev.lain.claudejb.session.SessionTranscriptReader
 import dev.lain.claudejb.settings.ClaudeSettings
+import dev.lain.claudejb.util.edt
 import javax.swing.JList
 
 internal class TabSessionCommands(
@@ -53,7 +53,7 @@ internal class TabSessionCommands(
                         ),
                     )
                 }
-            ApplicationManager.getApplication().invokeLater({
+            edt {
                 if (restored.isEmpty()) {
                     openChat(manager.create())
                 } else {
@@ -64,7 +64,7 @@ internal class TabSessionCommands(
                         openChat(s)
                     }
                 }
-            }, ModalityState.any())
+            }
         }
     }
 
@@ -95,23 +95,23 @@ internal class TabSessionCommands(
                 SessionTranscriptReader.DEFAULT_RESTORE_CAP,
                 project.basePath,
             )
-            ApplicationManager.getApplication().invokeLater({
+            edt {
                 val manager = ChatSessionManager.getInstance(project)
                 val s = manager.create()
                 s.title = "$sourceTitle (fork)"
                 s.restore(sourceId, entries)
                 openChat(s)
-            }, ModalityState.any())
+            }
         }
     }
 
     fun openPreviousSession() {
         ApplicationManager.getApplication().executeOnPooledThread {
             val refs = SessionTranscriptReader.listSessions(project)
-            ApplicationManager.getApplication().invokeLater({
+            edt {
                 if (refs.isEmpty()) {
                     Messages.showInfoMessage(project, "No previous sessions have been saved yet.", "Claude Code")
-                    return@invokeLater
+                    return@edt
                 }
                 JBPopupFactory.getInstance()
                     .createPopupChooserBuilder(refs)
@@ -124,19 +124,19 @@ internal class TabSessionCommands(
                                 SessionTranscriptReader.DEFAULT_RESTORE_CAP,
                                 project.basePath,
                             )
-                            ApplicationManager.getApplication().invokeLater({
+                            edt {
                                 val manager = ChatSessionManager.getInstance(project)
                                 val s = manager.create()
                                 s.title = ref.title
                                 s.restore(ref.sessionId, entries)
                                 openChat(s)
-                            }, ModalityState.any())
+                            }
                         }
                     }
                     .setRequestFocus(true)
                     .createPopup()
                     .showCenteredInCurrentWindow(project)
-            }, ModalityState.any())
+            }
         }
     }
 

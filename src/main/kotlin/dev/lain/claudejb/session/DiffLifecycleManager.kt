@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import dev.lain.claudejb.diff.DiffPresenter
 import dev.lain.claudejb.diff.EditSnapshot
 import dev.lain.claudejb.diff.EditSnapshotStore
+import dev.lain.claudejb.util.edt
 import kotlinx.serialization.json.JsonObject
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
@@ -88,7 +89,4 @@ class DiffLifecycleManager(private val project: Project) {
             ModalityState.nonModal(),
         )
     }
-
-    private fun edt(block: () -> Unit) =
-        ApplicationManager.getApplication().invokeLater(block, ModalityState.any())
 }

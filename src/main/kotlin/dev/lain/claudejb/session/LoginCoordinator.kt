@@ -14,6 +14,7 @@ import dev.lain.claudejb.process.TerminalLauncher
 import dev.lain.claudejb.settings.ClaudeSettings
 import dev.lain.claudejb.settings.Provider
 import dev.lain.claudejb.settings.resolveEnv
+import dev.lain.claudejb.util.PluginIdentity
 import java.io.File
 
 class LoginCoordinator(
@@ -96,7 +97,7 @@ class LoginCoordinator(
 
     private fun notifyLoginNeeded() {
         NotificationGroupManager.getInstance()
-            .getNotificationGroup(ClaudeSession.NOTIFICATION_GROUP)
+            .getNotificationGroup(PluginIdentity.NOTIFICATION_GROUP)
             .createNotification(
                 "Claude Code",
                 "You don't seem to be logged in. Sign in to Claude to continue.",
@@ -186,7 +187,7 @@ class LoginCoordinator(
         )
         if (opened) {
             NotificationGroupManager.getInstance()
-                .getNotificationGroup(ClaudeSession.NOTIFICATION_GROUP)
+                .getNotificationGroup(PluginIdentity.NOTIFICATION_GROUP)
                 .createNotification(
                     "Claude Code",
                     "Finish signing in in the terminal — the browser opens automatically. " +

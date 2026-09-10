@@ -1,7 +1,6 @@
 package dev.lain.claudejb.ui
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.Logger
 import dev.lain.claudejb.settings.ClaudeSettings
 import dev.lain.claudejb.settings.GuardAlert
@@ -9,6 +8,7 @@ import dev.lain.claudejb.settings.GuardAlertLog
 import dev.lain.claudejb.settings.SecretStore
 import dev.lain.claudejb.settings.SettingsScope
 import dev.lain.claudejb.ui.jcef.JcefGuardData
+import dev.lain.claudejb.util.edt
 
 internal class GuardFeed(private val panel: JcefChatPanel) {
 
@@ -25,7 +25,7 @@ internal class GuardFeed(private val panel: JcefChatPanel) {
                 recording = !SecretStore.inert(),
                 max = GuardAlertLog.MAX_ENTRIES,
             )
-            onEdt { panel.host.exec("window.cc.guard && window.cc.guard($json)") }
+            edt(panel.project) { panel.host.exec("window.cc.guard && window.cc.guard($json)") }
         }
     }
 
@@ -35,7 +35,7 @@ internal class GuardFeed(private val panel: JcefChatPanel) {
         offEdt {
             val alert = read(scope, sessionId).firstOrNull { JcefGuardData.idOf(it) == id }
             val prompt = alert?.let(GuardPromptedActions::explainBlockPrompt)
-            onEdt {
+            edt(panel.project) {
                 if (prompt == null) {
                     panel.session.systemNotice(GuardPromptedActions.ENTRY_GONE)
                 } else {
@@ -58,12 +58,6 @@ internal class GuardFeed(private val panel: JcefChatPanel) {
         ApplicationManager.getApplication().executeOnPooledThread {
             runCatching(block).onFailure { logger.warn("Claude Code could not answer the guard view", it) }
         }
-    }
-
-    private fun onEdt(block: () -> Unit) {
-        ApplicationManager.getApplication().invokeLater({
-            if (!panel.project.isDisposed) block()
-        }, ModalityState.any())
     }
 
     private companion object {

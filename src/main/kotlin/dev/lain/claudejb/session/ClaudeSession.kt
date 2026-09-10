@@ -5,7 +5,6 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
@@ -53,6 +52,8 @@ import dev.lain.claudejb.settings.sensitiveDecision
 import dev.lain.claudejb.settings.setExecutionTrusted
 import dev.lain.claudejb.ui.ClaudeSettingsConfigurable
 import dev.lain.claudejb.ui.ReviewPrompt
+import dev.lain.claudejb.util.PluginIdentity
+import dev.lain.claudejb.util.edt
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
@@ -237,7 +238,7 @@ class ClaudeSession(
             }
             override fun onFresh(fresh: List<String>) = fireAgents(fresh)
             override fun onOutputGrew() = fireState()
-            override fun edt(block: () -> Unit) = this@ClaudeSession.edt(block)
+            override fun edt(block: () -> Unit) = dev.lain.claudejb.util.edt(block)
         },
     )
 
@@ -1505,19 +1506,16 @@ class ClaudeSession(
         listeners.forEach { it.onAttention(reason, landing) }
     private fun fireTitleChanged() = listeners.forEach { it.onTitleChanged() }
 
-    private fun edt(block: () -> Unit) =
-        ApplicationManager.getApplication().invokeLater(block, ModalityState.any())
-
     private fun notifyError(content: String) {
         NotificationGroupManager.getInstance()
-            .getNotificationGroup(NOTIFICATION_GROUP)
+            .getNotificationGroup(PluginIdentity.NOTIFICATION_GROUP)
             .createNotification("Claude Code", content, NotificationType.ERROR)
             .notify(project)
     }
 
     private fun notifyInfo(content: String) {
         NotificationGroupManager.getInstance()
-            .getNotificationGroup(NOTIFICATION_GROUP)
+            .getNotificationGroup(PluginIdentity.NOTIFICATION_GROUP)
             .createNotification("Claude Code", content, NotificationType.INFORMATION)
             .notify(project)
     }
@@ -1558,7 +1556,7 @@ class ClaudeSession(
 
     private fun notifyMissingBinary() {
         NotificationGroupManager.getInstance()
-            .getNotificationGroup(NOTIFICATION_GROUP)
+            .getNotificationGroup(PluginIdentity.NOTIFICATION_GROUP)
             .createNotification(
                 "Claude Code",
                 "The 'claude' binary was not found on PATH or in a typical location. " +
@@ -1589,8 +1587,6 @@ class ClaudeSession(
     fun preferredDefaultModel(): String = preferredDefault(models)
 
     companion object {
-        const val NOTIFICATION_GROUP = "Claude Code"
-
         const val EXPIRED_TOKEN_NOTICE =
             "Your access token expired while this chat was open. The sign-in itself is still valid and is " +
                 "renewed when a session starts, but a running one cannot pick up the new token — so this turn " +

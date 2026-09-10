@@ -4,8 +4,8 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
-import dev.lain.claudejb.session.ClaudeSession
 import dev.lain.claudejb.session.PermissionMode
+import dev.lain.claudejb.util.PluginIdentity
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal object LegacySettingsNotice {
@@ -23,7 +23,7 @@ internal object LegacySettingsNotice {
         if (app.isUnitTestMode || app.isHeadlessEnvironment) return
         app.invokeLater {
             NotificationGroupManager.getInstance()
-                .getNotificationGroup(ClaudeSession.NOTIFICATION_GROUP)
+                .getNotificationGroup(PluginIdentity.NOTIFICATION_GROUP)
                 .createNotification(
                     "Claude Code kept its default permission mode",
                     "A settings file in this project (<code>.idea/claude-code.xml</code>, from before 5.5.0) asked " +

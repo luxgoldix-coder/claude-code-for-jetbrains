@@ -9,6 +9,7 @@ import dev.lain.claudejb.protocol.ControlProtocol
 import dev.lain.claudejb.settings.ClaudeSettings
 import dev.lain.claudejb.settings.Provider
 import dev.lain.claudejb.ui.ClaudeSettingsConfigurable
+import dev.lain.claudejb.util.PluginIdentity
 
 class SessionLiveSettings(
     private val session: ClaudeSession,
@@ -74,7 +75,7 @@ class SessionLiveSettings(
 
     private fun notifyConfigureProviderKey(target: Provider) {
         NotificationGroupManager.getInstance()
-            .getNotificationGroup(ClaudeSession.NOTIFICATION_GROUP)
+            .getNotificationGroup(PluginIdentity.NOTIFICATION_GROUP)
             .createNotification(
                 "Claude Code",
                 "${target.label} needs its own API key. Configure it in Settings — the provider isn't switched " +

@@ -4,13 +4,13 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import dev.lain.claudejb.diff.DiffPresenter
 import dev.lain.claudejb.session.ClaudeSession
 import dev.lain.claudejb.session.WorkspaceDiff
 import dev.lain.claudejb.session.WorkspaceDiffReview
+import dev.lain.claudejb.util.edt
 import java.io.File
 
 internal class SessionDiffAction(private val project: Project, private val tabs: ChatTabsPanel) :
@@ -41,10 +41,7 @@ internal class SessionDiffAction(private val project: Project, private val tabs:
                     ?.takeIf { DiffPresenter.isWithinRoot(it, root) }
                     ?.let { runCatching { File(it).readText() }.getOrNull() }
             }
-            ApplicationManager.getApplication().invokeLater(
-                { if (!project.isDisposed) open(diff, sides) },
-                ModalityState.any(),
-            )
+            edt(project) { open(diff, sides) }
         }
     }
 

@@ -3,7 +3,6 @@ package dev.lain.claudejb.ui
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -19,6 +18,7 @@ import dev.lain.claudejb.ui.jcef.JcefSessionData
 import dev.lain.claudejb.ui.jcef.JcefSettingsMenu
 import dev.lain.claudejb.ui.jcef.JcefState
 import dev.lain.claudejb.ui.jcef.JcefTheme
+import dev.lain.claudejb.util.edt
 import dev.lain.claudejb.vuln.VulnService
 import java.awt.BorderLayout
 
@@ -77,7 +77,7 @@ class JcefChatPanel(internal val project: Project, val session: ClaudeSession) :
         Disposer.register(this, lafConn)
 
         project.service<GitHistoryService>().onRepositoryChanged(this) {
-            ApplicationManager.getApplication().invokeLater({ if (!project.isDisposed) pushGit() }, ModalityState.any())
+            edt(project) { pushGit() }
         }
 
         pushTheme()

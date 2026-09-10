@@ -3,11 +3,12 @@ package dev.lain.claudejb.ui
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
 import dev.lain.claudejb.context.Attachment
 import dev.lain.claudejb.context.EditorContextProvider
 import dev.lain.claudejb.context.FilePickerHelper
+import dev.lain.claudejb.util.PluginIdentity
+import dev.lain.claudejb.util.edt
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
@@ -91,7 +92,7 @@ internal class AttachmentTray(
             val img = EditorContextProvider.imageFromClipboard()
             val text = if (img == null) EditorContextProvider.clipboardText() else null
             val help = if (img == null && text.isNullOrEmpty()) EditorContextProvider.clipboardImageHelp() else null
-            onEdt {
+            edt {
                 when {
                     img != null -> add(img)
 
@@ -111,7 +112,7 @@ internal class AttachmentTray(
             val img = EditorContextProvider.imageFromClipboard()
             val shouldNotify = img == null && (alwaysNotify || !EditorContextProvider.clipboardHasText())
             val help = if (shouldNotify) EditorContextProvider.clipboardImageHelp() else null
-            onEdt {
+            edt {
                 when {
                     img != null -> add(img)
 
@@ -129,7 +130,7 @@ internal class AttachmentTray(
 
     fun notify(message: String) {
         NotificationGroupManager.getInstance()
-            .getNotificationGroup("Claude Code")
+            .getNotificationGroup(PluginIdentity.NOTIFICATION_GROUP)
             .createNotification(message, NotificationType.INFORMATION)
             .notify(project)
     }
@@ -152,9 +153,6 @@ internal class AttachmentTray(
     ).toString()
 
     private fun offEdt(block: () -> Unit) = ApplicationManager.getApplication().executeOnPooledThread(block)
-
-    private fun onEdt(block: () -> Unit) =
-        ApplicationManager.getApplication().invokeLater(block, ModalityState.any())
 
     private companion object {
         const val RECENT_FILES_LIMIT = 14
