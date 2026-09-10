@@ -60,7 +60,7 @@ internal class TabSessionCommands(
                     for (r in restored) {
                         val s = manager.create()
                         s.title = r.title ?: s.title
-                        s.restore(r.id, r.entries)
+                        s.persistence.restore(r.id, r.entries)
                         openChat(s)
                     }
                 }
@@ -79,7 +79,7 @@ internal class TabSessionCommands(
             null,
         )?.trim().orEmpty()
         if (input.isEmpty() || input == session.title) return
-        session.renameSession(input)
+        session.persistence.rename(input)
     }
 
     fun forkActiveSession() {
@@ -99,7 +99,7 @@ internal class TabSessionCommands(
                 val manager = ChatSessionManager.getInstance(project)
                 val s = manager.create()
                 s.title = "$sourceTitle (fork)"
-                s.restore(sourceId, entries, fork = true)
+                s.persistence.restore(sourceId, entries, fork = true)
                 openChat(s)
             }
         }
@@ -128,7 +128,7 @@ internal class TabSessionCommands(
                                 val manager = ChatSessionManager.getInstance(project)
                                 val s = manager.create()
                                 s.title = ref.title
-                                s.restore(ref.sessionId, entries)
+                                s.persistence.restore(ref.sessionId, entries)
                                 openChat(s)
                             }
                         }

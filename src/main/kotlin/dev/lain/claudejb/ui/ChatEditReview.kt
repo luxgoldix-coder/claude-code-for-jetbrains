@@ -1,9 +1,15 @@
 package dev.lain.claudejb.ui
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.openapi.ui.Messages
 import dev.lain.claudejb.diff.DiffPresenter
+import dev.lain.claudejb.diff.EditSnapshot
+import dev.lain.claudejb.permission.PendingPermission
 import dev.lain.claudejb.session.ClaudeSession
 import dev.lain.claudejb.settings.ClaudeSettings
+import java.io.File
 
 internal class ChatEditReview(
     private val project: Project,
@@ -11,13 +17,13 @@ internal class ChatEditReview(
     private val notify: (String) -> Unit,
 ) {
 
-    fun diffsFor(perms: List<dev.lain.claudejb.permission.PendingPermission>): Map<String, String> =
+    fun diffsFor(perms: List<PendingPermission>): Map<String, String> =
         perms.mapNotNull { p -> inlineDiffFor(p)?.let { p.requestId to it } }.toMap()
 
-    private fun inlineDiffFor(p: dev.lain.claudejb.permission.PendingPermission): String? {
+    private fun inlineDiffFor(p: PendingPermission): String? {
         if (!p.reviewable || p.toolName !in DiffPresenter.REVIEWABLE_TOOLS) return null
         val path = DiffPresenter.filePathOf(p.input) ?: return null
-        val file = java.io.File(path)
+        val file = File(path)
         if (file.isFile && file.length() > MAX_HUNK_FILE_BYTES) return null
         val current = runCatching { file.takeIf { it.isFile }?.readText() }.getOrNull() ?: ""
         val proposed = DiffPresenter.proposedContent(p.toolName, p.input, current) ?: return null
@@ -25,30 +31,31 @@ internal class ChatEditReview(
     }
 
     fun rewindOrRevert(toolUseId: String) {
-        val snap = session.editSnapshot(toolUseId)
+        val snap = session.cards.editSnapshot(toolUseId)
         val turn = session.prompts.userMessageIdFor(toolUseId)
-        if (turn != null && session.checkpointingEnabled) {
-            session.queries.requestRewindFiles(turn, dryRun = true) { probe ->
-                if (probe != null && probe.canRewind) {
-                    session.queries.requestRewindFiles(turn, dryRun = false) { done ->
-                        if (done != null && done.canRewind) {
-                            session.refreshAfterRewind(done.filesChanged)
-                            val n = done.filesChanged.size
-                            notify("Restored to this turn via Claude Code" + if (n > 0) " ($n file(s))." else ".")
-                        } else {
-                            offerIdeFallback(snap, done?.error ?: "rewind failed")
-                        }
-                    }
+        val checkpointing = ClaudeSettings.getInstance(project).enableFileCheckpointing
+        if (turn == null || !checkpointing) {
+            offerIdeFallback(snap, if (!checkpointing) "checkpointing disabled" else "no turn anchor for this edit")
+            return
+        }
+        session.queries.requestRewindFiles(turn, dryRun = true) { probe ->
+            if (probe == null || !probe.canRewind) {
+                offerIdeFallback(snap, probe?.error ?: "no checkpoint for this turn")
+                return@requestRewindFiles
+            }
+            session.queries.requestRewindFiles(turn, dryRun = false) { done ->
+                if (done != null && done.canRewind) {
+                    session.diffs.refreshAfterRewind(done.filesChanged)
+                    val n = done.filesChanged.size
+                    notify("Restored to this turn via Claude Code" + if (n > 0) " ($n file(s))." else ".")
                 } else {
-                    offerIdeFallback(snap, probe?.error ?: "no checkpoint for this turn")
+                    offerIdeFallback(snap, done?.error ?: "rewind failed")
                 }
             }
-        } else {
-            offerIdeFallback(snap, if (!session.checkpointingEnabled) "checkpointing disabled" else "no turn anchor for this edit")
         }
     }
 
-    private fun offerIdeFallback(snap: dev.lain.claudejb.diff.EditSnapshot?, reason: String) {
+    private fun offerIdeFallback(snap: EditSnapshot?, reason: String) {
         if (snap == null) {
             notify("Nothing to restore for this edit.")
             return
@@ -56,7 +63,7 @@ internal class ChatEditReview(
         val settings = ClaudeSettings.getInstance(project)
         when (settings.rewindFallback) {
             "ide" -> {
-                session.revertEdit(snap)
+                revert(snap)
                 return
             }
 
@@ -65,22 +72,31 @@ internal class ChatEditReview(
                 return
             }
         }
-        val doNotAsk = object : com.intellij.openapi.ui.DialogWrapper.DoNotAskOption.Adapter() {
+        val doNotAsk = object : DialogWrapper.DoNotAskOption.Adapter() {
             override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
-                if (isSelected) settings.rewindFallback = if (exitCode == com.intellij.openapi.ui.Messages.YES) "ide" else "never"
+                if (isSelected) settings.rewindFallback = if (exitCode == Messages.YES) "ide" else "never"
             }
         }
-        val restore = com.intellij.openapi.ui.MessageDialogBuilder
+        val restore = MessageDialogBuilder
             .yesNo(
                 "Rewind Unavailable",
                 "Claude Code's native rewind isn't available for this edit ($reason).\nRestore this file via the IDE instead?",
             )
             .yesText("Restore via IDE")
             .noText("Cancel")
-            .icon(com.intellij.openapi.ui.Messages.getQuestionIcon())
+            .icon(Messages.getQuestionIcon())
             .doNotAsk(doNotAsk)
             .ask(project)
-        if (restore) session.revertEdit(snap)
+        if (restore) revert(snap)
+    }
+
+    private fun revert(snap: EditSnapshot) {
+        val name = File(snap.filePath).name
+        if (session.rollback.revertEdit(snap)) {
+            session.notifier.info("Reverted $name to its state before this edit.")
+        } else {
+            session.notifier.error("Couldn't revert $name (the file may be outside the project, missing, or locked).")
+        }
     }
 
     private companion object {

@@ -18,14 +18,14 @@ class SecurityToggleLiveIntegrationTest : FakeClaudeTestBase() {
                 it.speaker == Speaker.SYSTEM && it.text.contains("Blocked mcp__test__run")
             }
         }
-        assertTrue("no card for the denied call", session.pendingPermissions().isEmpty())
+        assertTrue("no card for the denied call", session.cards.pending().isEmpty())
 
         settings.state.disabledSecurityRules = SecurityRule.SECRET_DUMPING_COMMANDS.name
 
         waitUntil("second call is now a permission card, not a silent deny") {
-            session.pendingPermissions().any { it.toolName == "mcp__test__run" }
+            session.cards.pending().any { it.toolName == "mcp__test__run" }
         }
-        val pending = session.pendingPermissions().single()
+        val pending = session.cards.pending().single()
         assertEquals("fake_sec_2", pending.requestId)
     }
 }

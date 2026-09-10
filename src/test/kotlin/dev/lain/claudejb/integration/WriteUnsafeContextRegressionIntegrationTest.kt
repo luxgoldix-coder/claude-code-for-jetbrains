@@ -9,7 +9,7 @@ class WriteUnsafeContextRegressionIntegrationTest : FakeClaudeTestBase() {
         session.send("write three files")
 
         waitUntil("cascade finished", timeoutMs = 20_000) {
-            session.pendingPermissions().forEach { session.resolvePermission(it.requestId, allow = true) }
+            session.cards.pending().forEach { session.cards.resolvePermission(it.requestId, allow = true) }
             session.transcript.entries.any { it.speaker == Speaker.ASSISTANT && it.text.contains("All three files written") }
         }
 

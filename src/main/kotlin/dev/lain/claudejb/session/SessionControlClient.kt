@@ -12,7 +12,7 @@ class SessionControlClient(
     private val write: (String) -> Unit,
     private val newRequestId: () -> String = { dev.lain.claudejb.protocol.ControlProtocol.newRequestId() },
     private val scheduler: Scheduler = AppExecutorUtilScheduler,
-    private val timeoutSeconds: Long = ClaudeSession.CONTROL_TIMEOUT_SECONDS,
+    private val timeoutSeconds: Long = DEFAULT_TIMEOUT_SECONDS,
 ) {
 
     fun interface Cancellable {
@@ -39,6 +39,7 @@ class SessionControlClient(
 
     private companion object {
         const val TRACE_MAX = 2000
+        const val DEFAULT_TIMEOUT_SECONDS = 30L
     }
 
     private fun requestSubtype(line: String): String =

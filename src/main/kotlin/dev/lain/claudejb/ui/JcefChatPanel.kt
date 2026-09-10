@@ -65,7 +65,7 @@ class JcefChatPanel(internal val project: Project, val session: ClaudeSession) :
         add(host.component, BorderLayout.CENTER)
 
         agentTabs.render()
-        session.scanAgents()
+        session.agentScanner.scan()
 
         livePanels.add(this)
         session.transcript.addListener(transcript)

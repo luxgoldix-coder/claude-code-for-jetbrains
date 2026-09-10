@@ -12,6 +12,6 @@ class DisposedSessionHeadlessTest : BasePlatformTestCase() {
         assertTrue(session.lifecycle.disposed)
         assertFalse(session.start(resume = false))
         assertFalse(session.isRunning())
-        assertFalse(session.isStarting())
+        assertFalse(session.lifecycle.isStarting())
     }
 }

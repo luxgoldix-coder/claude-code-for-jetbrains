@@ -12,7 +12,7 @@ class InterruptIntegrationTest : FakeClaudeTestBase() {
             session.transcript.entries.any { it.speaker == Speaker.ASSISTANT && it.text.contains("Working on it") }
         }
 
-        session.interrupt()
+        session.turnControl.interrupt()
 
         waitUntil("session idle after interrupt") {
             !session.turn.active &&

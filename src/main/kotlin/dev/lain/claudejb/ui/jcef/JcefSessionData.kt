@@ -41,7 +41,7 @@ object JcefSessionData {
             put("workloads", JcefWorkloadData.workloadsJson(workloads, windowMinutes, nowMillis))
             put("workloadWindow", JcefWorkloadData.windowJson(windowMinutes))
             put("model", JcefModelLabels.modelLabel(session))
-            put("cwd", session.workingDir)
+            put("cwd", session.project.basePath)
             put("home", LinkResolver.userHome())
             put("version", session.catalog.binaryVersion)
         }

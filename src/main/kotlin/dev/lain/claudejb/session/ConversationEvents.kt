@@ -80,14 +80,14 @@ class ConversationEvents(
         s.agentScanner.scan()
         fireState()
         s.prompts.pump()
-        s.sessionId?.let { id -> s.recordOpenAndTitle(id) }
+        s.sessionId?.let { id -> s.persistence.recordOpenAndTitle(id) }
         fireAttention(if (event.result.isError) AttentionReason.ERROR else AttentionReason.TURN_DONE)
     }
 
     fun surfaceAuthFailure(failureText: String, display: String) {
         when (LoginDetection.resolve(failureText, s.lifecycle.auth::canRenewCredential)) {
             AuthFailure.EXPIRED -> {
-                s.transcript.add(Speaker.SYSTEM, ClaudeSession.EXPIRED_TOKEN_NOTICE)
+                s.transcript.add(Speaker.SYSTEM, EXPIRED_TOKEN_NOTICE)
                 renewRejectedCredential()
             }
 
@@ -108,5 +108,13 @@ class ConversationEvents(
             log.info("the rejected credential was renewed; restarting the session on the new one")
             edt { s.restart() }
         }
+    }
+
+    private companion object {
+        const val EXPIRED_TOKEN_NOTICE =
+            "Your access token expired while this chat was open. The sign-in itself is still valid and is " +
+                "renewed when a session starts, but a running one cannot pick up the new token — so this turn " +
+                "did not complete, and sending it again will fail the same way. Close this chat and open it " +
+                "again to continue."
     }
 }

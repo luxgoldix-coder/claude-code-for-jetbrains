@@ -66,7 +66,7 @@ internal class GitChatConversation(private val project: Project) :
     }
 
     fun interrupt() {
-        current()?.interrupt()
+        current()?.turnControl?.interrupt()
     }
 
     fun permissionGroup(): List<JcefCardPayload.Group> {
@@ -87,7 +87,7 @@ internal class GitChatConversation(private val project: Project) :
         val chat = current() ?: return null
         return buildString {
             append("{\"running\":").append(chat.isRunning())
-            append(",\"starting\":").append(chat.isStarting())
+            append(",\"starting\":").append(chat.lifecycle.isStarting())
             append(",\"turnActive\":").append(chat.turn.active)
             append(",\"rows\":").append(JcefTranscriptPayload.batchJson(rows(chat)))
             append("}")

@@ -20,12 +20,12 @@ class ToolEvents(
         s.reconciler.onMessageBoundary()
         s.transcript.add(
             Speaker.TOOL,
-            ToolNaming.formatToolUse(event.name, event.input, s.workingDir),
+            ToolNaming.formatToolUse(event.name, event.input, s.project.basePath),
             meta = event.name,
             toolUseId = event.id,
             parentToolUseId = event.parentToolUseId,
             toolState = ToolState.LOADING,
-            filePath = ToolNaming.toolFilePath(event.name, event.input, s.workingDir),
+            filePath = ToolNaming.toolFilePath(event.name, event.input, s.project.basePath),
             commandText = ToolInputScanner.commandText(event.input),
             messageText = ToolInputScanner.messageText(event.input),
         )

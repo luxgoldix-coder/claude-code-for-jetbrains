@@ -4,22 +4,13 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.util.concurrency.AppExecutorUtil
 import dev.lain.claudejb.context.Attachment
-import dev.lain.claudejb.diff.EditSnapshot
-import dev.lain.claudejb.permission.PendingPermission
 import dev.lain.claudejb.protocol.ClaudeEvent
-import dev.lain.claudejb.protocol.ControlProtocol
-import dev.lain.claudejb.protocol.TaskProgressInfo
-import dev.lain.claudejb.settings.ClaudeSettings
-import dev.lain.claudejb.settings.Provider
-import dev.lain.claudejb.settings.guardSuspended
 import dev.lain.claudejb.util.edt
-import kotlinx.serialization.json.JsonObject
 import java.util.concurrent.CopyOnWriteArrayList
 
 class ClaudeSession(
-    private val project: Project,
+    val project: Project,
     @Volatile var title: String,
     val gitIntegration: Boolean = false,
 ) : Disposable {
@@ -30,12 +21,12 @@ class ClaudeSession(
 
     val transcript = TranscriptModel()
 
-    internal val tokens = TokenAccountant()
+    val tokens = TokenAccountant()
     internal val taskTracker = TaskTracker()
     internal val reconciler = TranscriptReconciler(transcript)
 
-    internal val diffs = DiffLifecycleManager(project)
-    private val rollback = RollbackManager(project, diffs, reseedReadState = { p, m -> queries.seedReadState(p, m) })
+    val diffs = DiffLifecycleManager(project)
+    val rollback = RollbackManager(project, diffs, reseedReadState = { p, m -> queries.seedReadState(p, m) })
     internal val controlClient = SessionControlClient(write = ::write)
 
     val settings = SessionLiveSettings(
@@ -54,12 +45,7 @@ class ClaudeSession(
         quota = QuotaWarnings(log, QuotaWarnings.Announce(inTranscript = ::systemNotice, asNotification = notifier::info)),
     )
 
-    private val titling = SessionTitling(
-        currentTitle = { title },
-        setTitle = { title = it },
-        fireTitleChanged = { edt { fireTitleChanged() } },
-        requestGeneratedTitle = queries::requestGeneratedTitle,
-    )
+    val persistence = SessionPersistence(this, project, ::edt, ::fireState, ::fireTitleChanged)
 
     private val notices = NoticeNarrator(
         log = log,
@@ -97,13 +83,11 @@ class ClaudeSession(
 
     val signals = SessionSignals()
 
-    val subagentTasks: Map<String, TaskProgressInfo> get() = taskTracker.tasks
-
     val runningAgents = AgentRegistry(subagentsDir = { sessionId?.let { SessionStore.subagentsDir(it) } })
 
     val backgroundTaskRegistry = BackgroundTaskRegistry()
 
-    internal val agentScanner: AgentScanner = AgentScanner(
+    val agentScanner: AgentScanner = AgentScanner(
         project = project,
         agents = runningAgents,
         tasks = backgroundTaskRegistry,
@@ -122,24 +106,10 @@ class ClaudeSession(
 
     fun ownerAgentOfTask(taskId: String): String? {
         val fromLink = backgroundTaskRegistry.taskOf(taskId)?.ownerToolUseId
-        val fromEdge = subagentTasks[taskId]?.toolUseId
+        val fromEdge = taskTracker.tasks[taskId]?.toolUseId
         val tool = fromLink ?: fromEdge ?: return null
         return runningAgents.nodes.values.firstOrNull { it.meta.toolUseId == tool }?.agentId
     }
-
-    val backgroundTasks: List<dev.lain.claudejb.protocol.BackgroundTaskInfo> get() = taskTracker.backgroundTasks
-
-    val liveInputTokens get() = tokens.liveInputTokens
-    val liveCacheCreationTokens get() = tokens.liveCacheCreationTokens
-    val liveCacheReadTokens get() = tokens.liveCacheReadTokens
-    val liveOutputTokens get() = tokens.liveOutputTokens
-
-    val sessionInputTokens get() = tokens.sessionInputTokens
-    val sessionCacheCreationTokens get() = tokens.sessionCacheCreationTokens
-    val sessionCacheReadTokens get() = tokens.sessionCacheReadTokens
-    val sessionOutputTokens get() = tokens.sessionOutputTokens
-
-    fun totalTokens(): Int = tokens.totalTokens()
 
     private val stream = StreamBuffer()
 
@@ -171,15 +141,9 @@ class ClaudeSession(
         fireState = ::fireState,
     )
 
-    internal val turnControl = TurnControl(this, ::edt, ::write, ::fireState)
+    val turnControl = TurnControl(this, ::edt, ::write, ::fireState)
 
     private val listeners = CopyOnWriteArrayList<SessionListener>()
-
-    val workingDir: String? get() = project.basePath
-
-    val checkpointingEnabled: Boolean get() = ClaudeSettings.getInstance(project).enableFileCheckpointing
-
-    val guardEnforced: Boolean get() = !ClaudeSettings.getInstance(project).guardSuspended()
 
     internal val poll = PollSchedule(
         isRunning = ::isRunning,
@@ -202,7 +166,6 @@ class ClaudeSession(
         ),
     )
 
-    @Volatile
     val guard = SessionGuard(
         session = this,
         project = project,
@@ -232,17 +195,11 @@ class ClaudeSession(
 
     fun isRunning(): Boolean = lifecycle.isRunning()
 
-    fun isStarting(): Boolean = lifecycle.isStarting()
-
     fun start(resume: Boolean = sessionId != null): Boolean = lifecycle.start(resume)
 
     fun restart(resume: Boolean = true) = lifecycle.restart(resume)
 
     fun stop() = lifecycle.stop()
-
-    fun refreshBootState() = lifecycle.refreshBootState()
-
-    fun dismissLoginCard() = lifecycle.dismissLoginCard()
 
     fun send(text: String) = send(text, emptyList())
 
@@ -269,91 +226,6 @@ class ClaudeSession(
             }
             prompts.pump()
         }
-    }
-
-    fun interrupt() = turnControl.interrupt()
-
-    fun editSnapshot(toolUseId: String): EditSnapshot? = diffs.snapshot(toolUseId)
-
-    fun restore(savedSessionId: String, dtos: List<EntryDTO>, fork: Boolean = false) {
-        sessionId = savedSessionId
-        launch = launch.copy(fork = fork)
-        agentScanner.restoreAdmitted(onTasksReplayed = ::fireState)
-        prompts.forgetTurn()
-        val saved = guard.restore(savedSessionId)
-        val withGuard = GuardRestore.reinstate(dtos, GuardRestore.raisedInThisChat(dtos, saved))
-        edt {
-            transcript.clear()
-            for (dto in withGuard) {
-                val speaker = runCatching { Speaker.valueOf(dto.speaker) }.getOrNull() ?: continue
-                transcript.add(
-                    speaker,
-                    dto.text,
-                    meta = dto.meta,
-                    toolUseId = dto.toolUseId,
-                    parentToolUseId = dto.parentToolUseId,
-                    filePath = dto.filePath,
-                    commandText = dto.commandText,
-                    messageText = dto.messageText,
-                    blockedRule = dto.blockedRule,
-                    bypassedRule = dto.bypassedRule,
-                    bypassAction = dto.bypassAction,
-                    toolState = when {
-                        dto.failed -> ToolState.ERROR
-                        dto.inFlight -> ToolState.ERROR
-                        dto.meta == "Task" || dto.meta == "Agent" -> ToolState.ERROR
-                        else -> ToolState.FINISHED
-                    },
-                )
-            }
-        }
-    }
-
-    internal fun recordOpenAndTitle(id: String) {
-        AppExecutorUtil.getAppExecutorService().execute {
-            if (!gitIntegration) titling.resolve(id)
-            SessionHistory.getInstance(project).setOpenSessions(
-                ChatSessionManager.getInstance(project).all()
-                    .filterNot { it.gitIntegration }
-                    .mapNotNull { it.sessionId },
-            )
-        }
-    }
-
-    fun pendingPermissions(): List<PendingPermission> = cards.pending()
-
-    fun resolvePermission(
-        requestId: String,
-        allow: Boolean,
-        denyMessage: String? = null,
-        overrideInput: JsonObject? = null,
-    ) = cards.resolvePermission(requestId, allow, denyMessage, overrideInput)
-
-    val provider: Provider get() = ClaudeSettings.getInstance(project).provider
-
-    fun refreshAfterRewind(paths: List<String>) {
-        paths.forEach { diffs.markForRefresh(it) }
-        diffs.refreshTouched()
-    }
-
-    fun revertEdit(snapshot: EditSnapshot): Boolean {
-        val name = java.io.File(snapshot.filePath).name
-        val ok = rollback.revertEdit(snapshot)
-        if (ok) {
-            notifier.info("Reverted $name to its state before this edit.")
-        } else {
-            notifier.error("Couldn't revert $name (the file may be outside the project, missing, or locked).")
-        }
-        return ok
-    }
-
-    fun renameSession(title: String) {
-        val trimmed = title.trim()
-        if (trimmed.isBlank()) return
-        if (isRunning()) write(ControlProtocol.renameSessionRequest(ControlProtocol.newRequestId(), trimmed))
-        titling.markRenamed()
-        this.title = trimmed
-        edt { fireTitleChanged() }
     }
 
     @org.jetbrains.annotations.TestOnly
@@ -383,8 +255,6 @@ class ClaudeSession(
 
     internal fun systemNotice(message: String) = edt { transcript.add(Speaker.SYSTEM, message) }
 
-    fun scanAgents() = agentScanner.scan()
-
     private fun fireAgents(fresh: List<String>) = listeners.forEach { it.onAgentsChanged(fresh) }
 
     private fun fireState() = listeners.forEach { it.onStateChanged() }
@@ -396,15 +266,7 @@ class ClaudeSession(
 
     override fun dispose() = lifecycle.shutdown()
 
-    companion object {
-        const val EXPIRED_TOKEN_NOTICE =
-            "Your access token expired while this chat was open. The sign-in itself is still valid and is " +
-                "renewed when a session starts, but a running one cannot pick up the new token — so this turn " +
-                "did not complete, and sending it again will fail the same way. Close this chat and open it " +
-                "again to continue."
-
+    private companion object {
         const val SIDE_QUESTION_UNANSWERED = "↩ The side question was not answered."
-
-        const val CONTROL_TIMEOUT_SECONDS = 30L
     }
 }

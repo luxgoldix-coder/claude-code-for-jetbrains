@@ -35,10 +35,11 @@ internal object JcefCostData {
     fun costJson(session: ClaudeSession): JsonObject? {
         val raw = session.signals.lastSessionCost
         val usage = raw?.let { decodeApiUsage(it) }
-        val input = (usage?.inputTokens?.takeIf { it > 0 }) ?: session.sessionInputTokens.toLong()
-        val output = (usage?.outputTokens?.takeIf { it > 0 }) ?: session.sessionOutputTokens.toLong()
-        val cacheWrite = (usage?.cacheCreationInputTokens?.takeIf { it > 0 }) ?: session.sessionCacheCreationTokens.toLong()
-        val cacheRead = (usage?.cacheReadInputTokens?.takeIf { it > 0 }) ?: session.sessionCacheReadTokens.toLong()
+        val counted = session.tokens
+        val input = (usage?.inputTokens?.takeIf { it > 0 }) ?: counted.sessionInputTokens.toLong()
+        val output = (usage?.outputTokens?.takeIf { it > 0 }) ?: counted.sessionOutputTokens.toLong()
+        val cacheWrite = (usage?.cacheCreationInputTokens?.takeIf { it > 0 }) ?: counted.sessionCacheCreationTokens.toLong()
+        val cacheRead = (usage?.cacheReadInputTokens?.takeIf { it > 0 }) ?: counted.sessionCacheReadTokens.toLong()
         val usd = raw?.let { usdOf(it) }
         val noTokens = listOf(input, output, cacheWrite, cacheRead).all { it == 0L }
         if (noTokens && usd == null) return null

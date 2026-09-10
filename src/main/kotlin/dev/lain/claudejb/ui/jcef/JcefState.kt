@@ -4,6 +4,8 @@ import dev.lain.claudejb.protocol.RateLimitInfo
 import dev.lain.claudejb.protocol.UsageReport
 import dev.lain.claudejb.session.ClaudeSession
 import dev.lain.claudejb.session.StatusLineFormatter
+import dev.lain.claudejb.settings.ClaudeSettings
+import dev.lain.claudejb.settings.guardSuspended
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.addJsonObject
 import kotlinx.serialization.json.buildJsonArray
@@ -36,7 +38,7 @@ object JcefState {
     private data class CompactWindow(val key: String, val label: String, val pct: Double, val resetsAt: String?)
 
     fun stateJson(session: ClaudeSession, usage: UsageReport? = null): String {
-        val provider = session.provider
+        val settings = ClaudeSettings.getInstance(session.project)
         val mode = session.launch.permissionMode
         val effort = session.launch.effort
         val thinkingOn = session.launch.thinkingTokens != null
@@ -46,8 +48,8 @@ object JcefState {
             put("turnActive", session.turn.active)
             put("interrupting", session.turn.interrupting)
             put("running", session.isRunning() && session.catalog.initialized)
-            put("starting", session.isStarting())
-            put("resuming", session.isStarting() && session.sessionId != null)
+            put("starting", session.lifecycle.isStarting())
+            put("resuming", session.lifecycle.isStarting() && session.sessionId != null)
             put("binaryMissing", session.lifecycle.binaryMissing)
             put("needsLogin", session.lifecycle.needsLogin)
 
@@ -60,11 +62,11 @@ object JcefState {
                 put("thinkingStatus", null as String?)
             }
 
-            put("guardOn", session.guardEnforced)
+            put("guardOn", !settings.guardSuspended())
             put("remoteControlOn", session.remote.enabled)
             put("remoteControlError", session.remote.error)
 
-            put("provider", JcefComposerOptions.providerJson(provider))
+            put("provider", JcefComposerOptions.providerJson(settings.provider))
             put("model", JcefComposerOptions.modelJson(session))
             put("mode", JcefComposerOptions.modeJson(mode))
             put("effort", JcefComposerOptions.effortJson(effort))
@@ -88,7 +90,7 @@ object JcefState {
                 put("context", null as String?)
             }
 
-            put("tokensOut", session.sessionOutputTokens)
+            put("tokensOut", session.tokens.sessionOutputTokens)
             put("costUsd", null as String?)
         }
         return obj.toString()

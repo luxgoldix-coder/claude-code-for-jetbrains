@@ -51,7 +51,7 @@ internal class ChatBridgeRouter(private val panel: JcefChatPanel) {
             if (m.scope == JcefBridge.SCOPE_GIT) panel.gitChat.send(m.text) else dispatchSend(m.text)
 
         is JcefBridge.Msg.Interrupt ->
-            if (m.scope == JcefBridge.SCOPE_GIT) panel.gitChat.interrupt() else session.interrupt()
+            if (m.scope == JcefBridge.SCOPE_GIT) panel.gitChat.interrupt() else session.turnControl.interrupt()
 
         JcefBridge.Msg.CycleMode -> session.settings.cyclePermissionMode()
 

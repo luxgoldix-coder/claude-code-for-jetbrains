@@ -56,7 +56,7 @@ class GuardRestoreHeadlessTest : BasePlatformTestCase() {
 
     private fun restored(dtos: List<EntryDTO>): ClaudeSession {
         val session = ClaudeSession(project, "t")
-        session.restore(savedSession, dtos)
+        session.persistence.restore(savedSession, dtos)
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
         return session
     }

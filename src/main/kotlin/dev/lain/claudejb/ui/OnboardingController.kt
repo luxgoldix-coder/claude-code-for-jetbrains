@@ -33,7 +33,7 @@ internal class OnboardingController(
     }
 
     private fun tick() {
-        ApplicationManager.getApplication().executeOnPooledThread { session.refreshBootState() }
+        ApplicationManager.getApplication().executeOnPooledThread { session.lifecycle.refreshBootState() }
     }
 
     fun onStateChanged() {
@@ -75,7 +75,7 @@ internal class OnboardingController(
                 pushAuthState("idle")
             }
 
-            JcefBridge.Msg.DismissAuth -> session.dismissLoginCard()
+            JcefBridge.Msg.DismissAuth -> session.lifecycle.dismissLoginCard()
 
             JcefBridge.Msg.Logout -> logout()
 
@@ -116,7 +116,7 @@ internal class OnboardingController(
 
     private fun recheckBinary(announceFailure: Boolean) {
         ApplicationManager.getApplication().executeOnPooledThread {
-            session.refreshBootState()
+            session.lifecycle.refreshBootState()
             val found = ClaudeBinaryLocator.locate(ClaudeSettings.getInstance(project).claudePath) != null
             if (found || !announceFailure) return@executeOnPooledThread
             ApplicationManager.getApplication().invokeLater {
@@ -164,7 +164,7 @@ internal class OnboardingController(
                 }
                 ClaudeSettings.getInstance(project).setProviderApiKey(Provider.ANTHROPIC, trimmed)
                 ClaudeSettings.getInstance(project).signedOut = false
-                session.dismissLoginCard()
+                session.lifecycle.dismissLoginCard()
                 session.restart()
             }
         }

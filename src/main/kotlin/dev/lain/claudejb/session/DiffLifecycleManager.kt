@@ -74,6 +74,11 @@ class DiffLifecycleManager(private val project: Project) {
         pendingRefresh.add(path)
     }
 
+    fun refreshAfterRewind(paths: List<String>) {
+        paths.forEach(::markForRefresh)
+        refreshTouched()
+    }
+
     fun refreshTouched() {
         val paths = synchronized(pendingRefresh) { pendingRefresh.toList().also { pendingRefresh.clear() } }
         if (paths.isEmpty()) return

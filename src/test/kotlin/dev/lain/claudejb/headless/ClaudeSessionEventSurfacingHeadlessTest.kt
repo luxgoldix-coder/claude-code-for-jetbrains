@@ -80,7 +80,7 @@ class ClaudeSessionEventSurfacingHeadlessTest : BasePlatformTestCase() {
                 ClaudeEvent.Elicitation("r1", ElicitationRequest(mcpServerName = "github", message = "Authorize?")),
             )
             flush()
-            val pending = session.pendingPermissions().single()
+            val pending = session.cards.pending().single()
             assertEquals("r1", pending.requestId)
             assertNotNull(pending.elicitation)
         } finally {
