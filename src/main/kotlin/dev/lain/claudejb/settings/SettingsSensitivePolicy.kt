@@ -3,7 +3,6 @@ package dev.lain.claudejb.settings
 import dev.lain.claudejb.permission.CredentialPaths
 import dev.lain.claudejb.permission.SecurityRule
 import dev.lain.claudejb.permission.SensitiveGuard
-import dev.lain.claudejb.session.RemoteMounts
 import kotlinx.serialization.json.JsonObject
 
 fun ClaudeSettings.sensitiveGlobs(): List<String> {

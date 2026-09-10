@@ -5,10 +5,12 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
 import dev.lain.claudejb.protocol.ModelInfo
+import dev.lain.claudejb.protocol.PermissionMode
 import dev.lain.claudejb.session.ClaudeSession
 import dev.lain.claudejb.session.SessionListener
-import dev.lain.claudejb.session.WorkloadWindow
 import dev.lain.claudejb.settings.ClaudeSettings
+import dev.lain.claudejb.settings.LaunchDefaults
+import dev.lain.claudejb.settings.WorkloadWindow
 import dev.lain.claudejb.ui.jcef.JcefModelLabels
 import javax.swing.DefaultComboBoxModel
 import javax.swing.DefaultListCellRenderer
@@ -18,8 +20,8 @@ import javax.swing.JList
 internal class SettingsModelSection(private val sessionOf: () -> ClaudeSession) : SettingsSection {
 
     private val modelCombo = JComboBox<String>().apply { isEditable = true }
-    private val effortCombo = JComboBox(ClaudeSession.EFFORT_LEVELS.toTypedArray())
-    private val modeCombo = JComboBox(ClaudeSession.PERMISSION_MODES.toTypedArray())
+    private val effortCombo = JComboBox(LaunchDefaults.EFFORT_LEVELS.toTypedArray())
+    private val modeCombo = JComboBox(LaunchDefaults.PERMISSION_MODES.toTypedArray())
     private val thinkingCheck = JBCheckBox("Extended thinking (adaptive — the model decides depth)")
     private val partialCheck = JBCheckBox("Stream partial messages (live token streaming)")
     private val restoreChatsCheck = JBCheckBox("Restore open chats on startup")
@@ -65,7 +67,7 @@ internal class SettingsModelSection(private val sessionOf: () -> ClaudeSession) 
                 isSelected: Boolean,
                 cellHasFocus: Boolean,
             ): java.awt.Component {
-                val label = dev.lain.claudejb.session.PermissionMode.labelFor(value as? String)
+                val label = PermissionMode.labelFor(value as? String)
                 return super.getListCellRendererComponent(list, label, index, isSelected, cellHasFocus)
             }
         }
@@ -86,7 +88,7 @@ internal class SettingsModelSection(private val sessionOf: () -> ClaudeSession) 
     }
 
     override fun reset(s: ClaudeSettings.State) {
-        shownModel = if (s.model == ClaudeSession.RECOMMENDED_ALIAS) ClaudeSession.DEFAULT_MODEL else s.model
+        shownModel = if (s.model == LaunchDefaults.RECOMMENDED_ALIAS) LaunchDefaults.DEFAULT_MODEL else s.model
         modelCombo.selectedItem = shownModel
         effortCombo.selectedItem = s.effort
         modeCombo.selectedItem = s.permissionMode
@@ -102,7 +104,7 @@ internal class SettingsModelSection(private val sessionOf: () -> ClaudeSession) 
         s.model = modelToSave(s.model)
         s.effort = effortText()
         s.permissionMode = modeText()
-        s.thinkingTokens = if (thinkingCheck.isSelected) ClaudeSession.THINKING_ON else 0
+        s.thinkingTokens = if (thinkingCheck.isSelected) LaunchDefaults.THINKING_ON else 0
         s.includePartialMessages = partialCheck.isSelected
         s.restoreOpenChatsOnStartup = restoreChatsCheck.isSelected
         s.reduceMotion = reduceMotionCheck.isSelected
@@ -134,7 +136,7 @@ internal class SettingsModelSection(private val sessionOf: () -> ClaudeSession) 
         currentModels = opts
         val preserved = (modelCombo.editor?.item as? String)
             ?: (modelCombo.selectedItem as? String)
-        val values = opts.map { it.value }.filter { it != ClaudeSession.RECOMMENDED_ALIAS }
+        val values = opts.map { it.value }.filter { it != LaunchDefaults.RECOMMENDED_ALIAS }
         modelCombo.model = DefaultComboBoxModel(values.toTypedArray())
         if (!preserved.isNullOrBlank()) modelCombo.selectedItem = preserved
     }

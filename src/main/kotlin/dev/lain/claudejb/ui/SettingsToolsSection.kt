@@ -7,14 +7,14 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.Panel
-import dev.lain.claudejb.session.ClaudeSession
 import dev.lain.claudejb.session.ToolNaming
 import dev.lain.claudejb.settings.ClaudeSettings
+import dev.lain.claudejb.settings.LaunchDefaults
 import javax.swing.JComponent
 
 internal class SettingsToolsSection(private val settings: ClaudeSettings) : SettingsSection {
 
-    private val settingSourcesGroup = CheckboxGroup(ClaudeSession.SETTING_SOURCES)
+    private val settingSourcesGroup = CheckboxGroup(LaunchDefaults.SETTING_SOURCES)
     private val allowedToolsGroup = CheckboxGroup(ToolNaming.BUILTIN_TOOLS)
     private val disallowedToolsGroup = CheckboxGroup(ToolNaming.BUILTIN_TOOLS)
 

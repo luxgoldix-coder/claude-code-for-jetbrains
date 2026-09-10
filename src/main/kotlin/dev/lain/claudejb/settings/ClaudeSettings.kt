@@ -9,8 +9,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.AppExecutorUtil
 import dev.lain.claudejb.permission.SensitiveGuard
-import dev.lain.claudejb.session.ClaudeSession
-import dev.lain.claudejb.session.WorkloadWindow
 import kotlinx.serialization.json.JsonObject
 
 @Service(Service.Level.PROJECT)
@@ -18,13 +16,13 @@ class ClaudeSettings(internal val project: Project? = null) {
 
     @kotlinx.serialization.Serializable
     class State {
-        @JvmField var model: String = ClaudeSession.DEFAULT_MODEL
+        @JvmField var model: String = LaunchDefaults.DEFAULT_MODEL
 
         @JvmField var effort: String = "high"
 
         @JvmField var permissionMode: String = "default"
 
-        @JvmField var thinkingTokens: Int = ClaudeSession.THINKING_ON
+        @JvmField var thinkingTokens: Int = LaunchDefaults.THINKING_ON
 
         @JvmField var includePartialMessages: Boolean = true
 
@@ -38,7 +36,7 @@ class ClaudeSettings(internal val project: Project? = null) {
 
         @JvmField var ideMcpTransport: String = "sse"
 
-        @JvmField var ideMcpPort: Int = ClaudeSession.DEFAULT_IDE_MCP_PORT
+        @JvmField var ideMcpPort: Int = LaunchDefaults.DEFAULT_IDE_MCP_PORT
 
         @JvmField var customMcpServers: String = ""
 
@@ -219,29 +217,6 @@ class ClaudeSettings(internal val project: Project? = null) {
     @Synchronized
     private fun replace(s: State) {
         loaded = s
-    }
-
-    fun applyTo(session: ClaudeSession) {
-        session.settings.changeModel(state.model.ifBlank { null })
-        session.settings.changeEffort(state.effort.ifBlank { null })
-        session.settings.changePermissionMode(state.permissionMode.ifBlank { "default" })
-        session.settings.changeThinkingTokens(state.thinkingTokens.takeIf { it > 0 })
-        session.settings.configureLaunchOptions(
-            allowedTools = state.allowedTools,
-            disallowedTools = state.disallowedTools,
-            settingSources = state.settingSources,
-            includePartialMessages = state.includePartialMessages,
-            ideMcpEnabled = state.ideMcpEnabled,
-            ideMcpTransport = state.ideMcpTransport,
-            ideMcpPort = state.ideMcpPort,
-            customMcpServers = state.customMcpServers,
-            maxTurns = maxTurns,
-            maxBudgetUsd = maxBudgetUsd,
-            fallbackModel = fallbackModel,
-            addDirs = addDirs,
-            betas = betas,
-            strictMcpConfig = strictMcpConfig,
-        )
     }
 
     val alwaysAllow = AlwaysAllowTools(this)

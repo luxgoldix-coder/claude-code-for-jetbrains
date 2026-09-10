@@ -53,7 +53,7 @@ internal class GitChatConversation(private val project: Project) :
         current()?.let { return it }
         val chat = ChatSessionManager.getInstance(project).gitChatOrCreate()
         current()
-        ClaudeSettings.getInstance(project).applyTo(chat)
+        chat.settings.adopt(ClaudeSettings.getInstance(project))
         chat.start()
         broadcast()
         return chat

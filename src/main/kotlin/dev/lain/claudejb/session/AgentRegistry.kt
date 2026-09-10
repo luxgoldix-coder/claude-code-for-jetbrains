@@ -1,5 +1,6 @@
 package dev.lain.claudejb.session
 
+import dev.lain.claudejb.settings.WorkloadWindow
 import kotlinx.serialization.json.JsonObject
 import java.nio.file.Files
 import java.nio.file.Path

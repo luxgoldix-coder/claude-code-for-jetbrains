@@ -6,8 +6,8 @@ import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.Panel
-import dev.lain.claudejb.session.ClaudeSession
 import dev.lain.claudejb.settings.ClaudeSettings
+import dev.lain.claudejb.settings.LaunchDefaults
 import javax.swing.JComboBox
 import javax.swing.JSpinner
 import javax.swing.SpinnerNumberModel
@@ -15,9 +15,9 @@ import javax.swing.SpinnerNumberModel
 internal class SettingsMcpSection : SettingsSection {
 
     private val ideMcpCheck = JBCheckBox("Enable JetBrains MCP server — lets Claude query the IDE")
-    private val ideMcpTransportCombo = JComboBox(ClaudeSession.IDE_MCP_TRANSPORTS.toTypedArray())
+    private val ideMcpTransportCombo = JComboBox(LaunchDefaults.IDE_MCP_TRANSPORTS.toTypedArray())
     private val ideMcpPortSpinner =
-        JSpinner(SpinnerNumberModel(ClaudeSession.DEFAULT_IDE_MCP_PORT, MIN_PORT, MAX_PORT, 1))
+        JSpinner(SpinnerNumberModel(LaunchDefaults.DEFAULT_IDE_MCP_PORT, MIN_PORT, MAX_PORT, 1))
     private val customMcpArea = JBTextArea(CUSTOM_MCP_ROWS, 0).apply {
         emptyText.text = "JSON object of name → server config; add as many as you like (sse / streamable-http / stdio)"
     }
@@ -44,7 +44,7 @@ internal class SettingsMcpSection : SettingsSection {
     }
 
     override fun validate() {
-        if (!ClaudeSession.isValidMcpConfig(customMcpArea.text.trim())) {
+        if (!LaunchDefaults.isValidMcpConfig(customMcpArea.text.trim())) {
             throw ConfigurationException("Custom MCP servers must be a JSON object mapping each server name to its config.")
         }
     }

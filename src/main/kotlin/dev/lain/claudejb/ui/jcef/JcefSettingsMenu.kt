@@ -2,13 +2,14 @@ package dev.lain.claudejb.ui.jcef
 
 import dev.lain.claudejb.permission.SecurityCategory
 import dev.lain.claudejb.permission.SecurityRule
+import dev.lain.claudejb.protocol.EffortLevel
 import dev.lain.claudejb.protocol.ModelInfo
+import dev.lain.claudejb.protocol.PermissionMode
 import dev.lain.claudejb.session.ClaudeSession
-import dev.lain.claudejb.session.EffortLevel
-import dev.lain.claudejb.session.PermissionMode
 import dev.lain.claudejb.session.ToolNaming
 import dev.lain.claudejb.settings.ClaudeSettings
 import dev.lain.claudejb.settings.GuardMode
+import dev.lain.claudejb.settings.LaunchDefaults
 import dev.lain.claudejb.settings.SecuritySuspensions
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonArrayBuilder
@@ -72,7 +73,7 @@ internal object JcefSettingsMenu {
     }
 
     private fun JsonArrayBuilder.modelRows(selected: Selected) {
-        selected.models.filter { it.value != ClaudeSession.RECOMMENDED_ALIAS }.forEach { m ->
+        selected.models.filter { it.value != LaunchDefaults.RECOMMENDED_ALIAS }.forEach { m ->
             val label = JcefModelLabels.modelDisplayLabel(m)
             entry("$MODEL:${m.value}", "Model", label, m.value == selected.model, radio = true)
         }
@@ -86,7 +87,7 @@ internal object JcefSettingsMenu {
     }
 
     private fun JsonArrayBuilder.modeRows(selected: Selected) {
-        ClaudeSession.PERMISSION_MODES.forEach { wire ->
+        LaunchDefaults.PERMISSION_MODES.forEach { wire ->
             entry("$MODE:$wire", "Permission mode", PermissionMode.labelFor(wire), wire == selected.mode, radio = true)
         }
     }
@@ -146,7 +147,7 @@ internal object JcefSettingsMenu {
     }
 
     private fun JsonArrayBuilder.sourceRows(s: ClaudeSettings.State) {
-        ClaudeSession.SETTING_SOURCES.forEach { source ->
+        LaunchDefaults.SETTING_SOURCES.forEach { source ->
             val label = source.replaceFirstChar { it.uppercase() }
             entry("$SOURCE:$source", "Setting sources", label, csvHas(s.settingSources, source), deferred = true)
         }
@@ -239,7 +240,7 @@ internal object JcefSettingsMenu {
         when (prefix) {
             RULE -> applyRule(scope, state, value, on)
 
-            SOURCE -> toggle(value in ClaudeSession.SETTING_SOURCES, state.settingSources, value, on) {
+            SOURCE -> toggle(value in LaunchDefaults.SETTING_SOURCES, state.settingSources, value, on) {
                 state.settingSources = it
             }
 

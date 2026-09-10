@@ -6,6 +6,7 @@ import dev.lain.claudejb.permission.ElicitationCard
 import dev.lain.claudejb.permission.PendingPermission
 import dev.lain.claudejb.protocol.ControlProtocol
 import dev.lain.claudejb.protocol.ElicitationRequest
+import dev.lain.claudejb.protocol.PermissionMode
 import dev.lain.claudejb.protocol.parseElicitationFields
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject

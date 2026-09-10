@@ -1,8 +1,9 @@
 package dev.lain.claudejb.ui.jcef
 
+import dev.lain.claudejb.protocol.PermissionMode
 import dev.lain.claudejb.session.ClaudeSession
 import dev.lain.claudejb.session.LegacyModels
-import dev.lain.claudejb.session.PermissionMode
+import dev.lain.claudejb.settings.LaunchDefaults
 import dev.lain.claudejb.settings.Provider
 import kotlinx.serialization.json.addJsonObject
 import kotlinx.serialization.json.buildJsonArray
@@ -34,7 +35,7 @@ internal object JcefComposerOptions {
         put(
             "options",
             buildJsonArray {
-                val catalog = session.models.filter { it.value != ClaudeSession.RECOMMENDED_ALIAS }
+                val catalog = session.models.filter { it.value != LaunchDefaults.RECOMMENDED_ALIAS }
                 catalog.forEach { m ->
                     addJsonObject {
                         put("value", m.value)
@@ -60,7 +61,7 @@ internal object JcefComposerOptions {
         put(
             "options",
             buildJsonArray {
-                ClaudeSession.PERMISSION_MODES.forEach { wire ->
+                LaunchDefaults.PERMISSION_MODES.forEach { wire ->
                     addJsonObject {
                         put("wire", wire)
                         put("label", PermissionMode.labelFor(wire))
@@ -81,7 +82,7 @@ internal object JcefComposerOptions {
                     put("label", "Default")
                     put("selected", effort == null)
                 }
-                ClaudeSession.EFFORT_LEVELS.forEach { lvl ->
+                LaunchDefaults.EFFORT_LEVELS.forEach { lvl ->
                     addJsonObject {
                         put("value", lvl)
                         put("label", lvl.replaceFirstChar { it.uppercase() })

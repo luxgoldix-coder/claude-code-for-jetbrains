@@ -4,6 +4,7 @@ import com.intellij.ide.RecentProjectListActionProvider
 import com.intellij.ide.ReopenProjectAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.ProjectManager
+import dev.lain.claudejb.settings.ClaudeHome
 import dev.lain.claudejb.settings.SecretStore
 import dev.lain.claudejb.settings.SettingsScope
 import java.nio.file.Files
@@ -84,7 +85,7 @@ internal object SharedPluginFiles {
 
     private fun read(file: Path): String = runCatching { Files.readString(file) }.getOrNull().orEmpty()
 
-    private fun fileOf(name: String): Path? = PluginAgentIndex.homeDir()
+    private fun fileOf(name: String): Path? = ClaudeHome.dir()
         ?.let { Paths.get(it) }
         ?.resolve(DIR_IDE)
         ?.resolve(DIR_PLUGIN)

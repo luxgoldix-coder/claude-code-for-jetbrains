@@ -60,7 +60,7 @@ class ClaudeSettingsConfigurable(private val project: Project) : Configurable {
         val s = settings.state
         sections.forEach { it.apply(s) }
         settings.save()
-        settings.applyTo(session)
+        session.settings.adopt(settings)
         shown = s
     }
 

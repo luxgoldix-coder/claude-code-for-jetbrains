@@ -166,18 +166,6 @@ class PluginAgentIndex internal constructor(
 
         const val FORMAT_VERSION = 3
 
-        @Volatile
-        var homeOverride: String? = defaultHome()
-
-        private fun defaultHome(): String? =
-            System.getProperty("user.home")?.takeIf { it.isNotBlank() }?.let { "$it/.claude" }
-
-        internal fun homeDir(): String? {
-            homeOverride?.let { if (it != defaultHome()) return it }
-            val app = com.intellij.openapi.application.ApplicationManager.getApplication()
-            return if (app == null || app.isUnitTestMode) null else homeOverride
-        }
-
         fun getInstance(project: Project): PluginAgentIndex = project.service()
 
         fun encode(sessions: Map<String, SessionRecord>): String {

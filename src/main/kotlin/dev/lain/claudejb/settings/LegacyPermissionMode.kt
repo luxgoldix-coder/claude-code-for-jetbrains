@@ -1,6 +1,6 @@
 package dev.lain.claudejb.settings
 
-import dev.lain.claudejb.session.PermissionMode
+import dev.lain.claudejb.protocol.PermissionMode
 
 internal object LegacyPermissionMode {
 

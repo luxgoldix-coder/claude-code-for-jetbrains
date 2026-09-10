@@ -5,9 +5,9 @@ import dev.lain.claudejb.protocol.AskQuestion
 import dev.lain.claudejb.protocol.CanUseToolRequest
 import dev.lain.claudejb.protocol.ControlProtocol
 import dev.lain.claudejb.protocol.ElicitField
+import dev.lain.claudejb.protocol.PermissionMode
 import dev.lain.claudejb.protocol.parseAskQuestions
 import dev.lain.claudejb.protocol.str
-import dev.lain.claudejb.session.PermissionMode
 import kotlinx.serialization.json.JsonObject
 
 data class PendingPermission(

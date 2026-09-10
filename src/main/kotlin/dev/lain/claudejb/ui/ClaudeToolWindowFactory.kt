@@ -48,7 +48,7 @@ class ClaudeToolWindowFactory : ToolWindowFactory, DumbAware {
     }
 
     private fun openChat(project: Project, tabs: ChatTabsPanel, session: ClaudeSession, select: Boolean = true) {
-        ClaudeSettings.getInstance(project).applyTo(session)
+        session.settings.adopt(ClaudeSettings.getInstance(project))
         session.start()
 
         val panel = JcefChatPanel(project, session)

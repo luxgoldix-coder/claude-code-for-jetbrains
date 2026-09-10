@@ -1,5 +1,6 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.settings
 
+import dev.lain.claudejb.permission.ForeignTerritory
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -30,7 +31,7 @@ object RemoteMounts {
         if (path.isNullOrBlank()) return false
         val p = path.replace('\\', '/')
         if (snap.isWsl && p.startsWith("/mnt/")) return !(p == "/mnt/c" || p.startsWith("/mnt/c/"))
-        if (SensitiveGuardUnc.isUnc(p)) return true
+        if (ForeignTerritory.isUnc(p)) return true
         if (snap.remoteRoots.any { under(p, it) }) return true
         return runCatching {
             val store = Files.getFileStore(Paths.get(path))
@@ -70,8 +71,4 @@ object RemoteMounts {
         val r = root.trimEnd('/')
         return r.isNotEmpty() && r != "/" && (path == r || path.startsWith("$r/", ignoreCase = true))
     }
-}
-
-private object SensitiveGuardUnc {
-    fun isUnc(path: String): Boolean = dev.lain.claudejb.permission.ForeignTerritory.isUnc(path)
 }

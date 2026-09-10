@@ -11,11 +11,12 @@ import dev.lain.claudejb.permission.SecurityRule
 import dev.lain.claudejb.permission.SensitiveGuard
 import dev.lain.claudejb.permission.ToolInputScanner
 import dev.lain.claudejb.session.ClaudeSession
-import dev.lain.claudejb.session.WorkloadWindow
 import dev.lain.claudejb.settings.ClaudeSettings
 import dev.lain.claudejb.settings.GuardWhitelists
+import dev.lain.claudejb.settings.LaunchDefaults
 import dev.lain.claudejb.settings.Provider
 import dev.lain.claudejb.settings.SecuritySuspensions
+import dev.lain.claudejb.settings.WorkloadWindow
 import dev.lain.claudejb.settings.sensitivePolicy
 import dev.lain.claudejb.ui.jcef.JcefBridge
 import dev.lain.claudejb.ui.jcef.JcefSettingsMenu
@@ -67,7 +68,7 @@ internal class ChatBridgeRouter(private val panel: JcefChatPanel) {
         is JcefBridge.Msg.ChangeEffort -> session.settings.changeEffort(m.value)
 
         is JcefBridge.Msg.ChangeThinking ->
-            session.settings.changeThinkingTokens(if (m.on) ClaudeSession.THINKING_ON else null)
+            session.settings.changeThinkingTokens(if (m.on) LaunchDefaults.THINKING_ON else null)
 
         is JcefBridge.Msg.ChangeVibe -> {
             ChatTheme.setVibeMode(m.on)

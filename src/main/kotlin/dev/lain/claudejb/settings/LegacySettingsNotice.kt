@@ -4,7 +4,7 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
-import dev.lain.claudejb.session.PermissionMode
+import dev.lain.claudejb.protocol.PermissionMode
 import dev.lain.claudejb.util.PluginIdentity
 import java.util.concurrent.atomic.AtomicBoolean
 

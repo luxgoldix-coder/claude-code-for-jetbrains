@@ -43,15 +43,15 @@ import dev.lain.claudejb.settings.ClaudeSettings
 import dev.lain.claudejb.settings.GuardAlert
 import dev.lain.claudejb.settings.GuardAlertLog
 import dev.lain.claudejb.settings.GuardCommandApprovals
+import dev.lain.claudejb.settings.LaunchDefaults
 import dev.lain.claudejb.settings.Provider
+import dev.lain.claudejb.settings.RemoteMounts
 import dev.lain.claudejb.settings.SecretStore
 import dev.lain.claudejb.settings.guardSuspended
 import dev.lain.claudejb.settings.requiresTrustPrompt
 import dev.lain.claudejb.settings.resolveEnv
 import dev.lain.claudejb.settings.sensitiveDecision
 import dev.lain.claudejb.settings.setExecutionTrusted
-import dev.lain.claudejb.ui.ClaudeSettingsConfigurable
-import dev.lain.claudejb.ui.ReviewPrompt
 import dev.lain.claudejb.util.PluginIdentity
 import dev.lain.claudejb.util.edt
 import kotlinx.serialization.json.JsonArray
@@ -165,7 +165,7 @@ class ClaudeSession(
     @Volatile var ideMcpTransport: String = "sse"
         internal set
 
-    @Volatile var ideMcpPort: Int = DEFAULT_IDE_MCP_PORT
+    @Volatile var ideMcpPort: Int = LaunchDefaults.DEFAULT_IDE_MCP_PORT
         internal set
 
     @Volatile var customMcpServers: String = ""
@@ -678,8 +678,10 @@ class ClaudeSession(
                 )
                 initialized = true
                 if (info.outputStyle.isNotBlank()) outputStyle = info.outputStyle
-                val pinMissing = info.models.isNotEmpty() && info.models.none { it.value == DEFAULT_MODEL }
-                if (model == DEFAULT_MODEL && pinMissing) settings.changeModel(preferredDefault(info.models))
+                val pinMissing = info.models.isNotEmpty() && info.models.none { it.value == LaunchDefaults.DEFAULT_MODEL }
+                if (model == LaunchDefaults.DEFAULT_MODEL && pinMissing) {
+                    settings.changeModel(LaunchDefaults.preferredDefault(info.models))
+                }
                 edt { fireMetadata() }
             },
         )
@@ -1565,7 +1567,7 @@ class ClaudeSession(
             )
             .addAction(
                 NotificationAction.createSimple("Configure paths…") {
-                    ShowSettingsUtil.getInstance().showSettingsDialog(project, ClaudeSettingsConfigurable::class.java)
+                    ShowSettingsUtil.getInstance().showSettingsDialog(project, PluginIdentity.SETTINGS_ID)
                 },
             )
             .notify(project)
@@ -1584,7 +1586,7 @@ class ClaudeSession(
 
     fun modelOptions(): List<ModelInfo> = models
 
-    fun preferredDefaultModel(): String = preferredDefault(models)
+    fun preferredDefaultModel(): String = LaunchDefaults.preferredDefault(models)
 
     companion object {
         const val EXPIRED_TOKEN_NOTICE =
@@ -1596,49 +1598,5 @@ class ClaudeSession(
         const val SIDE_QUESTION_UNANSWERED = "↩ The side question was not answered."
 
         const val CONTROL_TIMEOUT_SECONDS = 30L
-
-        const val DEFAULT_MODEL = "opus[1m]"
-
-        const val RECOMMENDED_ALIAS = "default"
-
-        fun preferredDefault(models: List<ModelInfo>, pinned: String = DEFAULT_MODEL): String = when {
-            models.isEmpty() -> pinned
-
-            models.any { it.value == pinned } -> pinned
-
-            models.any { it.value == RECOMMENDED_ALIAS } -> RECOMMENDED_ALIAS
-
-            else -> TIER_ORDER.firstNotNullOfOrNull { tier ->
-                models.firstOrNull { it.value.contains(tier, ignoreCase = true) }?.value
-            } ?: models.first().value
-        }
-
-        private val TIER_ORDER = listOf("opus", "sonnet", "haiku")
-
-        const val THINKING_ON = 1
-
-        val PERMISSION_MODES_CYCLE = PermissionMode.CYCLE.map { it.wire }
-
-        val PERMISSION_MODES = PermissionMode.entries.map { it.wire }
-
-        val EFFORT_LEVELS = EffortLevel.entries.map { it.wire }
-
-        val SETTING_SOURCES = listOf("user", "project", "local")
-
-        const val DEFAULT_IDE_MCP_PORT = 64342
-
-        internal val VALID_PORTS = 1..65_535
-
-        val IDE_MCP_TRANSPORTS = McpTransport.entries.map { it.wire }
-
-        val CUSTOM_MCP_SERVERS_HINT = """
-            {
-              "my-http-server": { "type": "streamable-http", "url": "https://example.com/mcp", "headers": {} },
-              "my-stdio-server": { "type": "stdio", "command": "/path/to/server", "args": [] }
-            }
-        """.trimIndent()
-
-        fun isValidMcpConfig(text: String): Boolean =
-            text.isBlank() || (runCatching { ClaudeJson.parseToJsonElement(text) }.getOrNull() is JsonObject)
     }
 }

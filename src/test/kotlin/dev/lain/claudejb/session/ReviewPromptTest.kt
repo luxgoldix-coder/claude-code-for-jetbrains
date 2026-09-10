@@ -1,4 +1,4 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.session
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse

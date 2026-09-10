@@ -121,7 +121,7 @@ class SettingsStoreHeadlessTest : BasePlatformTestCase() {
     fun `test the defaults are Opus, ask each time, high effort, guard on`() {
         SecretStore.clear(SecretStore.SETTINGS_JSON)
         val fresh = SettingsStore.load(scope)
-        assertEquals(dev.lain.claudejb.session.ClaudeSession.DEFAULT_MODEL, fresh.model)
+        assertEquals(dev.lain.claudejb.settings.LaunchDefaults.DEFAULT_MODEL, fresh.model)
         assertEquals("opus[1m]", fresh.model)
         assertEquals("default", fresh.permissionMode)
         assertEquals("high", fresh.effort)

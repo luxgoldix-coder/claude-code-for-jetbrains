@@ -1,9 +1,9 @@
 package dev.lain.claudejb.headless
 
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import dev.lain.claudejb.session.PluginAgentIndex
 import dev.lain.claudejb.session.SessionHistory
 import dev.lain.claudejb.session.SessionStore
+import dev.lain.claudejb.settings.ClaudeHome
 import dev.lain.claudejb.settings.ClaudeSettings
 import dev.lain.claudejb.settings.SecretStore
 import java.nio.file.Files
@@ -21,15 +21,15 @@ class SessionHistoryHeadlessTest : BasePlatformTestCase() {
     override fun setUp() {
         super.setUp()
         SecretStore.storeOverride = mutableMapOf()
-        previousHome = PluginAgentIndex.homeOverride
+        previousHome = ClaudeHome.override
         tempHome = Files.createTempDirectory("claude-home-test")
-        PluginAgentIndex.homeOverride = tempHome.toString()
+        ClaudeHome.override = tempHome.toString()
         history.setOpenSessions(emptyList())
     }
 
     override fun tearDown() {
         try {
-            PluginAgentIndex.homeOverride = previousHome
+            ClaudeHome.override = previousHome
             SecretStore.storeOverride = null
         } finally {
             super.tearDown()

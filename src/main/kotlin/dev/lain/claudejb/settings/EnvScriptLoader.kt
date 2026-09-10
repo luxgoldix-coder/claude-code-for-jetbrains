@@ -1,4 +1,4 @@
-package dev.lain.claudejb.process
+package dev.lain.claudejb.settings
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler

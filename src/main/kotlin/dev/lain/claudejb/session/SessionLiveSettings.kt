@@ -7,8 +7,8 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import dev.lain.claudejb.protocol.ControlProtocol
 import dev.lain.claudejb.settings.ClaudeSettings
+import dev.lain.claudejb.settings.LaunchDefaults
 import dev.lain.claudejb.settings.Provider
-import dev.lain.claudejb.ui.ClaudeSettingsConfigurable
 import dev.lain.claudejb.util.PluginIdentity
 
 class SessionLiveSettings(
@@ -20,7 +20,7 @@ class SessionLiveSettings(
 ) {
 
     fun changeModel(value: String?) {
-        val resolved = if (value == ClaudeSession.RECOMMENDED_ALIAS) session.preferredDefaultModel() else value
+        val resolved = if (value == LaunchDefaults.RECOMMENDED_ALIAS) session.preferredDefaultModel() else value
         val previous = session.model
         session.model = resolved
         if (session.isRunning()) {
@@ -84,7 +84,7 @@ class SessionLiveSettings(
             )
             .addAction(
                 NotificationAction.createSimple("Configure…") {
-                    ShowSettingsUtil.getInstance().showSettingsDialog(project, ClaudeSettingsConfigurable::class.java)
+                    ShowSettingsUtil.getInstance().showSettingsDialog(project, PluginIdentity.SETTINGS_ID)
                 },
             )
             .notify(project)
@@ -102,6 +102,30 @@ class SessionLiveSettings(
         }
     }
 
+    fun adopt(settings: ClaudeSettings) {
+        val state = settings.state
+        changeModel(state.model.ifBlank { null })
+        changeEffort(state.effort.ifBlank { null })
+        changePermissionMode(state.permissionMode.ifBlank { "default" })
+        changeThinkingTokens(state.thinkingTokens.takeIf { it > 0 })
+        configureLaunchOptions(
+            allowedTools = state.allowedTools,
+            disallowedTools = state.disallowedTools,
+            settingSources = state.settingSources,
+            includePartialMessages = state.includePartialMessages,
+            ideMcpEnabled = state.ideMcpEnabled,
+            ideMcpTransport = state.ideMcpTransport,
+            ideMcpPort = state.ideMcpPort,
+            customMcpServers = state.customMcpServers,
+            maxTurns = settings.maxTurns,
+            maxBudgetUsd = settings.maxBudgetUsd,
+            fallbackModel = settings.fallbackModel,
+            addDirs = settings.addDirs,
+            betas = settings.betas,
+            strictMcpConfig = settings.strictMcpConfig,
+        )
+    }
+
     @Suppress("LongParameterList")
     fun configureLaunchOptions(
         allowedTools: String,
@@ -110,7 +134,7 @@ class SessionLiveSettings(
         includePartialMessages: Boolean,
         ideMcpEnabled: Boolean = false,
         ideMcpTransport: String = "sse",
-        ideMcpPort: Int = ClaudeSession.DEFAULT_IDE_MCP_PORT,
+        ideMcpPort: Int = LaunchDefaults.DEFAULT_IDE_MCP_PORT,
         customMcpServers: String = "",
         maxTurns: Int? = null,
         maxBudgetUsd: Double? = null,
@@ -125,7 +149,7 @@ class SessionLiveSettings(
         session.includePartialMessages = includePartialMessages
         session.ideMcpEnabled = ideMcpEnabled
         session.ideMcpTransport = ideMcpTransport.ifBlank { "sse" }
-        session.ideMcpPort = ideMcpPort.takeIf { it in ClaudeSession.VALID_PORTS } ?: ClaudeSession.DEFAULT_IDE_MCP_PORT
+        session.ideMcpPort = ideMcpPort.takeIf { it in LaunchDefaults.VALID_PORTS } ?: LaunchDefaults.DEFAULT_IDE_MCP_PORT
         session.customMcpServers = customMcpServers
         session.maxTurns = maxTurns
         session.maxBudgetUsd = maxBudgetUsd
@@ -137,7 +161,7 @@ class SessionLiveSettings(
     }
 
     fun cyclePermissionMode() {
-        val order = ClaudeSession.PERMISSION_MODES_CYCLE
+        val order = LaunchDefaults.PERMISSION_MODES_CYCLE
         val idx = order.indexOf(session.permissionMode).let { if (it < 0) 0 else it }
         changePermissionMode(order[(idx + 1) % order.size])
     }

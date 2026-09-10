@@ -2,7 +2,7 @@ package dev.lain.claudejb.settings
 
 import dev.lain.claudejb.permission.PermissionBroker
 import dev.lain.claudejb.protocol.CanUseToolRequest
-import dev.lain.claudejb.session.PermissionMode
+import dev.lain.claudejb.protocol.PermissionMode
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import org.junit.jupiter.api.Assertions.assertEquals

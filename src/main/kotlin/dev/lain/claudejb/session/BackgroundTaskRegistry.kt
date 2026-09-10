@@ -2,6 +2,7 @@ package dev.lain.claudejb.session
 
 import dev.lain.claudejb.protocol.BackgroundTaskInfo
 import dev.lain.claudejb.protocol.ClaudeEvent
+import dev.lain.claudejb.settings.WorkloadWindow
 import java.util.concurrent.ConcurrentHashMap
 
 class BackgroundTaskRegistry(

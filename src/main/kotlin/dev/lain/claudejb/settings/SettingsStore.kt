@@ -1,7 +1,6 @@
 package dev.lain.claudejb.settings
 
 import com.intellij.openapi.diagnostic.logger
-import dev.lain.claudejb.session.PluginAgentIndex
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.booleanOrNull
@@ -151,7 +150,7 @@ internal object SettingsStore {
     private fun inheritedExists(): Boolean =
         runCatching { SecretStore.get(SecretStore.SETTINGS_JSON) != null }.getOrDefault(false)
 
-    private fun file(): Path? = PluginAgentIndex.homeDir()?.let { Paths.get(it) }
+    private fun file(): Path? = ClaudeHome.dir()?.let { Paths.get(it) }
         ?.resolve("ide")?.resolve("claude-code-native")?.resolve("settings.json")
 
     private fun encode(s: ClaudeSettings.State): JsonObject =

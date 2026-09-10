@@ -1,4 +1,4 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.session
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.util.PropertiesComponent

@@ -3,9 +3,9 @@ package dev.lain.claudejb.headless
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import dev.lain.claudejb.permission.SecurityRule
 import dev.lain.claudejb.permission.SensitiveGuard
-import dev.lain.claudejb.session.ClaudeSession
 import dev.lain.claudejb.settings.ClaudeSettings
 import dev.lain.claudejb.settings.GuardMode
+import dev.lain.claudejb.settings.LaunchDefaults
 import dev.lain.claudejb.settings.SecretStore
 import dev.lain.claudejb.settings.SecuritySuspensions
 import dev.lain.claudejb.settings.SettingsStore
@@ -47,7 +47,7 @@ class ClaudeSettingsHeadlessTest : BasePlatformTestCase() {
     }
 
     fun `test defaults are correct`() {
-        assertEquals(ClaudeSession.DEFAULT_MODEL, settings.state.model)
+        assertEquals(LaunchDefaults.DEFAULT_MODEL, settings.state.model)
         assertEquals("opus[1m]", settings.state.model)
         assertTrue(settings.restoreOpenChatsOnStartup)
         assertTrue(settings.state.restoreOpenChatsOnStartup)

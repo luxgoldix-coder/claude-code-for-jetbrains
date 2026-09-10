@@ -1,0 +1,48 @@
+package dev.lain.claudejb.settings
+
+import dev.lain.claudejb.protocol.ClaudeJson
+import dev.lain.claudejb.protocol.EffortLevel
+import dev.lain.claudejb.protocol.McpTransport
+import dev.lain.claudejb.protocol.ModelInfo
+import dev.lain.claudejb.protocol.PermissionMode
+import kotlinx.serialization.json.JsonObject
+
+object LaunchDefaults {
+
+    const val DEFAULT_MODEL = "opus[1m]"
+
+    const val RECOMMENDED_ALIAS = "default"
+
+    private val TIER_ORDER = listOf("opus", "sonnet", "haiku")
+
+    fun preferredDefault(models: List<ModelInfo>, pinned: String = DEFAULT_MODEL): String = when {
+        models.isEmpty() -> pinned
+
+        models.any { it.value == pinned } -> pinned
+
+        models.any { it.value == RECOMMENDED_ALIAS } -> RECOMMENDED_ALIAS
+
+        else -> TIER_ORDER.firstNotNullOfOrNull { tier ->
+            models.firstOrNull { it.value.contains(tier, ignoreCase = true) }?.value
+        } ?: models.first().value
+    }
+
+    const val THINKING_ON = 1
+
+    val PERMISSION_MODES_CYCLE = PermissionMode.CYCLE.map { it.wire }
+
+    val PERMISSION_MODES = PermissionMode.entries.map { it.wire }
+
+    val EFFORT_LEVELS = EffortLevel.entries.map { it.wire }
+
+    val SETTING_SOURCES = listOf("user", "project", "local")
+
+    const val DEFAULT_IDE_MCP_PORT = 64342
+
+    internal val VALID_PORTS = 1..65_535
+
+    val IDE_MCP_TRANSPORTS = McpTransport.entries.map { it.wire }
+
+    fun isValidMcpConfig(text: String): Boolean =
+        text.isBlank() || (runCatching { ClaudeJson.parseToJsonElement(text) }.getOrNull() is JsonObject)
+}

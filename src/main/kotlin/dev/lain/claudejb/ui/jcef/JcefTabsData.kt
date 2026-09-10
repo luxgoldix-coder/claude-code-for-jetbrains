@@ -3,7 +3,7 @@ package dev.lain.claudejb.ui.jcef
 import dev.lain.claudejb.session.AgentStatus
 import dev.lain.claudejb.session.BackgroundTaskRegistry
 import dev.lain.claudejb.session.ClaudeSession
-import dev.lain.claudejb.session.WorkloadWindow
+import dev.lain.claudejb.settings.WorkloadWindow
 import kotlinx.serialization.json.addJsonObject
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject

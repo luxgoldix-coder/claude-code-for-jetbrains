@@ -6,6 +6,8 @@ object PluginIdentity {
 
     const val NOTIFICATION_GROUP = "Claude Code"
 
+    const val SETTINGS_ID = "dev.lain.claudejb.settings"
+
     private const val PROJECT_URL = "https://github.com/serialexperimentslainnnn/claude-code-for-jetbrains"
 
     const val USER_AGENT = "ClaudeCodeNative/$PLUGIN_VERSION (+$PROJECT_URL)"
