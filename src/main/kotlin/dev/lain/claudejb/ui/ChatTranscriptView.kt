@@ -72,7 +72,7 @@ internal class ChatTranscriptView(
 
     private fun agentEntries(agentId: String): List<EntryDTO> {
         val entries = session.runningAgents.nodes[agentId]?.entries.orEmpty()
-        return GuardRestore.reinstate(entries, session.guardAlertsAnchoredIn(entries))
+        return GuardRestore.reinstate(entries, session.guard.alertsAnchoredIn(entries))
     }
 
     fun shows(landing: AttentionLanding): Boolean = when (landing) {

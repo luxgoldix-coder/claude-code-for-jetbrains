@@ -122,7 +122,7 @@ class GuardRestoreHeadlessTest : BasePlatformTestCase() {
             assertEquals("only the call the chat itself made is reported here", 2, rows.size)
             assertEquals(rule.name, rows[1].blockedRule)
 
-            val mine = session.guardAlertsAnchoredIn(listOf(toolRow("tu_inside_the_agent")))
+            val mine = session.guard.alertsAnchoredIn(listOf(toolRow("tu_inside_the_agent")))
             assertEquals(1, mine.size)
             assertEquals("tu_inside_the_agent", mine.first().toolUseId)
         } finally {

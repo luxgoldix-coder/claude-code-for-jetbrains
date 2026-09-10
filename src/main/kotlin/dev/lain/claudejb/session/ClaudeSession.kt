@@ -10,8 +10,6 @@ import dev.lain.claudejb.diff.DiffPresenter
 import dev.lain.claudejb.diff.EditSnapshot
 import dev.lain.claudejb.permission.ElicitationCard
 import dev.lain.claudejb.permission.PendingPermission
-import dev.lain.claudejb.permission.PermissionBroker
-import dev.lain.claudejb.permission.SecurityRule
 import dev.lain.claudejb.permission.ToolInputScanner
 import dev.lain.claudejb.process.ClaudeBinaryLocator
 import dev.lain.claudejb.process.ClaudeProcess
@@ -35,16 +33,12 @@ import dev.lain.claudejb.protocol.parseElicitationFields
 import dev.lain.claudejb.protocol.parseUsageReport
 import dev.lain.claudejb.protocol.str
 import dev.lain.claudejb.settings.ClaudeSettings
-import dev.lain.claudejb.settings.GuardAlert
-import dev.lain.claudejb.settings.GuardAlertLog
-import dev.lain.claudejb.settings.GuardCommandApprovals
 import dev.lain.claudejb.settings.LaunchDefaults
 import dev.lain.claudejb.settings.Provider
 import dev.lain.claudejb.settings.RemoteMounts
 import dev.lain.claudejb.settings.SecretStore
 import dev.lain.claudejb.settings.guardSuspended
 import dev.lain.claudejb.settings.resolveEnv
-import dev.lain.claudejb.settings.sensitiveDecision
 import dev.lain.claudejb.util.PluginIdentity
 import dev.lain.claudejb.util.edt
 import kotlinx.serialization.json.JsonArray
@@ -294,81 +288,14 @@ class ClaudeSession(
     var initialized: Boolean = false
         private set
 
-    val guardApprovals = GuardCommandApprovals()
-
-    val guardLog = GuardLogTally()
-
-    private val guardAlerts = java.util.concurrent.CopyOnWriteArrayList<GuardAlert>()
-
-    private val broker by lazy {
-        PermissionBroker(
-            permissionMode = { launch.permissionMode },
-            respond = ::write,
-            onApprovedWrite = { diffs.markForRefresh(it) },
-            present = ::presentPermission,
-            onAutoReviewed = diffs::autoOpenDiff,
-            projectRoot = project.basePath,
-            isRemembered = { toolName, _ -> ClaudeSettings.getInstance(project).isToolAlwaysAllowed(toolName) },
-            forceAsk = { gitIntegration },
-            sensitiveDecision = { input ->
-                ClaudeSettings.getInstance(project).sensitiveDecision(input, project.basePath)
-            },
-            isGuardCommandApproved = { rule, command -> guardApprovals.isApproved(rule, command) },
-            onSensitiveDenied = { denial ->
-                edt {
-                    val landing = guardLandingOf(denial.toolUseId)
-                    if (landing == AttentionLanding.Chat) {
-                        transcript.add(
-                            Speaker.SYSTEM,
-                            denial.reason?.let { "Blocked ${denial.toolName}: it $it." }
-                                ?: "Blocked ${denial.toolName} by the sensitive-data guard. " +
-                                "See Settings ▸ Claude Code Security.",
-                            commandText = denial.command?.takeIf { it.isNotBlank() },
-                            blockedRule = denial.rule?.name,
-                        )
-                    }
-                    fireAttention(AttentionReason.GUARD_BLOCKED, landing)
-                    recordAlert(
-                        GuardAlert.DENIED,
-                        denial.rule,
-                        denial.toolName,
-                        command = denial.command,
-                        toolUseId = denial.toolUseId,
-                        detail = denial.detail,
-                        inAgent = landing != AttentionLanding.Chat,
-                    )
-                    fireState()
-                }
-            },
-            onSensitiveBypassed = { bypass ->
-                val offer = bypass.action ?: if (ClaudeSettings.getInstance(project).guardSuspended()) {
-                    PermissionBroker.ENABLE_GUARD
-                } else {
-                    PermissionBroker.REMOVE_FROM_WHITELIST
-                }
-                guardNotice(
-                    bypass.toolName,
-                    bypass.reason ?: "${bypass.rule.label} matched, and a bypass is in force",
-                    bypass.rule,
-                    offer,
-                    bypass.command,
-                    bypass.toolUseId,
-                )
-                edt {
-                    recordAlert(
-                        GuardAlert.ALLOWED,
-                        bypass.rule,
-                        bypass.toolName,
-                        via = offer,
-                        command = bypass.command,
-                        toolUseId = bypass.toolUseId,
-                        detail = bypass.detail,
-                        inAgent = guardLandingOf(bypass.toolUseId) != AttentionLanding.Chat,
-                    )
-                }
-            },
-        )
-    }
+    val guard = SessionGuard(
+        session = this,
+        project = project,
+        edt = ::edt,
+        write = ::write,
+        fireState = ::fireState,
+        fireAttention = ::fireAttention,
+    )
 
     fun addListener(listener: SessionListener) {
         listeners.add(listener)
@@ -760,54 +687,6 @@ class ClaudeSession(
         fireState()
     }
 
-    private fun recordAlert(
-        verdict: String,
-        rule: SecurityRule?,
-        toolName: String,
-        via: String? = null,
-        command: String? = null,
-        toolUseId: String? = null,
-        detail: String? = null,
-        inAgent: Boolean = false,
-    ) {
-        val matched = rule ?: return
-        val settings = ClaudeSettings.getInstance(project)
-        val alert = GuardAlert(
-            at = System.currentTimeMillis(),
-            rule = matched.name,
-            category = matched.category.name,
-            verdict = verdict,
-            sessionId = sessionId,
-            toolUseId = toolUseId,
-            via = via,
-            tool = toolName,
-            detail = detail,
-            command = command,
-            inAgent = inAgent,
-        )
-        guardAlerts += alert
-        val submitted = GuardAlertLog.record(settings.scope, alert, retentionDays = settings.state.guardLogRetentionDays)
-        guardLog.submitted(submitted != null)
-    }
-
-    private fun presentPermission(request: PendingPermission) = edt {
-        request.guard?.let {
-            recordAlert(
-                GuardAlert.ASKED,
-                it.rule,
-                request.toolName,
-                command = ToolInputScanner.commandText(request.input),
-                toolUseId = request.toolUseId,
-                detail = it.reason,
-            )
-        }
-        cards.present(request)
-        if (request.reviewable && request.toolName in DiffPresenter.REVIEWABLE_TOOLS) {
-            diffs.openReviewDiff(request.requestId, request.toolName, request.input)
-        }
-        fireAttention(AttentionReason.PERMISSION)
-    }
-
     fun editSnapshot(toolUseId: String): EditSnapshot? = diffs.snapshot(toolUseId)
 
     fun restore(savedSessionId: String, dtos: List<EntryDTO>, fork: Boolean = false) {
@@ -816,8 +695,7 @@ class ClaudeSession(
         agentScanner.restoreAdmitted(onTasksReplayed = ::fireState)
         toolUseTurn.clear()
         currentUserMessageId = null
-        val saved = GuardAlertLog.forSession(ClaudeSettings.getInstance(project).scope, savedSessionId)
-        guardAlerts.addAll(saved)
+        val saved = guard.restore(savedSessionId)
         val withGuard = GuardRestore.reinstate(dtos, GuardRestore.raisedInThisChat(dtos, saved))
         edt {
             transcript.clear()
@@ -1086,7 +964,7 @@ class ClaudeSession(
 
     private fun onControl(event: ClaudeEvent.Control) {
         when (event) {
-            is ClaudeEvent.PermissionRequest -> broker.handle(event.requestId, event.request)
+            is ClaudeEvent.PermissionRequest -> guard.broker.handle(event.requestId, event.request)
 
             is ClaudeEvent.HookCallback -> handleHookCallback(event.requestId, event.request)
 
@@ -1097,7 +975,7 @@ class ClaudeSession(
 
             is ClaudeEvent.Elicitation -> cards.presentElicitation(event.requestId, event.request)
 
-            is ClaudeEvent.UnsupportedControlRequest -> broker.rejectUnsupported(event.requestId, event.subtype)
+            is ClaudeEvent.UnsupportedControlRequest -> guard.broker.rejectUnsupported(event.requestId, event.subtype)
 
             is ClaudeEvent.ControlCancel -> edt { cards.withdraw(event.requestId) }
 
@@ -1311,37 +1189,6 @@ class ClaudeSession(
     }
 
     internal fun systemNotice(message: String) = edt { transcript.add(Speaker.SYSTEM, message) }
-
-    internal fun guardNotice(
-        toolName: String,
-        reason: String,
-        rule: SecurityRule,
-        action: String? = null,
-        command: String? = null,
-        toolUseId: String? = null,
-    ) = edt {
-        if (guardLandingOf(toolUseId) != AttentionLanding.Chat) return@edt
-        transcript.add(
-            Speaker.SYSTEM,
-            "Allowed $toolName: $reason.",
-            commandText = command?.takeIf { it.isNotBlank() },
-            bypassedRule = rule.name,
-            bypassAction = action,
-        )
-    }
-
-    private fun guardLandingOf(toolUseId: String?): AttentionLanding {
-        if (toolUseId == null || transcript.knowsTool(toolUseId)) return AttentionLanding.Chat
-        val owner = runningAgents.nodes.values
-            .firstOrNull { node -> node.entries.any { it.toolUseId == toolUseId } }
-        return owner?.let { AttentionLanding.Agent(it.agentId) } ?: AttentionLanding.Elsewhere
-    }
-
-    fun guardAlertsAnchoredIn(entries: List<EntryDTO>): List<GuardAlert> {
-        if (guardAlerts.isEmpty()) return emptyList()
-        val anchors = entries.mapNotNullTo(HashSet()) { it.toolUseId }
-        return guardAlerts.filter { it.toolUseId in anchors }
-    }
 
     fun scanAgents() = agentScanner.scan()
 

@@ -105,7 +105,7 @@ internal class ChatBridgeRouter(private val panel: JcefChatPanel) {
             logger.warn("A bypass warning asked to revoke something this build cannot place: ${m.rule}")
             return
         }
-        session.guardApprovals.revoke(rule, m.command.trim())
+        session.guard.approvals.revoke(rule, m.command.trim())
         JcefChatPanel.pushSettingsMenuToAll()
         session.systemNotice("`${m.command.trim()}` is no longer pre-approved. ${rule.label} decides again.")
     }
@@ -125,7 +125,7 @@ internal class ChatBridgeRouter(private val panel: JcefChatPanel) {
             return true
         }
         JcefSettingsMenu.sessionApproval(m.key)?.let { (rule, command) ->
-            if (!m.on) session.guardApprovals.revoke(rule, command)
+            if (!m.on) session.guard.approvals.revoke(rule, command)
             return true
         }
         if (JcefSettingsMenu.isRemoteControl(m.key)) {
@@ -326,7 +326,7 @@ internal class ChatBridgeRouter(private val panel: JcefChatPanel) {
         val chat = cardSession(m.scope)
         val target = chat.cards.pending().firstOrNull { it.requestId == m.id } ?: return
         val rule = target.guard?.rule ?: return
-        ToolInputScanner.commandsIn(target.input).forEach { chat.guardApprovals.approve(rule, it) }
+        ToolInputScanner.commandsIn(target.input).forEach { chat.guard.approvals.approve(rule, it) }
         chat.cards.resolvePermission(target.requestId, true)
     }
 

@@ -99,9 +99,9 @@ class GuardViewWiringContractTest {
 
     @Test
     fun `the alert tally is actually fed, or the dropped-alert alarm can never fire`() {
-        val session = source("session/ClaudeSession.kt").readLines()
+        val session = source("session/SessionGuard.kt").readLines()
         val start = session.indexOfFirst { it.contains("private fun recordAlert(") }
-        assertTrue(start >= 0) { "ClaudeSession no longer records guard alerts" }
+        assertTrue(start >= 0) { "SessionGuard no longer records guard alerts" }
         val body = session.drop(start).take(BODY_LINES)
 
         assertTrue(body.any { it.contains("guardLog.submitted(") }) {

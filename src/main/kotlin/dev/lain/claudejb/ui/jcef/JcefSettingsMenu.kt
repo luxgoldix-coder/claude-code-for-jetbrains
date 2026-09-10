@@ -295,7 +295,7 @@ internal object JcefSettingsMenu {
         model = session.launch.model ?: session.preferredDefaultModel(),
         effort = session.launch.effort,
         mode = session.launch.permissionMode,
-        approvals = session.guardApprovals.all(),
+        approvals = session.guard.approvals.all(),
         remoteControl = session.remoteControlEnabled,
     )
 
