@@ -19,10 +19,11 @@ class SessionLiveSettings(
     private val write: (String) -> Unit,
 ) {
 
-    fun changeModel(value: String?) {
+    fun changeModel(value: String?, persist: Boolean = true) {
         val resolved = if (value == LaunchDefaults.RECOMMENDED_ALIAS) session.preferredDefaultModel() else value
         val previous = session.launch.model
         session.launch = session.launch.copy(model = resolved)
+        if (persist) ClaudeSettings.getInstance(project).update { it.model = value.orEmpty() }
         if (session.isRunning()) {
             session.controlClient.send({ id -> ControlProtocol.setModelRequest(id, resolved) }) { res ->
                 if (!res.success) edt { revertModel(previous, resolved, res.error) }
@@ -51,8 +52,9 @@ class SessionLiveSettings(
         fireState()
     }
 
-    fun changeEffort(value: String?) {
+    fun changeEffort(value: String?, persist: Boolean = true) {
         session.launch = session.launch.copy(effort = value)
+        if (persist) ClaudeSettings.getInstance(project).update { it.effort = value.orEmpty() }
         fireState()
     }
 
@@ -90,10 +92,11 @@ class SessionLiveSettings(
             .notify(project)
     }
 
-    fun changeThinkingTokens(tokens: Int?) {
+    fun changeThinkingTokens(tokens: Int?, persist: Boolean = true) {
         if (tokens == session.launch.thinkingTokens) return
         val wasRunning = session.isRunning()
         session.launch = session.launch.copy(thinkingTokens = tokens)
+        if (persist) ClaudeSettings.getInstance(project).update { it.thinkingTokens = tokens ?: 0 }
         fireState()
         if (wasRunning) {
             val state = if (tokens != null) "on" else "off"
@@ -103,10 +106,10 @@ class SessionLiveSettings(
     }
 
     fun adopt(next: LaunchOptions) {
-        changeModel(next.model)
-        changeEffort(next.effort)
+        changeModel(next.model, persist = false)
+        changeEffort(next.effort, persist = false)
         changePermissionMode(next.permissionMode)
-        changeThinkingTokens(next.thinkingTokens)
+        changeThinkingTokens(next.thinkingTokens, persist = false)
         val live = session.launch
         session.launch = next.copy(
             model = live.model,
