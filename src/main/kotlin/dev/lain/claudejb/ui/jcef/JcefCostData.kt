@@ -13,7 +13,7 @@ import kotlinx.serialization.json.put
 internal object JcefCostData {
 
     fun contextJson(session: ClaudeSession): JsonObject? {
-        val ctx = session.lastContextUsage ?: return null
+        val ctx = session.signals.lastContextUsage ?: return null
         return buildJsonObject {
             put(
                 "categories",
@@ -33,7 +33,7 @@ internal object JcefCostData {
     }
 
     fun costJson(session: ClaudeSession): JsonObject? {
-        val raw = session.lastSessionCost
+        val raw = session.signals.lastSessionCost
         val usage = raw?.let { decodeApiUsage(it) }
         val input = (usage?.inputTokens?.takeIf { it > 0 }) ?: session.sessionInputTokens.toLong()
         val output = (usage?.outputTokens?.takeIf { it > 0 }) ?: session.sessionOutputTokens.toLong()

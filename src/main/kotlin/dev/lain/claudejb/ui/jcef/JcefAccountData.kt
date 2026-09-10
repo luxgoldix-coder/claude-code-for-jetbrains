@@ -12,7 +12,7 @@ import kotlinx.serialization.json.put
 internal object JcefAccountData {
 
     fun accountJson(session: ClaudeSession): JsonObject? = accountJson(
-        session.account,
+        session.catalog.account,
         session.auth.status,
         AuthCli.stored(),
         CredentialsVault.subscriptionType(),

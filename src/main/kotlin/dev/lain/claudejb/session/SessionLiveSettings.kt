@@ -20,7 +20,7 @@ class SessionLiveSettings(
 ) {
 
     fun changeModel(value: String?, persist: Boolean = true) {
-        val resolved = if (value == LaunchDefaults.RECOMMENDED_ALIAS) session.preferredDefaultModel() else value
+        val resolved = if (value == LaunchDefaults.RECOMMENDED_ALIAS) session.catalog.preferredDefaultModel() else value
         val previous = session.launch.model
         session.launch = session.launch.copy(model = resolved)
         if (persist) ClaudeSettings.getInstance(project).update { it.model = value.orEmpty() }
@@ -67,7 +67,7 @@ class SessionLiveSettings(
         }
         val wasRunning = session.isRunning()
         settings.update { it.provider = target.id }
-        session.cachedEnv = null
+        session.lifecycle.cachedEnv = null
         fireState()
         if (wasRunning) {
             session.systemNotice("Provider → ${target.label} — restarting session.")

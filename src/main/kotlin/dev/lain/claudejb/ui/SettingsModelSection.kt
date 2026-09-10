@@ -132,7 +132,7 @@ internal class SettingsModelSection(private val sessionOf: () -> ClaudeSession) 
     }
 
     private fun rebuildModelCombo() {
-        val opts = sessionOf().modelOptions()
+        val opts = sessionOf().catalog.models
         currentModels = opts
         val preserved = (modelCombo.editor?.item as? String)
             ?: (modelCombo.selectedItem as? String)

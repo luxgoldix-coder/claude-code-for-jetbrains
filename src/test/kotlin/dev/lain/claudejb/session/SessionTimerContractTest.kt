@@ -22,10 +22,15 @@ class SessionTimerContractTest {
     }
 
     @Test
-    fun `dispose still hands off to PollSchedule#stopAll`() {
-        assertTrue(sessionLines.any { it.trim() == "poll.stopAll()" }) {
-            "$SESSION_SOURCE_NAME's dispose() no longer calls `poll.stopAll()` — a closed tab would leak every " +
-                "timer PollSchedule owns."
+    fun `shutdown hands off to PollSchedule#stopAll`() {
+        listOf("fun shutdown(").forEach { signature ->
+            val from = sessionLines.indexOfFirst { it.trimStart().startsWith(signature) }
+            assertTrue(from >= 0) { "no `$signature` in $SESSION_SOURCE_NAME" }
+            val length = sessionLines.drop(from).indexOfFirst { it == CLOSING_BRACE }
+            assertTrue(sessionLines.subList(from, from + length).any { it.trim() == "s.poll.stopAll()" }) {
+                "$SESSION_SOURCE_NAME's $signature no longer calls `poll.stopAll()` — a stopped or closed chat would " +
+                    "leave every timer PollSchedule owns ticking, and the agent revival poll rescanning the disk."
+            }
         }
     }
 
@@ -63,7 +68,7 @@ class SessionTimerContractTest {
     private companion object {
 
         const val POLL_SOURCE_NAME = "PollSchedule.kt"
-        const val SESSION_SOURCE_NAME = "ClaudeSession.kt"
+        const val SESSION_SOURCE_NAME = "SessionLifecycle.kt"
         const val CLOSING_BRACE = "    }"
 
         const val KNOWN_TIMERS = 3

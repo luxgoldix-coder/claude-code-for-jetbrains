@@ -16,7 +16,7 @@ object JcefState {
         val fromReport = usage?.windows.orEmpty().mapNotNull { (key, w) ->
             w.utilization?.let { CompactWindow(key, w.title(key), it, w.resetsAt) }
         }
-        val fromEvents = session.rateLimits
+        val fromEvents = session.signals.rateLimits
             .filterKeys { key -> fromReport.none { it.key == key } }
             .mapNotNull { (key, info) ->
                 info.utilization?.let {
@@ -40,16 +40,16 @@ object JcefState {
         val mode = session.launch.permissionMode
         val effort = session.launch.effort
         val thinkingOn = session.launch.thinkingTokens != null
-        val context = session.lastContextUsage
+        val context = session.signals.lastContextUsage
 
         val obj = buildJsonObject {
             put("turnActive", session.turn.active)
             put("interrupting", session.turn.interrupting)
-            put("running", session.isRunning() && session.initialized)
+            put("running", session.isRunning() && session.catalog.initialized)
             put("starting", session.isStarting())
             put("resuming", session.isStarting() && session.sessionId != null)
-            put("binaryMissing", session.binaryMissing)
-            put("needsLogin", session.needsLogin)
+            put("binaryMissing", session.lifecycle.binaryMissing)
+            put("needsLogin", session.lifecycle.needsLogin)
 
             put("reasoningTokens", session.turn.liveThinkingTokens)
 
@@ -98,7 +98,7 @@ object JcefState {
         val pluginCommands = mapOf(
             "btw" to "Ask a side question without disturbing the current turn",
         )
-        val binaryNames = session.commands.map { it.name }.toSet()
+        val binaryNames = session.catalog.commands.map { it.name }.toSet()
         val obj = buildJsonObject {
             put(
                 "commands",
@@ -111,7 +111,7 @@ object JcefState {
                             }
                         }
                     }
-                    session.commands.forEach { cmd ->
+                    session.catalog.commands.forEach { cmd ->
                         addJsonObject {
                             put("name", cmd.name)
                             put("description", cmd.description.ifBlank { cmd.name })

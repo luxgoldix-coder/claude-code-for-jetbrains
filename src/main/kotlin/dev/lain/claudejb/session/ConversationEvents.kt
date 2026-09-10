@@ -48,12 +48,12 @@ class ConversationEvents(
         s.sessionId = event.info.sessionId
         s.agentScanner.restoreAdmitted(onTasksReplayed = fireState)
         s.launch = s.launch.copy(model = s.launch.model ?: event.info.model.ifBlank { null }, fork = false)
-        if (event.info.outputStyle.isNotBlank()) s.outputStyle = event.info.outputStyle
+        if (event.info.outputStyle.isNotBlank()) s.catalog.outputStyle = event.info.outputStyle
         val ours = SessionLauncher.binaryPermissionMode(s.launch.permissionMode)
         if (event.info.permissionMode.isNotBlank() && event.info.permissionMode != ours) {
             s.write(ControlProtocol.setPermissionModeRequest(ControlProtocol.newRequestId(), ours))
         }
-        s.ready = true
+        s.lifecycle.ready = true
         edt {
             s.systemNotice("Connected · ${event.info.model.ifBlank { "claude" }} · ${event.info.cwd}")
             fireState()
@@ -72,7 +72,7 @@ class ConversationEvents(
             }
             surfaceAuthFailure(message, message)
         } else {
-            s.needsLogin = false
+            s.lifecycle.needsLogin = false
             s.login.onCleanResult()
             ReviewPrompt.onSuccessfulTurn(project)
         }
@@ -85,7 +85,7 @@ class ConversationEvents(
     }
 
     fun surfaceAuthFailure(failureText: String, display: String) {
-        when (LoginDetection.resolve(failureText, s.auth::canRenewCredential)) {
+        when (LoginDetection.resolve(failureText, s.lifecycle.auth::canRenewCredential)) {
             AuthFailure.EXPIRED -> {
                 s.transcript.add(Speaker.SYSTEM, ClaudeSession.EXPIRED_TOKEN_NOTICE)
                 renewRejectedCredential()
@@ -93,7 +93,7 @@ class ConversationEvents(
 
             AuthFailure.NO_IDENTITY -> {
                 s.transcript.add(Speaker.ERROR, display)
-                s.onLoginNeeded()
+                s.lifecycle.onLoginNeeded()
             }
 
             AuthFailure.NONE -> s.transcript.add(Speaker.ERROR, display)
@@ -104,7 +104,7 @@ class ConversationEvents(
         ApplicationManager.getApplication().executeOnPooledThread {
             val settings = ClaudeSettings.getInstance(project)
             val binary = ClaudeBinaryLocator.locate(settings.claudePath) ?: return@executeOnPooledThread
-            if (!s.auth.renewRejected(binary, settings)) return@executeOnPooledThread
+            if (!s.lifecycle.auth.renewRejected(binary, settings)) return@executeOnPooledThread
             log.info("the rejected credential was renewed; restarting the session on the new one")
             edt { s.restart() }
         }

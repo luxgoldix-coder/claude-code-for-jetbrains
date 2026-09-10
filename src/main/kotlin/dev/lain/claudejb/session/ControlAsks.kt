@@ -4,6 +4,7 @@ package dev.lain.claudejb.session
 
 import dev.lain.claudejb.protocol.ClaudeJson
 import dev.lain.claudejb.protocol.ContextUsage
+import dev.lain.claudejb.protocol.InitializeResponse
 import dev.lain.claudejb.protocol.UsageReport
 import dev.lain.claudejb.protocol.parseUsageReport
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -136,6 +137,10 @@ object Asks {
     }
 
     val BINARY_VERSION = Ask("get_binary_version") { it }
+
+    val INITIALIZE = Ask("initialize") { payload ->
+        payload?.let { runCatching { ClaudeJson.decodeFromJsonElement(InitializeResponse.serializer(), it) }.getOrNull() }
+    }
 
     fun generateTitle(description: String, persist: Boolean = true) = Ask(
         subtype = "generate_session_title",

@@ -43,19 +43,28 @@ class EdtProcessTeardownContractTest {
     }
 
     @Test
-    fun `stop and dispose end the process through the one door`() {
-        listOf("fun stop(", "override fun dispose(").forEach { signature ->
-            val body = bodyOf(CLAUDE_SESSION, signature)
+    fun `stop and shutdown end the process through the one door`() {
+        listOf("fun stop(", "fun shutdown(").forEach { signature ->
+            val body = bodyOf(SESSION_LIFECYCLE, signature)
 
             assertTrue(body.any { "$DOOR()" in it }) {
-                "ClaudeSession.$signature no longer ends the process through `$DOOR()`. It runs on the EDT, " +
+                "SessionLifecycle.$signature no longer ends the process through `$DOOR()`. It runs on the EDT, " +
                     "so whatever it does instead is a UI freeze for as long as `claude` takes to die."
             }
             LEGACY_CALLS.forEach { call ->
                 assertFalse(body.any { call in it }) {
-                    "ClaudeSession.$signature calls `$call` directly. That is the blocking half, on the EDT."
+                    "SessionLifecycle.$signature calls `$call` directly. That is the blocking half, on the EDT."
                 }
             }
+        }
+    }
+
+    @Test
+    fun `disposing a session is the lifecycle's shutdown and nothing else`() {
+        val dispose = CLAUDE_SESSION.readLines().single { it.trimStart().startsWith("override fun dispose(") }
+        assertTrue("lifecycle.shutdown()" in dispose) {
+            "ClaudeSession.dispose no longer delegates to SessionLifecycle.shutdown, so the teardown gate above " +
+                "no longer covers what a closed tab actually runs."
         }
     }
 
@@ -85,6 +94,7 @@ class EdtProcessTeardownContractTest {
 
         val CLAUDE_PROCESS = source("process/ClaudeProcess.kt")
         val CLAUDE_SESSION = source("session/ClaudeSession.kt")
+        val SESSION_LIFECYCLE = source("session/SessionLifecycle.kt")
 
         fun source(name: String): File {
             val path = "src/main/kotlin/dev/lain/claudejb/$name"

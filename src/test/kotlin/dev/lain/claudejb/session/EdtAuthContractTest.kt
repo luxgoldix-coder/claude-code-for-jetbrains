@@ -101,7 +101,7 @@ class EdtAuthContractTest {
         const val INDENT = "    "
         const val CLOSING_BRACE = "    }"
 
-        val CLAUDE_SESSION = source("ClaudeSession.kt")
+        val CLAUDE_SESSION = source("SessionLifecycle.kt")
         val AUTH_GATE = source("AuthGate.kt")
 
         fun source(name: String): File {

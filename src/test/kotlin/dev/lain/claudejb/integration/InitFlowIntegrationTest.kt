@@ -18,7 +18,7 @@ class InitFlowIntegrationTest : FakeClaudeTestBase() {
         session.start(resume = false)
         waitUntil("session id back-filled from init") { session.sessionId != null }
 
-        assertEquals(session.models, session.modelOptions())
+        assertEquals(session.catalog.models, session.catalog.models)
         assertTrue("no hardcoded fallback entries", session.modelOptions().none { it.value == "sonnet" || it.value == "haiku" })
     }
 }

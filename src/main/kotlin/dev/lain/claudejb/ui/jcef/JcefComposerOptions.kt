@@ -30,12 +30,12 @@ internal object JcefComposerOptions {
     }
 
     fun modelJson(session: ClaudeSession) = buildJsonObject {
-        val selectedModel = session.launch.model ?: session.preferredDefaultModel()
+        val selectedModel = session.launch.model ?: session.catalog.preferredDefaultModel()
         put("label", JcefModelLabels.modelLabel(session))
         put(
             "options",
             buildJsonArray {
-                val catalog = session.models.filter { it.value != LaunchDefaults.RECOMMENDED_ALIAS }
+                val catalog = session.catalog.models.filter { it.value != LaunchDefaults.RECOMMENDED_ALIAS }
                 catalog.forEach { m ->
                     addJsonObject {
                         put("value", m.value)

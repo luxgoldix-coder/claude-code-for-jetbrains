@@ -108,7 +108,7 @@ class JcefChatPanel(internal val project: Project, val session: ClaudeSession) :
         val running = session.isRunning()
         if (running && !wasRunning) feed.onSessionReady()
         wasRunning = running
-        if (session.rateLimits.isNotEmpty()) feed.requestUsage()
+        if (session.signals.rateLimits.isNotEmpty()) feed.requestUsage()
         if (!session.turn.active && running) {
             feed.requestPlan()
             pushGit()

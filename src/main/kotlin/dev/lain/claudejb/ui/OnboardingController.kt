@@ -37,7 +37,7 @@ internal class OnboardingController(
     }
 
     fun onStateChanged() {
-        if (installLaunched && !session.binaryMissing) {
+        if (installLaunched && !session.lifecycle.binaryMissing) {
             installLaunched = false
             notifyInfo("Claude Code installed", "The claude binary was found — starting the session.")
         }

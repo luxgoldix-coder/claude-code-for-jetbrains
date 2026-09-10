@@ -61,7 +61,7 @@ internal class SessionFeed(
     }
 
     fun requestVersion() {
-        if (session.binaryVersion != null) return
+        if (session.catalog.binaryVersion != null) return
         session.queries.requestBinaryVersion { payload ->
             val v = payload?.let {
                 it["version"]?.jsonPrimitive?.contentOrNull
@@ -69,7 +69,7 @@ internal class SessionFeed(
                     ?: it["claude_code_version"]?.jsonPrimitive?.contentOrNull
             }
             if (!v.isNullOrBlank()) {
-                session.binaryVersion = v
+                session.catalog.binaryVersion = v
                 onRefreshed()
             }
         }

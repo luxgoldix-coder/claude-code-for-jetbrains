@@ -22,7 +22,7 @@ object InfoDialogs {
     }
 
     fun showAgents(project: Project, session: ClaudeSession) {
-        val agents = session.agents
+        val agents = session.catalog.agents
         val text = if (agents.isEmpty()) {
             "No agents available (connect the session first)."
         } else {

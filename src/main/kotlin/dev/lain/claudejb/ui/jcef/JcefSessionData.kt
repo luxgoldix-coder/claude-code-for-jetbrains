@@ -43,7 +43,7 @@ object JcefSessionData {
             put("model", JcefModelLabels.modelLabel(session))
             put("cwd", session.workingDir)
             put("home", LinkResolver.userHome())
-            put("version", session.binaryVersion)
+            put("version", session.catalog.binaryVersion)
         }
         return obj.toString()
     }

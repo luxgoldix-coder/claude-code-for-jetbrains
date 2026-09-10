@@ -22,7 +22,7 @@ class SignalEvents(
             is ClaudeEvent.ControlRequestProgress -> onControlRequestProgress(event)
 
             is ClaudeEvent.SessionStateChanged -> {
-                s.sessionState = event.info.state
+                s.signals.sessionState = event.info.state
                 edt { fireState() }
             }
 
@@ -37,7 +37,7 @@ class SignalEvents(
             }
 
             is ClaudeEvent.CommandsChanged -> edt {
-                s.commands = event.info.commands
+                s.catalog.commands = event.info.commands
                 fireMetadata()
             }
 
@@ -53,15 +53,15 @@ class SignalEvents(
         )
         val window = incoming.rateLimitType
         if (isHiddenUsageWindow(window)) return
-        val previous = window?.let { s.rateLimits[it] } ?: s.rateLimit.takeIf { it?.rateLimitType == window }
+        val previous = window?.let { s.signals.rateLimits[it] } ?: s.signals.rateLimit.takeIf { it?.rateLimitType == window }
         val merged = if (incoming.utilization == null) incoming.copy(utilization = previous?.utilization) else incoming
-        s.rateLimit = merged
-        if (window != null) s.rateLimits = s.rateLimits + (window to merged)
+        s.signals.rateLimit = merged
+        if (window != null) s.signals.rateLimits = s.signals.rateLimits + (window to merged)
         edt { fireState() }
     }
 
     private fun onAuthStatus(event: ClaudeEvent.AuthStatus) {
-        s.authStatus = event.info
+        s.signals.authStatus = event.info
         event.info.error?.takeIf { it.isNotBlank() }?.let {
             edt { s.conversation.surfaceAuthFailure(it, "Authentication error: $it") }
         }

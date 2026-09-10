@@ -291,8 +291,8 @@ internal object JcefSettingsMenu {
     }
 
     private fun selectedIn(session: ClaudeSession) = Selected(
-        models = session.models,
-        model = session.launch.model ?: session.preferredDefaultModel(),
+        models = session.catalog.models,
+        model = session.launch.model ?: session.catalog.preferredDefaultModel(),
         effort = session.launch.effort,
         mode = session.launch.permissionMode,
         approvals = session.guard.approvals.all(),

@@ -17,7 +17,7 @@ internal object JcefUsageData {
         val fromReport = report?.windows?.map { (key, w) ->
             Window(key, w.title(key), w.utilization, w.resetsAt, exhausted = false)
         }.orEmpty()
-        val fromEvents = session.rateLimits
+        val fromEvents = session.signals.rateLimits
             .filterKeys { key -> fromReport.none { it.key == key } }
             .map { (key, info) ->
                 val pct = info.utilization?.let { it * 100 }
@@ -26,7 +26,7 @@ internal object JcefUsageData {
         val windows = fromReport + fromEvents
         if (windows.isEmpty() && report?.extra == null) return null
         return buildJsonObject {
-            put("plan", report?.subscriptionType ?: session.account?.subscriptionType?.ifBlank { null })
+            put("plan", report?.subscriptionType ?: session.catalog.account.subscriptionType?.ifBlank { null })
             put(
                 "windows",
                 buildJsonArray {
