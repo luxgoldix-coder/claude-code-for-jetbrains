@@ -35,6 +35,9 @@ class SessionLifecycle(
 
     @Volatile internal var ready = false
 
+    @Volatile var disposed = false
+        private set
+
     @Volatile internal var cachedEnv: Map<String, String>? = null
 
     @Volatile var binaryMissing: Boolean = false
@@ -68,6 +71,7 @@ class SessionLifecycle(
     fun write(line: String): Boolean = process?.writeLine(line) ?: false
 
     fun start(resume: Boolean): Boolean {
+        if (disposed) return false
         if (isRunning() || starting) return true
         val settings = ClaudeSettings.getInstance(project)
         val binary = resolveBinary(settings) ?: return false
@@ -264,9 +268,11 @@ class SessionLifecycle(
     }
 
     fun shutdown() {
+        disposed = true
         generation++
         starting = false
         s.poll.stopAll()
+        s.login.cancelLogin()
         s.turnControl.cancelPendingElicitations()
         s.diffs.clearReviewDiffs()
         process?.terminate()

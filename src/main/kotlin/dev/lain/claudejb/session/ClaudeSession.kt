@@ -84,7 +84,7 @@ class ClaudeSession(
         project,
         edt = ::edt,
         notifier = notifier,
-        restartSession = { restart() },
+        restartSession = { if (!lifecycle.disposed) restart() },
     )
 
     @Volatile var sessionId: String? = null
