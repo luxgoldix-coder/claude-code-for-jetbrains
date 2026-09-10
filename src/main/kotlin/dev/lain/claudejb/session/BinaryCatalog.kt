@@ -3,7 +3,6 @@ package dev.lain.claudejb.session
 import com.intellij.openapi.diagnostic.thisLogger
 import dev.lain.claudejb.protocol.AccountInfo
 import dev.lain.claudejb.protocol.AgentInfo
-import dev.lain.claudejb.protocol.ControlProtocol
 import dev.lain.claudejb.protocol.InitializeResponse
 import dev.lain.claudejb.protocol.ModelInfo
 import dev.lain.claudejb.protocol.SlashCommand
@@ -11,7 +10,6 @@ import dev.lain.claudejb.settings.LaunchDefaults
 
 class BinaryCatalog(
     private val s: ClaudeSession,
-    private val edt: (() -> Unit) -> Unit,
     private val fireMetadata: () -> Unit,
 ) {
 
@@ -42,10 +40,7 @@ class BinaryCatalog(
 
     fun preferredDefaultModel(): String = LaunchDefaults.preferredDefault(models)
 
-    fun request() = s.controlClient.query(
-        buildRequest = { id -> ControlProtocol.of(id, Asks.INITIALIZE.subtype, Asks.INITIALIZE.params) },
-        decode = Asks.INITIALIZE.decode,
-    ) { info: InitializeResponse? -> info?.let(::adopt) }
+    fun request() = s.queries.ask(Asks.INITIALIZE) { info -> info?.let(::adopt) }
 
     private fun adopt(info: InitializeResponse) {
         commands = info.commands
@@ -65,6 +60,6 @@ class BinaryCatalog(
         if (s.launch.model == LaunchDefaults.DEFAULT_MODEL && pinMissing) {
             s.settings.changeModel(LaunchDefaults.preferredDefault(info.models), persist = false)
         }
-        edt { fireMetadata() }
+        fireMetadata()
     }
 }

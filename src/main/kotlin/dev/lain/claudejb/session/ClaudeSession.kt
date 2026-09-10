@@ -154,7 +154,7 @@ class ClaudeSession(
         if (ApplicationManager.getApplication().isDispatchThread) apply() else edt { apply() }
     }
 
-    val catalog = BinaryCatalog(this, ::edt, ::fireMetadata)
+    val catalog = BinaryCatalog(this, ::fireMetadata)
 
     val remote = RemoteControl(queries, transcript, ::fireState)
 
