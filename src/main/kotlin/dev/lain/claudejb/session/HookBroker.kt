@@ -3,6 +3,7 @@ package dev.lain.claudejb.session
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.put
 
 class HookBroker {
@@ -85,4 +86,4 @@ sealed interface HookSideEffect {
     data class TranscriptNote(val text: String) : HookSideEffect
 }
 
-private fun JsonObject.str(key: String): String? = (this[key] as? JsonPrimitive)?.content
+private fun JsonObject.str(key: String): String? = (this[key] as? JsonPrimitive)?.contentOrNull

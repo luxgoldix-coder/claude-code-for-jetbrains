@@ -93,6 +93,16 @@ class HookBrokerTest {
     }
 
     @Test
+    fun `an explicit JSON null is an absent field, not the word null`() {
+        val ctx = broker.parse(
+            callback("cb", input = input("FileChanged") { put("file_path", null as String?) }),
+        )!!
+        assertNull(ctx.filePath)
+        assertTrue(broker.sideEffects(ctx).isEmpty())
+        assertNull(broker.parse(callback("cb", input = buildJsonObject { put("hook_event_name", null as String?) })))
+    }
+
+    @Test
     fun `parse returns null on malformed frame`() {
         assertNull(broker.parse(buildJsonObject { put("subtype", "hook_callback") }))
         assertNull(broker.parse(buildJsonObject { put("input", buildJsonObject { put("x", 1) }) }))
