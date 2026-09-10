@@ -5,7 +5,6 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -30,7 +29,6 @@ class HookBrokerTest {
             build()
         }
 
-    private fun JsonObject.obj(key: String): JsonObject = this[key] as JsonObject
     private fun JsonObject.string(key: String): String? = (this[key] as? JsonPrimitive)?.content
     private fun JsonObject.bool(key: String): Boolean? =
         (this[key] as? JsonPrimitive)?.content?.toBooleanStrictOrNull()
@@ -101,101 +99,11 @@ class HookBrokerTest {
     }
 
     @Test
-    fun `default handlers Continue for every default event`() {
-        for (event in listOf(
-            "PreToolUse", "PermissionRequest", "Notification", "FileChanged",
-            "SessionStart", "SessionEnd", "Stop", "PreCompact", "PostCompact", "UserPromptSubmit",
-        )) {
-            val ctx = broker.parse(callback("cb", input = input(event)))!!
-            assertInstanceOf(HookDecision.Continue::class.java, broker.decide(ctx), event)
-        }
-    }
-
-    @Test
-    fun `unknown event falls back to Continue`() {
-        val ctx = broker.parse(callback("cb", input = input("SomethingNew")))!!
-        assertInstanceOf(HookDecision.Continue::class.java, broker.decide(ctx))
-    }
-
-    @Test
-    fun `registered handler overrides default`() {
-        val b = HookBroker()
-        b.register("PreToolUse") { ctx ->
-            if (ctx.toolName == "Bash") HookDecision.Block("no shell") else HookDecision.Continue
-        }
-        val ctx = b.parse(callback("cb", input = input("PreToolUse") { put("tool_name", "Bash") }))!!
-        val decision = b.decide(ctx)
-        assertEquals("no shell", (decision as HookDecision.Block).reason)
-    }
-
-    @Test
-    fun `Continue maps to continue true`() {
-        val out = broker.buildResponse("cb1", HookDecision.Continue, "PreToolUse")
+    fun `every hook is answered with continue and its callback id`() {
+        val out = broker.buildResponse("cb1")
         assertEquals(true, out.bool("continue"))
         assertEquals("cb1", out.string("callback_id"))
-    }
-
-    @Test
-    fun `PreToolUse Block maps to deny permissionDecision`() {
-        val out = broker.buildResponse("cb", HookDecision.Block("dangerous"), "PreToolUse")
-        val hso = out.obj("hookSpecificOutput")
-        assertEquals("PreToolUse", hso.string("hookEventName"))
-        assertEquals("deny", hso.string("permissionDecision"))
-        assertEquals("dangerous", hso.string("permissionDecisionReason"))
-    }
-
-    @Test
-    fun `PreToolUse Modify maps to allow with updatedInput`() {
-        val updated = buildJsonObject { put("command", "ls -la") }
-        val out = broker.buildResponse("cb", HookDecision.Modify(updated), "PreToolUse")
-        val hso = out.obj("hookSpecificOutput")
-        assertEquals("allow", hso.string("permissionDecision"))
-        assertEquals("ls -la", hso.obj("updatedInput").string("command"))
-    }
-
-    @Test
-    fun `PermissionRequest Block maps to nested deny decision`() {
-        val out = broker.buildResponse("cb", HookDecision.Block("policy"), "PermissionRequest")
-        val decision = out.obj("hookSpecificOutput").obj("decision")
-        assertEquals("deny", decision.string("behavior"))
-        assertEquals("policy", decision.string("message"))
-    }
-
-    @Test
-    fun `PermissionRequest Modify maps to nested allow decision`() {
-        val updated = buildJsonObject { put("file_path", "/proj/x") }
-        val out = broker.buildResponse("cb", HookDecision.Modify(updated), "PermissionRequest")
-        val decision = out.obj("hookSpecificOutput").obj("decision")
-        assertEquals("allow", decision.string("behavior"))
-        assertEquals("/proj/x", decision.obj("updatedInput").string("file_path"))
-    }
-
-    @Test
-    fun `generic event Block maps to top-level decision block`() {
-        val out = broker.buildResponse("cb", HookDecision.Block("stop"), "Stop")
-        assertEquals("block", out.string("decision"))
-        assertEquals("stop", out.string("reason"))
-    }
-
-    @Test
-    fun `generic event Modify degrades to continue`() {
-        val out = broker.buildResponse("cb", HookDecision.Modify(buildJsonObject {}), "Notification")
-        assertEquals(true, out.bool("continue"))
-        assertNull(out["hookSpecificOutput"])
-    }
-
-    @Test
-    fun `Annotate sets systemMessage and additionalContext for annotatable events`() {
-        val out = broker.buildResponse("cb", HookDecision.Annotate("remember X"), "UserPromptSubmit")
-        assertEquals("remember X", out.string("systemMessage"))
-        assertEquals("remember X", out.obj("hookSpecificOutput").string("additionalContext"))
-    }
-
-    @Test
-    fun `Annotate omits hookSpecificOutput for non-annotatable events`() {
-        val out = broker.buildResponse("cb", HookDecision.Annotate("note"), "Stop")
-        assertEquals("note", out.string("systemMessage"))
-        assertNull(out["hookSpecificOutput"])
+        assertNull(broker.buildResponse("")["callback_id"])
     }
 
     @Test
@@ -209,8 +117,7 @@ class HookBrokerTest {
                 },
             ),
         )!!
-        val fx = broker.sideEffects(ctx, HookDecision.Continue)
-        val notify = fx.filterIsInstance<HookSideEffect.NotifyUser>().single()
+        val notify = broker.sideEffects(ctx).filterIsInstance<HookSideEffect.NotifyUser>().single()
         assertEquals("hi", notify.message)
         assertEquals("T", notify.title)
     }
@@ -226,8 +133,7 @@ class HookBrokerTest {
                 },
             ),
         )!!
-        val refresh = broker.sideEffects(ctx, HookDecision.Continue)
-            .filterIsInstance<HookSideEffect.RefreshFile>().single()
+        val refresh = broker.sideEffects(ctx).filterIsInstance<HookSideEffect.RefreshFile>().single()
         assertEquals("/proj/a.kt", refresh.path)
         assertEquals("add", refresh.event)
     }
@@ -235,8 +141,7 @@ class HookBrokerTest {
     @Test
     fun `PreCompact yields a transcript note`() {
         val ctx = broker.parse(callback("cb", input = input("PreCompact") { put("trigger", "manual") }))!!
-        val note = broker.sideEffects(ctx, HookDecision.Continue)
-            .filterIsInstance<HookSideEffect.TranscriptNote>().single()
+        val note = broker.sideEffects(ctx).filterIsInstance<HookSideEffect.TranscriptNote>().single()
         assertTrue(note.text.contains("Compacting"))
         assertTrue(note.text.contains("manual"))
     }
@@ -244,23 +149,16 @@ class HookBrokerTest {
     @Test
     fun `SessionStart yields a lifecycle marker`() {
         val ctx = broker.parse(callback("cb", input = input("SessionStart") { put("source", "startup") }))!!
-        val marker = broker.sideEffects(ctx, HookDecision.Continue)
-            .filterIsInstance<HookSideEffect.Marker>().single()
+        val marker = broker.sideEffects(ctx).filterIsInstance<HookSideEffect.Marker>().single()
         assertEquals("SessionStart", marker.event)
         assertEquals("startup", marker.detail)
     }
 
     @Test
-    fun `Block decision adds a transcript note explaining the block`() {
-        val ctx = broker.parse(callback("cb", input = input("PreToolUse") { put("tool_name", "Bash") }))!!
-        val note = broker.sideEffects(ctx, HookDecision.Block("denied by rule"))
-            .filterIsInstance<HookSideEffect.TranscriptNote>().single()
-        assertTrue(note.text.contains("denied by rule"))
-    }
-
-    @Test
-    fun `blank notification message yields no side effect`() {
-        val ctx = broker.parse(callback("cb", input = input("Notification") { put("message", "  ") }))!!
-        assertTrue(broker.sideEffects(ctx, HookDecision.Continue).isEmpty())
+    fun `an unknown event and a blank notification yield no side effect`() {
+        val unknown = broker.parse(callback("cb", input = input("SomethingNew")))!!
+        assertTrue(broker.sideEffects(unknown).isEmpty())
+        val blank = broker.parse(callback("cb", input = input("Notification") { put("message", "  ") }))!!
+        assertTrue(broker.sideEffects(blank).isEmpty())
     }
 }

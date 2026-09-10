@@ -1337,9 +1337,8 @@ class ClaudeSession(
             write(ControlProtocol.error(requestId, "Malformed hook_callback (missing input/hook_event_name)"))
             return
         }
-        val decision = hookBroker.decide(ctx)
-        write(ControlProtocol.success(requestId, hookBroker.buildResponse(ctx.callbackId, decision, ctx.hookEventName)))
-        val effects = hookBroker.sideEffects(ctx, decision)
+        write(ControlProtocol.success(requestId, hookBroker.buildResponse(ctx.callbackId)))
+        val effects = hookBroker.sideEffects(ctx)
         if (effects.isEmpty()) return
         edt {
             for (effect in effects) {
