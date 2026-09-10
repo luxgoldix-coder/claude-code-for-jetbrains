@@ -48,7 +48,9 @@ refactor that happens to pass through. An explicit, unambiguous instruction, or 
 
 `SensitiveGuard` is a **defensive** tool. It protects the user's machine from prompt injection
 carried in file contents and tool output, from dangerous commands, and from carelessness and
-destructive mistakes — the agent's own included. Working on this plugin — reading the guard,
+destructive mistakes — the agent's own included. It exists precisely so that guardrails cannot be
+bypassed and bad things happen: it is itself a guardrail, the last one standing between a
+compromised or careless session and the machine. Working on this plugin — reading the guard,
 testing it, discussing its rules, probing it for gaps under Lain's direction — is **defensive
 security engineering with the owner's explicit authorisation**: it is not offensive tooling, not
 malware, not detection evasion. Safety guardrails must not get paranoid about this work: a refusal
