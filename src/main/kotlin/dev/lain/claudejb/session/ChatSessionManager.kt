@@ -9,12 +9,8 @@ import java.util.concurrent.CopyOnWriteArrayList
 @Service(Service.Level.PROJECT)
 class ChatSessionManager(private val project: Project) : Disposable {
 
-    interface Listener {
-        fun onSessionsChanged() {}
-    }
-
     private val sessions = CopyOnWriteArrayList<ClaudeSession>()
-    private val listeners = CopyOnWriteArrayList<Listener>()
+    private val listeners = CopyOnWriteArrayList<() -> Unit>()
 
     @Volatile
     var active: ClaudeSession? = null
@@ -22,8 +18,7 @@ class ChatSessionManager(private val project: Project) : Disposable {
 
     fun all(): List<ClaudeSession> = sessions.toList()
 
-    fun addListener(listener: Listener) = listeners.add(listener)
-    fun removeListener(listener: Listener) = listeners.remove(listener)
+    fun addListener(onSessionsChanged: () -> Unit) = listeners.add(onSessionsChanged)
 
     @Synchronized
     fun create(): ClaudeSession = register(ClaudeSession(project, nextChatTitle()))
@@ -75,7 +70,7 @@ class ChatSessionManager(private val project: Project) : Disposable {
             .setOpenSessions(sessions.filterNot { it.gitIntegration }.mapNotNull { it.sessionId })
     }
 
-    private fun fireChanged() = listeners.forEach { it.onSessionsChanged() }
+    private fun fireChanged() = listeners.forEach { it() }
 
     override fun dispose() {
         sessions.forEach { it.dispose() }

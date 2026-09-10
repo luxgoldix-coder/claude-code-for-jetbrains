@@ -12,7 +12,7 @@ import java.io.File
 @Service(Service.Level.PROJECT)
 internal class VulnService(private val project: Project) {
 
-    var scanner: VulnScanner? = OsvScanner()
+    private val scanner = OsvScanner()
 
     @Volatile
     private var components: List<VulnComponent> = emptyList()
@@ -39,7 +39,7 @@ internal class VulnService(private val project: Project) {
     fun snapshot(): VulnSnapshot = VulnSnapshot(
         state = viewState(),
         consent = consent(),
-        endpoint = scanner?.endpoint ?: VulnDisclosure.ENDPOINT,
+        endpoint = scanner.endpoint,
         manifests = manifests,
         ecosystems = ecosystems,
         componentCount = components.size,
@@ -81,7 +81,6 @@ internal class VulnService(private val project: Project) {
         if (scanning) return
         if (consent() != VulnConsent.GRANTED) return settle(ScanSilence.NO_CONSENT, onChanged)
         val root = projectRoot() ?: return settle(ScanSilence.NOTHING_TO_SCAN, onChanged)
-        val engine = scanner
         scanning = true
         cancelRequested = false
         silence = null
@@ -96,7 +95,7 @@ internal class VulnService(private val project: Project) {
                 total = items.size
                 onChanged()
             }
-            finish(runScan(engine, items, onChanged), onChanged)
+            finish(runScan(items, onChanged), onChanged)
         }
     }
 
@@ -106,28 +105,23 @@ internal class VulnService(private val project: Project) {
         onChanged()
     }
 
-    private fun runScan(engine: VulnScanner?, items: List<VulnComponent>, onChanged: () -> Unit): ScanAnswer = when {
+    private fun runScan(items: List<VulnComponent>, onChanged: () -> Unit): ScanAnswer = when {
         items.isEmpty() -> ScanAnswer.Silent(ScanSilence.NOTHING_TO_SCAN)
-
-        engine == null -> ScanAnswer.Silent(ScanSilence.NO_SCANNER)
 
         cancelRequested -> ScanAnswer.Silent(ScanSilence.CANCELLED)
 
-        else -> runCatching { engine.scan(items, listener(onChanged)) }.getOrElse {
+        else -> runCatching { scanner.scan(items, progress(onChanged)) { cancelRequested } }.getOrElse {
             LOG.warn("The vulnerability scanner threw; treating it as an unreadable answer", it)
             ScanAnswer.Silent(ScanSilence.MALFORMED)
         }
     }
 
-    private fun listener(onChanged: () -> Unit): ScanListener = object : ScanListener {
-
-        override fun progress(done: Int, total: Int) = edt {
-            this@VulnService.done = done
-            this@VulnService.total = total
+    private fun progress(onChanged: () -> Unit): (Int, Int) -> Unit = { done, total ->
+        edt {
+            this.done = done
+            this.total = total
             onChanged()
         }
-
-        override fun cancelled(): Boolean = cancelRequested
     }
 
     private fun finish(answer: ScanAnswer, onChanged: () -> Unit) = edt {

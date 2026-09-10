@@ -6,17 +6,17 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import java.net.URI
 
-internal class OsvScanner : VulnScanner {
+internal class OsvScanner {
 
-    override val endpoint: String = VulnDisclosure.ENDPOINT
+    val endpoint: String = VulnDisclosure.ENDPOINT
 
-    override fun scan(inventory: List<VulnComponent>, listener: ScanListener): ScanAnswer {
+    fun scan(inventory: List<VulnComponent>, progress: (Int, Int) -> Unit, cancelled: () -> Boolean): ScanAnswer {
         if (inventory.isEmpty()) return ScanAnswer.Silent(ScanSilence.NOTHING_TO_SCAN)
 
         val affected = ArrayList<VulnComponent>()
         var asked = 0
         for (batch in inventory.chunked(BATCH_SIZE)) {
-            if (listener.cancelled()) return ScanAnswer.Silent(ScanSilence.CANCELLED)
+            if (cancelled()) return ScanAnswer.Silent(ScanSilence.CANCELLED)
             val body = when (val answer = OsvHttp.post(URI.create(VulnDisclosure.ENDPOINT), batchBody(batch))) {
                 is OsvAnswer.Silent -> return ScanAnswer.Silent(answer.reason)
                 is OsvAnswer.Body -> answer.json
@@ -24,7 +24,7 @@ internal class OsvScanner : VulnScanner {
             val flags = OsvReplies.affectedFlags(body) ?: return ScanAnswer.Silent(ScanSilence.MALFORMED)
             flags.forEachIndexed { index, hit -> if (hit) batch.getOrNull(index)?.let(affected::add) }
             asked += batch.size
-            listener.progress(asked, inventory.size)
+            progress(asked, inventory.size)
         }
 
         if (affected.size > MAX_HYDRATED) {
@@ -34,13 +34,13 @@ internal class OsvScanner : VulnScanner {
             )
         }
 
-        return hydrate(affected.take(MAX_HYDRATED), listener, inventory.size)
+        return hydrate(affected.take(MAX_HYDRATED), cancelled, inventory.size)
     }
 
-    private fun hydrate(components: List<VulnComponent>, listener: ScanListener, queried: Int): ScanAnswer {
+    private fun hydrate(components: List<VulnComponent>, cancelled: () -> Boolean, queried: Int): ScanAnswer {
         val findings = ArrayList<VulnFinding>()
         for (component in components) {
-            if (listener.cancelled()) return ScanAnswer.Silent(ScanSilence.CANCELLED)
+            if (cancelled()) return ScanAnswer.Silent(ScanSilence.CANCELLED)
             val body = when (val answer = OsvHttp.post(URI.create(QUERY_ENDPOINT), queryBody(component))) {
                 is OsvAnswer.Silent -> return ScanAnswer.Silent(answer.reason)
                 is OsvAnswer.Body -> answer.json

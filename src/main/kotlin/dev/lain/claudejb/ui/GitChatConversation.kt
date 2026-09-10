@@ -17,7 +17,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 
 @Service(Service.Level.PROJECT)
 internal class GitChatConversation(private val project: Project) :
-    SessionListener, TranscriptModel.Listener, ChatSessionManager.Listener {
+    SessionListener, TranscriptModel.Listener {
 
     internal interface View {
         fun drawGitChat(payload: String?)
@@ -30,7 +30,7 @@ internal class GitChatConversation(private val project: Project) :
     private var attached: ClaudeSession? = null
 
     init {
-        ChatSessionManager.getInstance(project).addListener(this)
+        ChatSessionManager.getInstance(project).addListener(::broadcast)
     }
 
     private fun current(): ClaudeSession? {
@@ -109,8 +109,6 @@ internal class GitChatConversation(private val project: Project) :
     override fun onCleared() = broadcast()
 
     override fun onStateChanged() = broadcast()
-
-    override fun onSessionsChanged() = broadcast()
 
     override fun onPermissionsChanged() {
         views.forEach { it.refreshGitChatPermissions() }
