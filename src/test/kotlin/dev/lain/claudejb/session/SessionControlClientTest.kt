@@ -56,6 +56,22 @@ class SessionControlClientTest {
     }
 
     @Test
+    fun `failing every pending request also cancels every watchdog`() {
+        val sent = mutableListOf<String>()
+        val scheduler = FakeScheduler()
+        val client = client(sent, scheduler, listOf("req_1", "req_2").iterator())
+        val errors = mutableListOf<String?>()
+        repeat(2) { client.send({ id -> "line-$id" }) { errors += it.error } }
+
+        client.failAll("process gone")
+
+        assertEquals(listOf("process gone", "process gone"), errors)
+        assertEquals(2, scheduler.cancelled)
+        scheduler.fireAll()
+        assertEquals(2, errors.size)
+    }
+
+    @Test
     fun `onControlResult ignores an unknown request id`() {
         val sent = mutableListOf<String>()
         val scheduler = FakeScheduler()

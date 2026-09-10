@@ -31,7 +31,9 @@ class SessionControlClient(
         }
     }
 
-    private val pending = ConcurrentHashMap<String, (ClaudeEvent.ControlResult) -> Unit>()
+    private class Pending(val watchdog: Cancellable, val onOutcome: (ClaudeEvent.ControlResult) -> Unit)
+
+    private val pending = ConcurrentHashMap<String, Pending>()
 
     private val log = thisLogger()
 
@@ -53,14 +55,11 @@ class SessionControlClient(
         onOutcome: (ClaudeEvent.ControlResult) -> Unit,
     ) {
         val id = newRequestId()
-        val watchdog = scheduler.schedule(timeoutSeconds) {
-            pending.remove(id)?.invoke(
-                ClaudeEvent.ControlResult(requestId = id, success = false, payload = null, error = "control request timed out"),
-            )
-        }
         val requestLine = buildRequest(id)
-        pending[id] = { res ->
-            watchdog.cancel()
+        val watchdog = scheduler.schedule(timeoutSeconds) {
+            settle(id, ClaudeEvent.ControlResult(requestId = id, success = false, payload = null, error = "control request timed out"))
+        }
+        pending[id] = Pending(watchdog) { res ->
             log.debug(
                 "CC-TRACE control reply ${requestSubtype(requestLine)} id=$id success=${res.success}" +
                     " err=${res.error ?: "-"} payload=${res.payload?.toString()?.take(TRACE_MAX) ?: "null"}",
@@ -71,13 +70,17 @@ class SessionControlClient(
         write(requestLine)
     }
 
-    fun onControlResult(event: ClaudeEvent.ControlResult) {
-        pending.remove(event.requestId)?.invoke(event)
-    }
+    fun onControlResult(event: ClaudeEvent.ControlResult) = settle(event.requestId, event)
 
     fun failAll(reason: String) {
-        pending.values.toList().also { pending.clear() }.forEach {
-            it(ClaudeEvent.ControlResult(requestId = "", success = false, payload = null, error = reason))
+        pending.keys.toList().forEach { id ->
+            settle(id, ClaudeEvent.ControlResult(requestId = "", success = false, payload = null, error = reason))
         }
+    }
+
+    private fun settle(id: String, result: ClaudeEvent.ControlResult) {
+        val entry = pending.remove(id) ?: return
+        entry.watchdog.cancel()
+        entry.onOutcome(result)
     }
 }
