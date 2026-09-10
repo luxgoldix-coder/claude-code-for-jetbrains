@@ -43,26 +43,26 @@ object JcefState {
         val context = session.lastContextUsage
 
         val obj = buildJsonObject {
-            put("turnActive", session.turnActive)
-            put("interrupting", session.interrupting)
+            put("turnActive", session.turn.active)
+            put("interrupting", session.turn.interrupting)
             put("running", session.isRunning() && session.initialized)
             put("starting", session.isStarting())
             put("resuming", session.isStarting() && session.sessionId != null)
             put("binaryMissing", session.binaryMissing)
             put("needsLogin", session.needsLogin)
 
-            put("reasoningTokens", session.liveThinkingTokens)
+            put("reasoningTokens", session.turn.liveThinkingTokens)
 
-            val suffix = StatusLineFormatter.thinkingSuffix(session.liveThinkingTokens)
-            if (session.turnActive && suffix.isNotEmpty()) {
+            val suffix = StatusLineFormatter.thinkingSuffix(session.turn.liveThinkingTokens)
+            if (session.turn.active && suffix.isNotEmpty()) {
                 put("thinkingStatus", "Thinking… · $suffix")
             } else {
                 put("thinkingStatus", null as String?)
             }
 
             put("guardOn", session.guardEnforced)
-            put("remoteControlOn", session.remoteControlEnabled)
-            put("remoteControlError", session.remoteControlError)
+            put("remoteControlOn", session.remote.enabled)
+            put("remoteControlError", session.remote.error)
 
             put("provider", JcefComposerOptions.providerJson(provider))
             put("model", JcefComposerOptions.modelJson(session))
@@ -70,8 +70,8 @@ object JcefState {
             put("effort", JcefComposerOptions.effortJson(effort))
             put("thinking", JcefComposerOptions.thinkingJson(thinkingOn))
 
-            put("queue", buildJsonArray { session.queuedPrompts().forEach { add(it) } })
-            put("suggestion", session.promptSuggestion)
+            put("queue", buildJsonArray { session.prompts.queued().forEach { add(it) } })
+            put("suggestion", session.prompts.suggestion)
 
             put("usage", compactUsageJson(session, usage))
 

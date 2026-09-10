@@ -248,7 +248,7 @@ internal class GitIntegration(private val project: Project) {
         private var started = false
 
         override fun onStateChanged() {
-            if (session.turnActive) started = true
+            if (session.turn.active) started = true
         }
 
         override fun onAttention(reason: AttentionReason, landing: AttentionLanding) {

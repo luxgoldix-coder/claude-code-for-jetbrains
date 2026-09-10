@@ -88,7 +88,7 @@ internal class GitChatConversation(private val project: Project) :
         return buildString {
             append("{\"running\":").append(chat.isRunning())
             append(",\"starting\":").append(chat.isStarting())
-            append(",\"turnActive\":").append(chat.turnActive)
+            append(",\"turnActive\":").append(chat.turn.active)
             append(",\"rows\":").append(JcefTranscriptPayload.batchJson(rows(chat)))
             append("}")
         }

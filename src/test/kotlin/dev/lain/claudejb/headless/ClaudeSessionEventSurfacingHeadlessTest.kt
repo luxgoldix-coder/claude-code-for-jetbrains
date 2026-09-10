@@ -22,10 +22,10 @@ class ClaudeSessionEventSurfacingHeadlessTest : BasePlatformTestCase() {
         try {
             session.handleEventForTest(ClaudeEvent.PromptSuggestion(PromptSuggestionInfo(suggestion = "Add tests")))
             flush()
-            assertEquals("Add tests", session.promptSuggestion)
-            session.clearSuggestion()
+            assertEquals("Add tests", session.prompts.suggestion)
+            session.prompts.clearSuggestion()
             flush()
-            assertNull(session.promptSuggestion)
+            assertNull(session.prompts.suggestion)
         } finally {
             session.dispose()
         }
@@ -36,10 +36,10 @@ class ClaudeSessionEventSurfacingHeadlessTest : BasePlatformTestCase() {
         try {
             session.handleEventForTest(ClaudeEvent.ThinkingTokens(ThinkingTokensInfo(estimatedTokens = 500)))
             flush()
-            assertEquals(500, session.liveThinkingTokens)
+            assertEquals(500, session.turn.liveThinkingTokens)
             session.handleEventForTest(ClaudeEvent.MessageStart)
             flush()
-            assertEquals(0, session.liveThinkingTokens)
+            assertEquals(0, session.turn.liveThinkingTokens)
         } finally {
             session.dispose()
         }

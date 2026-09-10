@@ -15,10 +15,10 @@ class InterruptIntegrationTest : FakeClaudeTestBase() {
         session.interrupt()
 
         waitUntil("session idle after interrupt") {
-            !session.turnActive &&
+            !session.turn.active &&
                 session.transcript.entries.any { it.text.contains("still going") }
         }
 
-        assertFalse("turn no longer active", session.turnActive)
+        assertFalse("turn no longer active", session.turn.active)
     }
 }

@@ -55,7 +55,7 @@ internal class ChatBridgeRouter(private val panel: JcefChatPanel) {
 
         JcefBridge.Msg.CycleMode -> session.settings.cyclePermissionMode()
 
-        is JcefBridge.Msg.RemoveQueued -> session.removeQueued(m.index)
+        is JcefBridge.Msg.RemoveQueued -> session.prompts.remove(m.index)
 
         is JcefBridge.Msg.Copy -> CopyPasteManager.getInstance().setContents(StringSelection(m.text))
     }
@@ -129,7 +129,7 @@ internal class ChatBridgeRouter(private val panel: JcefChatPanel) {
             return true
         }
         if (JcefSettingsMenu.isRemoteControl(m.key)) {
-            session.setRemoteControl(m.on) { JcefChatPanel.pushSettingsMenuToAll() }
+            session.remote.set(m.on) { JcefChatPanel.pushSettingsMenuToAll() }
             return true
         }
         val models = session.models.map { it.value }
@@ -585,7 +585,7 @@ internal class ChatBridgeRouter(private val panel: JcefChatPanel) {
     }
 
     private fun dispatchSend(raw: String) {
-        session.clearSuggestion()
+        session.prompts.clearSuggestion()
         val atts = tray.take()
         val text = raw.trim()
         when {

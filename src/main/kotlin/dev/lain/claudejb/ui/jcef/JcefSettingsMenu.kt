@@ -296,7 +296,7 @@ internal object JcefSettingsMenu {
         effort = session.launch.effort,
         mode = session.launch.permissionMode,
         approvals = session.guard.approvals.all(),
-        remoteControl = session.remoteControlEnabled,
+        remoteControl = session.remote.enabled,
     )
 
     internal const val REMOTE_CONTROL = "remoteControl"

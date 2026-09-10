@@ -131,11 +131,7 @@ class ClaudeSession(
     @Volatile var outputStyle: String = "default"
         private set
 
-    @Volatile var turnActive: Boolean = false
-        private set
-
-    @Volatile var interrupting: Boolean = false
-        private set
+    val turn = TurnState()
 
     @Volatile var rateLimit: RateLimitInfo? = null
         private set
@@ -147,12 +143,6 @@ class ClaudeSession(
         private set
 
     @Volatile var authStatus: AuthStatusInfo? = null
-        private set
-
-    @Volatile var liveThinkingTokens: Int = 0
-        private set
-
-    @Volatile var promptSuggestion: String? = null
         private set
 
     val subagentTasks: Map<String, TaskProgressInfo> get() = taskTracker.tasks
@@ -226,10 +216,7 @@ class ClaudeSession(
         private set
     var account: AccountInfo = AccountInfo()
         private set
-    var remoteControlEnabled: Boolean = false
-        private set
-    var remoteControlError: String? = null
-        private set
+    val remote = RemoteControl(queries, transcript, ::fireState)
 
     @Volatile private var process: ClaudeProcess? = null
 
@@ -237,9 +224,20 @@ class ClaudeSession(
 
     @Volatile private var starting = false
 
-    private val queue = ArrayDeque<Outgoing>()
+    val prompts = PromptQueue(
+        transcript = transcript,
+        edt = ::edt,
+        write = ::write,
+        canSend = { ready && isRunning() },
+        onSent = {
+            turn.active = true
+            poll.startQuotaPolling()
+            poll.ensureAgentRevivalPoll()
+        },
+        fireState = ::fireState,
+    )
 
-    private data class Outgoing(val text: String, val images: List<Pair<String, String>>, val displayText: String)
+    private val turnControl = TurnControl(this, ::edt, ::write, ::fireState)
 
     private val listeners = CopyOnWriteArrayList<SessionListener>()
 
@@ -253,19 +251,13 @@ class ClaudeSession(
 
     @Volatile var binaryVersion: String? = null
 
-    @Volatile var currentUserMessageId: String? = null
-        private set
-    private val toolUseTurn = java.util.concurrent.ConcurrentHashMap<String, String>()
-
-    fun userMessageIdFor(toolUseId: String): String? = toolUseTurn[toolUseId]
-
     val checkpointingEnabled: Boolean get() = ClaudeSettings.getInstance(project).enableFileCheckpointing
 
     val guardEnforced: Boolean get() = !ClaudeSettings.getInstance(project).guardSuspended()
 
-    private val poll = PollSchedule(
+    internal val poll = PollSchedule(
         isRunning = ::isRunning,
-        turnActive = { turnActive },
+        turnActive = { turn.active },
         effects = PollSchedule.SessionEffects(edt = ::edt, fireState = ::fireState),
         quota = PollSchedule.QuotaSource(
             requestSessionCost = queries::requestSessionCost,
@@ -310,8 +302,6 @@ class ClaudeSession(
     fun isRunning(): Boolean = process?.isRunning() == true
 
     fun isStarting(): Boolean = starting
-
-    fun queuedPrompts(): List<String> = queue.map { it.displayText }
 
     fun start(resume: Boolean = sessionId != null): Boolean {
         if (isRunning() || starting) return true
@@ -542,16 +532,14 @@ class ClaudeSession(
     fun stop() {
         generation++
         flushDeltas()
-        cancelPendingElicitations()
+        turnControl.cancelPendingElicitations()
         process?.terminate()
         process = null
-        turnActive = false
-        interrupting = false
+        turn.reset()
         ready = false
         initialized = false
         starting = false
-        liveThinkingTokens = 0
-        promptSuggestion = null
+        prompts.dropSuggestion()
         cachedEnv = null
         controlClient.failAll("process gone")
         taskTracker.clear()
@@ -572,11 +560,7 @@ class ClaudeSession(
         if (!isRunning()) {
             if (!start()) return
         }
-        edt {
-            queue.addLast(Outgoing(composed.wireText, composed.images, composed.displayText))
-            fireState()
-            pump()
-        }
+        prompts.enqueue(composed.wireText, composed.images, composed.displayText)
     }
 
     fun sendSideQuestion(text: String) {
@@ -584,11 +568,7 @@ class ClaudeSession(
         if (trimmed.isEmpty()) return
         if (!isRunning()) {
             if (!start()) return
-            edt {
-                queue.addLast(Outgoing(trimmed, emptyList(), trimmed))
-                fireState()
-                pump()
-            }
+            prompts.enqueue(trimmed, emptyList(), trimmed)
             return
         }
         edt {
@@ -596,96 +576,11 @@ class ClaudeSession(
             queries.askSideQuestion(trimmed) { answer ->
                 transcript.add(Speaker.SYSTEM, answer?.let { "↩ $it" } ?: SIDE_QUESTION_UNANSWERED)
             }
-            pump()
+            prompts.pump()
         }
     }
 
-    fun setRemoteControl(enabled: Boolean, onSettled: () -> Unit) {
-        queries.setRemoteControl(enabled) { outcome ->
-            if (outcome.ok) remoteControlEnabled = outcome.enabled
-            remoteControlError = if (outcome.ok) null else remoteControlRefusal(outcome)
-            fireState()
-            transcript.add(Speaker.SYSTEM, remoteControlNotice(outcome))
-            onSettled()
-        }
-    }
-
-    private fun remoteControlRefusal(outcome: RemoteControlOutcome): String {
-        val what = if (outcome.enabled) "switch Remote Control on" else "switch Remote Control off"
-        return outcome.error?.takeIf { it.isNotBlank() }?.let { "Could not $what: $it" } ?: "Could not $what."
-    }
-
-    private fun remoteControlNotice(outcome: RemoteControlOutcome): String = when {
-        !outcome.ok -> remoteControlRefusal(outcome) +
-            " Remote Control has to be enabled for your account, and by your organisation on Team and Enterprise plans."
-
-        !outcome.enabled -> "Remote Control is off. This chat keeps running in the IDE."
-
-        outcome.sessionUrl != null -> "Remote Control is on — ${outcome.sessionUrl}"
-
-        else -> "Remote Control is on. The session is listed at https://claude.ai/code"
-    }
-
-    fun removeQueued(index: Int) = edt {
-        if (index in queue.indices) {
-            val copy = queue.toMutableList()
-            copy.removeAt(index)
-            queue.clear()
-            queue.addAll(copy)
-            fireState()
-        }
-    }
-
-    private fun pump() {
-        if (!ready || queue.isEmpty() || !isRunning()) return
-        while (queue.isNotEmpty()) {
-            val next = queue.removeFirst()
-            transcript.add(Speaker.USER, next.displayText)
-            val msgUuid = java.util.UUID.randomUUID().toString()
-            currentUserMessageId = msgUuid
-            write(ControlProtocol.userMessageWithImages(next.text, next.images, uuid = msgUuid))
-            turnActive = true
-            poll.startQuotaPolling()
-            poll.ensureAgentRevivalPoll()
-        }
-        promptSuggestion = null
-        fireState()
-    }
-
-    fun clearSuggestion() {
-        if (promptSuggestion == null) return
-        promptSuggestion = null
-        edt { fireState() }
-    }
-
-    fun interrupt() {
-        if (!isRunning()) return
-        edt {
-            if (interrupting) return@edt
-            cancelPendingElicitations()
-            cardManager.all().filter { it.elicitation == null }.forEach {
-                write(ControlProtocol.permissionDeny(it.requestId, "Interrupted."))
-            }
-            queue.clear()
-            cardManager.clear()
-            diffs.clearReviewDiffs()
-            interrupting = true
-            fireState()
-            controlClient.query(
-                buildRequest = ControlProtocol::interruptRequest,
-                onResult = { _: JsonObject? -> edt { finishInterrupt() } },
-                decode = { it },
-            )
-        }
-    }
-
-    private fun finishInterrupt() {
-        interrupting = false
-        turnActive = false
-        liveThinkingTokens = 0
-        poll.pollQuota()
-        fireState()
-    }
+    fun interrupt() = turnControl.interrupt()
 
     fun editSnapshot(toolUseId: String): EditSnapshot? = diffs.snapshot(toolUseId)
 
@@ -693,8 +588,7 @@ class ClaudeSession(
         sessionId = savedSessionId
         launch = launch.copy(fork = fork)
         agentScanner.restoreAdmitted(onTasksReplayed = ::fireState)
-        toolUseTurn.clear()
-        currentUserMessageId = null
+        prompts.forgetTurn()
         val saved = guard.restore(savedSessionId)
         val withGuard = GuardRestore.reinstate(dtos, GuardRestore.raisedInThisChat(dtos, saved))
         edt {
@@ -810,7 +704,7 @@ class ClaudeSession(
 
             is ClaudeEvent.MessageStart -> edt {
                 tokens.foldIntoSession()
-                liveThinkingTokens = 0
+                turn.liveThinkingTokens = 0
                 reconciler.onMessageBoundary()
             }
 
@@ -862,7 +756,7 @@ class ClaudeSession(
         )
         if (event.name in DiffPresenter.REVIEWABLE_TOOLS) {
             diffs.captureForReview(event.name, event.input, event.id)
-            currentUserMessageId?.let { toolUseTurn[event.id] = it }
+            prompts.bindTool(event.id)
         }
     }
 
@@ -914,10 +808,8 @@ class ClaudeSession(
     private fun onTurnResult(event: ClaudeEvent.Result) = edt {
         tokens.foldIntoSession()
         reconciler.onMessageBoundary()
-        turnActive = false
+        turn.reset()
         poll.pollQuota()
-        interrupting = false
-        liveThinkingTokens = 0
         if (event.result.isError) {
             val message = event.result.result.ifBlank {
                 event.result.errors.joinToString("\n").ifBlank { "Turn ended with error: ${event.result.subtype}" }
@@ -931,7 +823,7 @@ class ClaudeSession(
         diffs.refreshTouched()
         agentScanner.scan()
         fireState()
-        pump()
+        prompts.pump()
         sessionId?.let { id -> recordOpenAndTitle(id) }
         fireAttention(if (event.result.isError) AttentionReason.ERROR else AttentionReason.TURN_DONE)
     }
@@ -1050,7 +942,7 @@ class ClaudeSession(
             }
 
             is ClaudeEvent.ThinkingTokens -> edt {
-                liveThinkingTokens = event.info.estimatedTokens
+                turn.liveThinkingTokens = event.info.estimatedTokens
                 fireState()
             }
 
@@ -1064,10 +956,7 @@ class ClaudeSession(
                 fireMetadata()
             }
 
-            is ClaudeEvent.PromptSuggestion -> {
-                promptSuggestion = event.info.suggestion.takeIf { it.isNotBlank() }
-                edt { fireState() }
-            }
+            is ClaudeEvent.PromptSuggestion -> prompts.suggest(event.info.suggestion)
         }
     }
 
@@ -1122,12 +1011,10 @@ class ClaudeSession(
         flushDeltas()
         controlClient.failAll("process gone")
         edt {
-            turnActive = false
-            interrupting = false
+            turn.reset()
             ready = false
             initialized = false
-            liveThinkingTokens = 0
-            promptSuggestion = null
+            prompts.dropSuggestion()
             cardManager.clear()
             taskTracker.clear()
             hookNarrator.clear()
@@ -1151,15 +1038,7 @@ class ClaudeSession(
         }
     }
 
-    private fun write(line: String) = process?.writeLine(line)
-
-    private fun cancelPendingElicitations() {
-        runCatching {
-            cardManager.all().filter { it.elicitation != null }.forEach {
-                write(ControlProtocol.elicitationResult(it.requestId, "cancel"))
-            }
-        }
-    }
+    internal fun write(line: String): Boolean = process?.writeLine(line) ?: false
 
     private fun handleHookCallback(requestId: String, request: JsonObject) {
         val ctx = hookBroker.parse(request)
@@ -1250,7 +1129,7 @@ class ClaudeSession(
         generation++
         starting = false
         poll.stopAll()
-        cancelPendingElicitations()
+        turnControl.cancelPendingElicitations()
         diffs.clearReviewDiffs()
         process?.terminate()
         process = null

@@ -26,7 +26,7 @@ internal class ChatEditReview(
 
     fun rewindOrRevert(toolUseId: String) {
         val snap = session.editSnapshot(toolUseId)
-        val turn = session.userMessageIdFor(toolUseId)
+        val turn = session.prompts.userMessageIdFor(toolUseId)
         if (turn != null && session.checkpointingEnabled) {
             session.queries.requestRewindFiles(turn, dryRun = true) { probe ->
                 if (probe != null && probe.canRewind) {
