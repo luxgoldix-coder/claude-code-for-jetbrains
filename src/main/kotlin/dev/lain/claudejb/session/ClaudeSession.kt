@@ -228,7 +228,7 @@ class ClaudeSession(
         transcript = transcript,
         edt = ::edt,
         write = ::write,
-        canSend = { ready && isRunning() },
+        canSend = { ready && isRunning() && !turn.active },
         onSent = {
             turn.active = true
             poll.startQuotaPolling()
@@ -731,7 +731,7 @@ class ClaudeSession(
         edt {
             systemNotice("Connected · ${event.info.model.ifBlank { "claude" }} · ${event.info.cwd}")
             fireState()
-            pump()
+            prompts.pump()
         }
     }
 
