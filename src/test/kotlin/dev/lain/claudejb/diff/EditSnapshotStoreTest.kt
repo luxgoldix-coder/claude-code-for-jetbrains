@@ -55,6 +55,24 @@ class EditSnapshotStoreTest {
     }
 
     @Test
+    fun `the store keeps the most recent snapshots and forgets the oldest past its capacity`(@TempDir dir: Path) {
+        val store = EditSnapshotStore(capacity = 2)
+        val file = File(dir.toFile(), "a.kt").apply { writeText("v") }
+        val input = buildJsonObject { put("file_path", file.path) }
+        store.capture("Edit", input, "tool-1")
+        store.capture("Edit", input, "tool-2")
+        store.get("tool-1")
+        store.capture("Edit", input, "tool-3")
+
+        assertNull(store.get("tool-2"), "the least recently used snapshot is the one that goes")
+        assertEquals("v", store.get("tool-1")?.beforeText)
+        assertEquals("v", store.get("tool-3")?.beforeText)
+
+        store.clear()
+        assertNull(store.get("tool-1"))
+    }
+
+    @Test
     fun `snapshot plus proposedContent reproduces the live pre-write diff`(@TempDir dir: Path) {
         val file = File(dir.toFile(), "a.kt").apply { writeText("foo foo") }
         val store = EditSnapshotStore()

@@ -44,6 +44,12 @@ class DiffLifecycleManager(private val project: Project) {
         reviewDiffs.keys.toList().forEach { closeReviewDiff(it) }
     }
 
+    fun clear() {
+        clearReviewDiffs()
+        editSnapshots.clear()
+        autoOpenedDiffs.clear()
+    }
+
     fun captureForReview(toolName: String, input: JsonObject, toolUseId: String): EditSnapshot? =
         editSnapshots.capture(toolName, input, toolUseId)
 

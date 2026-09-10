@@ -2,7 +2,6 @@ package dev.lain.claudejb.diff
 
 import kotlinx.serialization.json.JsonObject
 import java.io.File
-import java.util.concurrent.ConcurrentHashMap
 
 data class EditSnapshot(
     val toolName: String,
@@ -12,9 +11,13 @@ data class EditSnapshot(
     val existedBefore: Boolean = true,
 )
 
-class EditSnapshotStore {
-    private val byToolUseId = ConcurrentHashMap<String, EditSnapshot>()
+class EditSnapshotStore(private val capacity: Int = DEFAULT_CAPACITY) {
 
+    private val byToolUseId = object : LinkedHashMap<String, EditSnapshot>(16, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, EditSnapshot>): Boolean = size > capacity
+    }
+
+    @Synchronized
     fun capture(toolName: String, input: JsonObject, toolUseId: String): EditSnapshot? {
         val path = DiffPresenter.filePathOf(input) ?: return null
         if (toolUseId.isNotBlank()) byToolUseId[toolUseId]?.let { return it }
@@ -25,10 +28,19 @@ class EditSnapshotStore {
             .also { if (toolUseId.isNotBlank()) byToolUseId[toolUseId] = it }
     }
 
+    @Synchronized
     fun get(toolUseId: String): EditSnapshot? = byToolUseId[toolUseId]
 
+    @Synchronized
     fun updateInput(toolUseId: String, input: JsonObject) {
         if (toolUseId.isBlank()) return
         byToolUseId.computeIfPresent(toolUseId) { _, snap -> snap.copy(input = input) }
+    }
+
+    @Synchronized
+    fun clear() = byToolUseId.clear()
+
+    companion object {
+        const val DEFAULT_CAPACITY = 500
     }
 }

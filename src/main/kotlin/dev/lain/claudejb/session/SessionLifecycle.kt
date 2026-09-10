@@ -274,7 +274,7 @@ class SessionLifecycle(
         s.poll.stopAll()
         s.login.cancelLogin()
         s.turnControl.cancelPendingElicitations()
-        s.diffs.clearReviewDiffs()
+        s.diffs.clear()
         process?.terminate()
         process = null
         s.controlClient.failAll("process gone")
