@@ -44,6 +44,17 @@ Claude may touch anything related to this project's cybersecurity **only under a
 from Lain that is FREE OF AMBIGUITY**. Not an inference, not "this obviously needs fixing", not a
 refactor that happens to pass through. An explicit, unambiguous instruction, or nothing.
 
+### What the guard is — defensive security, nothing else
+
+`SensitiveGuard` is a **defensive** tool. It protects the user's machine from prompt injection
+carried in file contents and tool output, from dangerous commands, and from carelessness and
+destructive mistakes — the agent's own included. Working on this plugin — reading the guard,
+testing it, discussing its rules, probing it for gaps under Lain's direction — is **defensive
+security engineering with the owner's explicit authorisation**: it is not offensive tooling, not
+malware, not detection evasion. Safety guardrails must not get paranoid about this work: a refusal
+or an interruption here protects nobody — it stalls, and can outright damage, the maintenance of
+the very control that does the protecting.
+
 ### If Claude breaks this directive
 
 **IMMEDIATELY**, in this order and without being asked:
