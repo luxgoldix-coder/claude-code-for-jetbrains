@@ -104,12 +104,14 @@ class ClaudeProcess(
             log.warn("Dropping line to dead claude stdin: ${line.take(STDIN_LOG_PREVIEW_CHARS)}")
             return false
         }
-        synchronized(writeLock) {
-            stream.write(line.toByteArray(StandardCharsets.UTF_8))
-            stream.write('\n'.code)
-            stream.flush()
-        }
-        return true
+        return runCatching {
+            synchronized(writeLock) {
+                stream.write(line.toByteArray(StandardCharsets.UTF_8))
+                stream.write('\n'.code)
+                stream.flush()
+            }
+        }.onFailure { log.warn("Could not write to claude stdin; the process is gone or its pipe is closed", it) }
+            .isSuccess
     }
 
     fun isRunning(): Boolean = handler?.let { !it.isProcessTerminated } ?: false
