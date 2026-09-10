@@ -31,7 +31,10 @@ object SessionLauncher {
         args += advancedFlags(opts)
         args += appendSystemPromptFlags(PluginContextPrompt.TEXT)
         mcpConfig?.let { args += listOf("--mcp-config", it) }
-        if (resume) opts.sessionId?.let { args += listOf("--resume", it) }
+        if (resume) {
+            opts.sessionId?.let { args += listOf("--resume", it) }
+            if (opts.fork && opts.sessionId != null) args += "--fork-session"
+        }
         return args
     }
 

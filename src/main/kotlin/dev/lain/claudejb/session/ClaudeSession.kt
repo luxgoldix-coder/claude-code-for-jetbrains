@@ -629,7 +629,7 @@ class ClaudeSession(
                 if (info.outputStyle.isNotBlank()) outputStyle = info.outputStyle
                 val pinMissing = info.models.isNotEmpty() && info.models.none { it.value == LaunchDefaults.DEFAULT_MODEL }
                 if (launch.model == LaunchDefaults.DEFAULT_MODEL && pinMissing) {
-                    settings.changeModel(LaunchDefaults.preferredDefault(info.models))
+                    settings.changeModel(LaunchDefaults.preferredDefault(info.models), persist = false)
                 }
                 edt { fireMetadata() }
             },
@@ -841,8 +841,9 @@ class ClaudeSession(
 
     fun editSnapshot(toolUseId: String): EditSnapshot? = diffs.snapshot(toolUseId)
 
-    fun restore(savedSessionId: String, dtos: List<EntryDTO>) {
+    fun restore(savedSessionId: String, dtos: List<EntryDTO>, fork: Boolean = false) {
         sessionId = savedSessionId
+        launch = launch.copy(fork = fork)
         agentScanner.restoreAdmitted(onTasksReplayed = ::fireState)
         toolUseTurn.clear()
         currentUserMessageId = null
@@ -996,7 +997,7 @@ class ClaudeSession(
     private fun onInit(event: ClaudeEvent.Init) {
         sessionId = event.info.sessionId
         agentScanner.restoreAdmitted(onTasksReplayed = ::fireState)
-        if (launch.model == null && event.info.model.isNotBlank()) launch = launch.copy(model = event.info.model)
+        launch = launch.copy(model = launch.model ?: event.info.model.ifBlank { null }, fork = false)
         if (event.info.outputStyle.isNotBlank()) outputStyle = event.info.outputStyle
         val ours = SessionLauncher.binaryPermissionMode(launch.permissionMode)
         if (event.info.permissionMode.isNotBlank() && event.info.permissionMode != ours) {

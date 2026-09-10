@@ -23,6 +23,7 @@ data class LaunchOptions(
     val betas: String? = null,
     val strictMcpConfig: Boolean = false,
     val sessionId: String? = null,
+    val fork: Boolean = false,
 ) {
 
     companion object {

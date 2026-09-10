@@ -99,7 +99,7 @@ internal class TabSessionCommands(
                 val manager = ChatSessionManager.getInstance(project)
                 val s = manager.create()
                 s.title = "$sourceTitle (fork)"
-                s.restore(sourceId, entries)
+                s.restore(sourceId, entries, fork = true)
                 openChat(s)
             }
         }

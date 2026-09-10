@@ -78,6 +78,21 @@ class SessionLauncherTest {
     }
 
     @Test
+    fun `a fork resumes the source session under a new id`() {
+        val args = SessionLauncher.buildArgs(opts(sessionId = "abc").copy(fork = true), resume = true, mcpConfig = null)
+        assertEquals(listOf("--resume", "abc", "--fork-session"), args.takeLast(3))
+    }
+
+    @Test
+    fun `a plain resume never forks, and a fork without an id has nothing to fork`() {
+        val plain = SessionLauncher.buildArgs(opts(sessionId = "abc"), resume = true, mcpConfig = null)
+        assertFalse(plain.contains("--fork-session"))
+        val orphan = SessionLauncher.buildArgs(opts().copy(fork = true), resume = true, mcpConfig = null)
+        assertFalse(orphan.contains("--fork-session"))
+        assertFalse(orphan.contains("--resume"))
+    }
+
+    @Test
     fun `plan mode passes through unchanged`() {
         val args = SessionLauncher.buildArgs(opts(permissionMode = "plan"), resume = false, mcpConfig = null)
         assertEquals("plan", args[args.indexOf("--permission-mode") + 1])
