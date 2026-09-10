@@ -16,7 +16,7 @@ object JcefModelLabels {
     }
 
     fun modelLabel(session: ClaudeSession): String {
-        val id = session.model ?: session.preferredDefaultModel()
+        val id = session.launch.model ?: session.preferredDefaultModel()
         session.models.firstOrNull { it.value == id }?.let { return modelDisplayLabel(it) }
         LegacyModels.labelFor(id)?.let { return it }
         return deriveModelLabel(id)

@@ -30,7 +30,7 @@ internal object JcefComposerOptions {
     }
 
     fun modelJson(session: ClaudeSession) = buildJsonObject {
-        val selectedModel = session.model ?: session.preferredDefaultModel()
+        val selectedModel = session.launch.model ?: session.preferredDefaultModel()
         put("label", JcefModelLabels.modelLabel(session))
         put(
             "options",

@@ -21,8 +21,8 @@ class SessionLiveSettings(
 
     fun changeModel(value: String?) {
         val resolved = if (value == LaunchDefaults.RECOMMENDED_ALIAS) session.preferredDefaultModel() else value
-        val previous = session.model
-        session.model = resolved
+        val previous = session.launch.model
+        session.launch = session.launch.copy(model = resolved)
         if (session.isRunning()) {
             session.controlClient.send({ id -> ControlProtocol.setModelRequest(id, resolved) }) { res ->
                 if (!res.success) edt { revertModel(previous, resolved, res.error) }
@@ -32,8 +32,8 @@ class SessionLiveSettings(
     }
 
     private fun revertModel(previous: String?, attempted: String?, error: String?) {
-        if (session.model != attempted) return
-        session.model = previous
+        if (session.launch.model != attempted) return
+        session.launch = session.launch.copy(model = previous)
         val name = attempted?.let { LegacyModels.labelFor(it) ?: it } ?: "That model"
         val kept = previous?.let { LegacyModels.labelFor(it) ?: it } ?: "the previous model"
         val reason = error?.takeIf { it.isNotBlank() }?.let { " ($it)" }.orEmpty()
@@ -42,17 +42,17 @@ class SessionLiveSettings(
     }
 
     fun changePermissionMode(mode: String) {
-        session.permissionMode = mode
+        session.launch = session.launch.copy(permissionMode = mode)
         ClaudeSettings.getInstance(project).update { it.permissionMode = mode }
         if (session.isRunning()) {
-            val wire = SessionLauncher.binaryPermissionMode(session.permissionMode)
+            val wire = SessionLauncher.binaryPermissionMode(mode)
             write(ControlProtocol.setPermissionModeRequest(ControlProtocol.newRequestId(), wire))
         }
         fireState()
     }
 
     fun changeEffort(value: String?) {
-        session.effort = value
+        session.launch = session.launch.copy(effort = value)
         fireState()
     }
 
@@ -91,9 +91,9 @@ class SessionLiveSettings(
     }
 
     fun changeThinkingTokens(tokens: Int?) {
-        if (tokens == session.thinkingTokens) return
+        if (tokens == session.launch.thinkingTokens) return
         val wasRunning = session.isRunning()
-        session.thinkingTokens = tokens
+        session.launch = session.launch.copy(thinkingTokens = tokens)
         fireState()
         if (wasRunning) {
             val state = if (tokens != null) "on" else "off"
@@ -102,67 +102,25 @@ class SessionLiveSettings(
         }
     }
 
-    fun adopt(settings: ClaudeSettings) {
-        val state = settings.state
-        changeModel(state.model.ifBlank { null })
-        changeEffort(state.effort.ifBlank { null })
-        changePermissionMode(state.permissionMode.ifBlank { "default" })
-        changeThinkingTokens(state.thinkingTokens.takeIf { it > 0 })
-        configureLaunchOptions(
-            allowedTools = state.allowedTools,
-            disallowedTools = state.disallowedTools,
-            settingSources = state.settingSources,
-            includePartialMessages = state.includePartialMessages,
-            ideMcpEnabled = state.ideMcpEnabled,
-            ideMcpTransport = state.ideMcpTransport,
-            ideMcpPort = state.ideMcpPort,
-            customMcpServers = state.customMcpServers,
-            maxTurns = settings.maxTurns,
-            maxBudgetUsd = settings.maxBudgetUsd,
-            fallbackModel = settings.fallbackModel,
-            addDirs = settings.addDirs,
-            betas = settings.betas,
-            strictMcpConfig = settings.strictMcpConfig,
+    fun adopt(next: LaunchOptions) {
+        changeModel(next.model)
+        changeEffort(next.effort)
+        changePermissionMode(next.permissionMode)
+        changeThinkingTokens(next.thinkingTokens)
+        val live = session.launch
+        session.launch = next.copy(
+            model = live.model,
+            effort = live.effort,
+            permissionMode = live.permissionMode,
+            thinkingTokens = live.thinkingTokens,
+            sessionId = live.sessionId,
         )
-    }
-
-    @Suppress("LongParameterList")
-    fun configureLaunchOptions(
-        allowedTools: String,
-        disallowedTools: String,
-        settingSources: String,
-        includePartialMessages: Boolean,
-        ideMcpEnabled: Boolean = false,
-        ideMcpTransport: String = "sse",
-        ideMcpPort: Int = LaunchDefaults.DEFAULT_IDE_MCP_PORT,
-        customMcpServers: String = "",
-        maxTurns: Int? = null,
-        maxBudgetUsd: Double? = null,
-        fallbackModel: String? = null,
-        addDirs: List<String> = emptyList(),
-        betas: String? = null,
-        strictMcpConfig: Boolean = false,
-    ) {
-        session.allowedTools = allowedTools
-        session.disallowedTools = disallowedTools
-        session.settingSources = settingSources
-        session.includePartialMessages = includePartialMessages
-        session.ideMcpEnabled = ideMcpEnabled
-        session.ideMcpTransport = ideMcpTransport.ifBlank { "sse" }
-        session.ideMcpPort = ideMcpPort.takeIf { it in LaunchDefaults.VALID_PORTS } ?: LaunchDefaults.DEFAULT_IDE_MCP_PORT
-        session.customMcpServers = customMcpServers
-        session.maxTurns = maxTurns
-        session.maxBudgetUsd = maxBudgetUsd
-        session.fallbackModel = fallbackModel
-        session.addDirs = addDirs
-        session.betas = betas
-        session.strictMcpConfig = strictMcpConfig
         fireState()
     }
 
     fun cyclePermissionMode() {
         val order = LaunchDefaults.PERMISSION_MODES_CYCLE
-        val idx = order.indexOf(session.permissionMode).let { if (it < 0) 0 else it }
+        val idx = order.indexOf(session.launch.permissionMode).let { if (it < 0) 0 else it }
         changePermissionMode(order[(idx + 1) % order.size])
     }
 }

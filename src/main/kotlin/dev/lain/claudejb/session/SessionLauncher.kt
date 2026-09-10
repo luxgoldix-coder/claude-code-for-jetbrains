@@ -13,28 +13,6 @@ object SessionLauncher {
 
     private const val MCP_SERVER_PLUGIN_ID = "com.intellij.mcpServer"
 
-    data class LaunchOptions(
-        val model: String?,
-        val effort: String?,
-        val permissionMode: String,
-        val thinkingTokens: Int?,
-        val allowedTools: String,
-        val disallowedTools: String,
-        val settingSources: String,
-        val includePartialMessages: Boolean,
-        val ideMcpEnabled: Boolean,
-        val ideMcpTransport: String,
-        val ideMcpPort: Int,
-        val customMcpServers: String,
-        val sessionId: String?,
-        val maxTurns: Int? = null,
-        val maxBudgetUsd: Double? = null,
-        val fallbackModel: String? = null,
-        val addDirs: List<String> = emptyList(),
-        val betas: String? = null,
-        val strictMcpConfig: Boolean = false,
-    )
-
     fun binaryPermissionMode(mode: String): String =
         if (mode == "acceptEdits" || mode == "bypassPermissions") "default" else mode
 

@@ -1,5 +1,6 @@
 package dev.lain.claudejb.process
 
+import dev.lain.claudejb.session.LaunchOptions
 import dev.lain.claudejb.session.SessionLauncher
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -143,21 +144,7 @@ class PluginContextPromptTest {
         assertEquals(1, args.count { it == "--append-system-prompt" }, "appended exactly once")
     }
 
-    private fun minimalOptions() = SessionLauncher.LaunchOptions(
-        model = null,
-        effort = null,
-        permissionMode = "default",
-        thinkingTokens = null,
-        allowedTools = "",
-        disallowedTools = "",
-        settingSources = "",
-        includePartialMessages = false,
-        ideMcpEnabled = false,
-        ideMcpTransport = "sse",
-        ideMcpPort = 64342,
-        customMcpServers = "",
-        sessionId = null,
-    )
+    private fun minimalOptions() = LaunchOptions(settingSources = "", includePartialMessages = false)
 
     private fun assertSameInstance(first: String, second: String) =
         assertTrue(first === second, "the prompt must be one constant, not rebuilt per call")

@@ -138,58 +138,7 @@ class ClaudeSession(
     @Volatile var sessionId: String? = null
         internal set
 
-    @Volatile var model: String? = null
-        internal set
-
-    @Volatile var effort: String? = null
-        internal set
-
-    @Volatile var permissionMode: String = "default"
-        internal set
-
-    @Volatile var thinkingTokens: Int? = null
-        internal set
-
-    @Volatile var allowedTools: String = ""
-        internal set
-
-    @Volatile var disallowedTools: String = ""
-        internal set
-
-    @Volatile var settingSources: String = "user,project,local"
-        internal set
-
-    @Volatile var ideMcpEnabled: Boolean = false
-        internal set
-
-    @Volatile var ideMcpTransport: String = "sse"
-        internal set
-
-    @Volatile var ideMcpPort: Int = LaunchDefaults.DEFAULT_IDE_MCP_PORT
-        internal set
-
-    @Volatile var customMcpServers: String = ""
-        internal set
-
-    @Volatile var includePartialMessages: Boolean = true
-        internal set
-
-    @Volatile var maxTurns: Int? = null
-        internal set
-
-    @Volatile var maxBudgetUsd: Double? = null
-        internal set
-
-    @Volatile var fallbackModel: String? = null
-        internal set
-
-    @Volatile var addDirs: List<String> = emptyList()
-        internal set
-
-    @Volatile var betas: String? = null
-        internal set
-
-    @Volatile var strictMcpConfig: Boolean = false
+    @Volatile var launch: LaunchOptions = LaunchOptions()
         internal set
 
     @Volatile var outputStyle: String = "default"
@@ -384,7 +333,7 @@ class ClaudeSession(
 
     private val broker by lazy {
         PermissionBroker(
-            permissionMode = { permissionMode },
+            permissionMode = { launch.permissionMode },
             respond = ::write,
             onApprovedWrite = { diffs.markForRefresh(it) },
             present = ::presentPermission,
@@ -679,7 +628,7 @@ class ClaudeSession(
                 initialized = true
                 if (info.outputStyle.isNotBlank()) outputStyle = info.outputStyle
                 val pinMissing = info.models.isNotEmpty() && info.models.none { it.value == LaunchDefaults.DEFAULT_MODEL }
-                if (model == LaunchDefaults.DEFAULT_MODEL && pinMissing) {
+                if (launch.model == LaunchDefaults.DEFAULT_MODEL && pinMissing) {
                     settings.changeModel(LaunchDefaults.preferredDefault(info.models))
                 }
                 edt { fireMetadata() }
@@ -687,27 +636,7 @@ class ClaudeSession(
         )
     }
 
-    private fun launchOptions() = SessionLauncher.LaunchOptions(
-        model = model,
-        effort = effort,
-        permissionMode = permissionMode,
-        thinkingTokens = thinkingTokens,
-        allowedTools = allowedTools,
-        disallowedTools = disallowedTools,
-        settingSources = settingSources,
-        includePartialMessages = includePartialMessages,
-        ideMcpEnabled = ideMcpEnabled,
-        ideMcpTransport = ideMcpTransport,
-        ideMcpPort = ideMcpPort,
-        customMcpServers = customMcpServers,
-        maxTurns = maxTurns,
-        maxBudgetUsd = maxBudgetUsd,
-        fallbackModel = fallbackModel,
-        addDirs = addDirs,
-        betas = betas,
-        strictMcpConfig = strictMcpConfig,
-        sessionId = sessionId,
-    )
+    private fun launchOptions() = launch.copy(sessionId = sessionId)
 
     fun restart(resume: Boolean = true) {
         stop()
@@ -1067,9 +996,9 @@ class ClaudeSession(
     private fun onInit(event: ClaudeEvent.Init) {
         sessionId = event.info.sessionId
         agentScanner.restoreAdmitted(onTasksReplayed = ::fireState)
-        if (model == null && event.info.model.isNotBlank()) model = event.info.model
+        if (launch.model == null && event.info.model.isNotBlank()) launch = launch.copy(model = event.info.model)
         if (event.info.outputStyle.isNotBlank()) outputStyle = event.info.outputStyle
-        val ours = SessionLauncher.binaryPermissionMode(permissionMode)
+        val ours = SessionLauncher.binaryPermissionMode(launch.permissionMode)
         if (event.info.permissionMode.isNotBlank() && event.info.permissionMode != ours) {
             write(ControlProtocol.setPermissionModeRequest(ControlProtocol.newRequestId(), ours))
         }

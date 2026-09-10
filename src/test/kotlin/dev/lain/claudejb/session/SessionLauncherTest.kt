@@ -24,7 +24,7 @@ class SessionLauncherTest {
         addDirs: List<String> = emptyList(),
         betas: String? = null,
         strictMcpConfig: Boolean = false,
-    ) = SessionLauncher.LaunchOptions(
+    ) = LaunchOptions(
         model = model,
         effort = effort,
         permissionMode = permissionMode,

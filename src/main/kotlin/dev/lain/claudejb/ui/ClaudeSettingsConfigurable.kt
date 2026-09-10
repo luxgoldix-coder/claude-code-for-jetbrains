@@ -7,6 +7,7 @@ import com.intellij.ui.dsl.builder.panel
 import dev.lain.claudejb.git.GitHistoryService
 import dev.lain.claudejb.session.ChatSessionManager
 import dev.lain.claudejb.session.ClaudeSession
+import dev.lain.claudejb.session.LaunchOptions
 import dev.lain.claudejb.settings.ClaudeSettings
 import javax.swing.JComponent
 
@@ -60,7 +61,7 @@ class ClaudeSettingsConfigurable(private val project: Project) : Configurable {
         val s = settings.state
         sections.forEach { it.apply(s) }
         settings.save()
-        session.settings.adopt(settings)
+        session.settings.adopt(LaunchOptions.from(settings))
         shown = s
     }
 

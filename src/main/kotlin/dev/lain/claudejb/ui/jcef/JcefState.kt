@@ -37,9 +37,9 @@ object JcefState {
 
     fun stateJson(session: ClaudeSession, usage: UsageReport? = null): String {
         val provider = session.provider
-        val mode = session.permissionMode
-        val effort = session.effort
-        val thinkingOn = session.thinkingTokens != null
+        val mode = session.launch.permissionMode
+        val effort = session.launch.effort
+        val thinkingOn = session.launch.thinkingTokens != null
         val context = session.lastContextUsage
 
         val obj = buildJsonObject {

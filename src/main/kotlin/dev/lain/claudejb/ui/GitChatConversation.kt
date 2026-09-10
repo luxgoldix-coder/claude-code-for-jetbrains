@@ -5,6 +5,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import dev.lain.claudejb.session.ChatSessionManager
 import dev.lain.claudejb.session.ClaudeSession
+import dev.lain.claudejb.session.LaunchOptions
 import dev.lain.claudejb.session.SessionListener
 import dev.lain.claudejb.session.TranscriptEntry
 import dev.lain.claudejb.session.TranscriptModel
@@ -53,7 +54,7 @@ internal class GitChatConversation(private val project: Project) :
         current()?.let { return it }
         val chat = ChatSessionManager.getInstance(project).gitChatOrCreate()
         current()
-        chat.settings.adopt(ClaudeSettings.getInstance(project))
+        chat.settings.adopt(LaunchOptions.from(ClaudeSettings.getInstance(project)))
         chat.start()
         broadcast()
         return chat

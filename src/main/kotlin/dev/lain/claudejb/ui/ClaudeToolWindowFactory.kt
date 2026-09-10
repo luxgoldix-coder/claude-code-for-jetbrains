@@ -19,6 +19,7 @@ import dev.lain.claudejb.session.AttentionLanding
 import dev.lain.claudejb.session.AttentionReason
 import dev.lain.claudejb.session.ChatSessionManager
 import dev.lain.claudejb.session.ClaudeSession
+import dev.lain.claudejb.session.LaunchOptions
 import dev.lain.claudejb.session.SessionListener
 import dev.lain.claudejb.settings.ClaudeSettings
 import javax.swing.JComponent
@@ -48,7 +49,7 @@ class ClaudeToolWindowFactory : ToolWindowFactory, DumbAware {
     }
 
     private fun openChat(project: Project, tabs: ChatTabsPanel, session: ClaudeSession, select: Boolean = true) {
-        session.settings.adopt(ClaudeSettings.getInstance(project))
+        session.settings.adopt(LaunchOptions.from(ClaudeSettings.getInstance(project)))
         session.start()
 
         val panel = JcefChatPanel(project, session)

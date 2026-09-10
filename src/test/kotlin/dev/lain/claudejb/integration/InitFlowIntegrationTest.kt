@@ -10,7 +10,7 @@ class InitFlowIntegrationTest : FakeClaudeTestBase() {
             session.sessionId == "11111111-1111-1111-1111-111111111111"
         }
         assertEquals("11111111-1111-1111-1111-111111111111", session.sessionId)
-        assertEquals("claude-opus-4-8", session.model)
+        assertEquals("claude-opus-4-8", session.launch.model)
     }
 
     fun `test modelOptions reflects only binary-reported models (no hardcoded fallback)`() {
