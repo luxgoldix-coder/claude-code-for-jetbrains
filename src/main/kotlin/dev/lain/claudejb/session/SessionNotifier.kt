@@ -27,6 +27,20 @@ class SessionNotifier(private val project: Project) {
             .notify(project)
     }
 
+    fun info(content: String, actionLabel: String, action: () -> Unit) =
+        withAction(content, NotificationType.INFORMATION, actionLabel, action)
+
+    fun warning(content: String, actionLabel: String, action: () -> Unit) =
+        withAction(content, NotificationType.WARNING, actionLabel, action)
+
+    private fun withAction(content: String, type: NotificationType, actionLabel: String, action: () -> Unit) {
+        NotificationGroupManager.getInstance()
+            .getNotificationGroup(PluginIdentity.NOTIFICATION_GROUP)
+            .createNotification("Claude Code", content, type)
+            .addAction(NotificationAction.createSimple(actionLabel) { action() })
+            .notify(project)
+    }
+
     fun missingBinary() {
         NotificationGroupManager.getInstance()
             .getNotificationGroup(PluginIdentity.NOTIFICATION_GROUP)
