@@ -105,8 +105,10 @@ object ScriptExecution {
         return SYSTEM_BIN_DIRS.any { lower.startsWith(it) }
     }
 
+    private val CLOBBER_REDIRECT = Regex(""">\|""")
+
     private fun commandWords(command: String): List<String> =
-        command.split(';', '|', '&', '\n', '(', ')', '{', '}')
+        command.replace(CLOBBER_REDIRECT, ">").split(';', '|', '&', '\n', '(', ')', '{', '}')
             .mapNotNull { segment ->
                 segment.trim().split(' ', '\t').map { it.trim() }.filter { it.isNotEmpty() }
                     .dropWhile { it.equals("sudo", ignoreCase = true) || ASSIGNMENT.matches(it) }
