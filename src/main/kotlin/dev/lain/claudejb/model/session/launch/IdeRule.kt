@@ -164,6 +164,9 @@ enum class IdeRule(val key: String, val server: IdeServer?, val label: String, v
 
         val common: List<IdeRule> get() = entries.filter { it.server == null }
 
+        fun active(rules: Set<IdeRule>, servers: Set<IdeServer>): Set<IdeRule> =
+            if (servers.isEmpty()) emptySet() else rules.filterTo(LinkedHashSet()) { it.server == null || it.server in servers }
+
         fun parse(csv: String): Set<IdeRule> =
             csv.split(',').map { it.trim() }.mapNotNull(::of).toSet()
 

@@ -3,11 +3,8 @@ package dev.lain.claudejb.model.session.launch
 object IdeMcpPrompt {
 
     fun text(rules: Set<IdeRule>, servers: Set<IdeServer>, knownTools: Set<String> = emptySet()): String {
-        if (servers.isEmpty()) return ""
-        val active = rules.filter { rule ->
-            val serverOn = rule.server == null || rule.server in servers
-            val exposed = knownTools.isEmpty() || rule.tools.isEmpty() || rule.tools.any { it in knownTools }
-            serverOn && exposed
+        val active = IdeRule.active(rules, servers).filter { rule ->
+            knownTools.isEmpty() || rule.tools.isEmpty() || rule.tools.any { it in knownTools }
         }
         if (active.isEmpty()) return ""
         val lines = mutableListOf(OPEN, HEADER)

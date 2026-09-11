@@ -26,6 +26,14 @@ class IdeRuleTest {
     }
 
     @Test
+    fun `a rule is active only with its server on, and a common rule only with some server on`() {
+        val picked = setOf(IdeRule.INDEX_READ, IdeRule.DEBUGGER_DEBUG, IdeRule.COMMON_AGENTS)
+        assertEquals(emptySet<IdeRule>(), IdeRule.active(picked, emptySet()))
+        assertEquals(setOf(IdeRule.INDEX_READ, IdeRule.COMMON_AGENTS), IdeRule.active(picked, setOf(IdeServer.INDEX)))
+        assertEquals(picked, IdeRule.active(picked, setOf(IdeServer.INDEX, IdeServer.DEBUGGER)))
+    }
+
+    @Test
     fun `each server owns at least one rule and the third-party servers are named as such`() {
         IdeServer.entries.forEach { assertTrue(IdeRule.forServer(it).isNotEmpty(), it.key) }
         assertTrue(IdeServer.INDEX.thirdParty && IdeServer.DEBUGGER.thirdParty && !IdeServer.JETBRAINS.thirdParty)

@@ -46,6 +46,8 @@ interface ComposerState {
   guardOn?: boolean;
   remoteControlOn?: boolean;
   remoteControlError?: string | null;
+  ideIntegrationOn?: boolean;
+  ideRulesOn?: number;
   queue?: unknown[];
   suggestion?: unknown;
   thinkingStatus?: string | null;
@@ -293,6 +295,7 @@ interface SettingsNs {
   allRows(): SettingsRow[];
   applyState(row: HTMLElement, on: boolean): void;
   enterGroup(path: string): void;
+  openGroup(path: string): void;
   leaveGroup(): void;
   close(returnFocus: boolean): void;
   buildBody(): DocumentFragment;
@@ -364,10 +367,13 @@ interface ComposerNs {
   autosize(input: HTMLTextAreaElement | HTMLInputElement | null): void;
   setGuardOn(on: boolean | undefined): void;
   setRemoteControlOn(on: boolean | undefined, error: unknown): void;
+  setIdeIntegration(on: boolean | undefined, rules: unknown): void;
+  robotGlyph(powered: boolean): string;
   buildToggles(barRight: HTMLElement): {
     follow: HTMLElement;
     guard: HTMLElement;
     rc: HTMLElement;
+    robot: HTMLElement;
     vibe: HTMLElement;
   };
   applyFollow(): void;

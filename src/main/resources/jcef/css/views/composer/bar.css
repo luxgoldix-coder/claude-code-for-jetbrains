@@ -90,6 +90,13 @@
 .bar-icon.failed {
   color: var(--danger);
 }
+.bar-icon.robot .robot-face {
+  fill: var(--surface2);
+}
+.bar-icon.robot.active {
+  color: #e6b422;
+  filter: drop-shadow(0 0 3px rgba(245, 197, 24, 0.75));
+}
 .bar-icon .vibe-emoji {
   font-size: 16px;
   line-height: 1;

@@ -2,6 +2,8 @@ package dev.lain.claudejb.view.payload.menu
 
 import dev.lain.claudejb.model.permission.vocab.SecurityRule
 import dev.lain.claudejb.model.protocol.models.ModelInfo
+import dev.lain.claudejb.model.session.launch.IdeRule
+import dev.lain.claudejb.model.session.launch.IdeServer
 import dev.lain.claudejb.model.settings.ClaudeSettings
 import dev.lain.claudejb.model.settings.guard.SecuritySuspensions
 import kotlinx.serialization.json.JsonObject
@@ -47,7 +49,7 @@ class JcefSettingsMenuTest {
         assertEquals(
             listOf(
                 "Model", "Effort", "Permission mode", "Remote control", "Chat", "Guard mode", "Security",
-                "Setting sources", "Allowed tools", "Disallowed tools", "Always allowed tools", "MCP",
+                "Setting sources", "Allowed tools", "Disallowed tools", "Always allowed tools", "MCP", "IDE rules",
             ),
             menu().map { it.str("group") }.distinct(),
         )
@@ -69,7 +71,7 @@ class JcefSettingsMenuTest {
             assertTrue(rows.none { it.bool("deferred") }, "$group takes effect immediately")
         }
 
-        listOf("Setting sources", "Allowed tools", "Disallowed tools", "MCP").forEach { group ->
+        listOf("Setting sources", "Allowed tools", "Disallowed tools", "MCP", "IDE rules").forEach { group ->
             val rows = byGroup.getValue(group)
             assertTrue(rows.all { it.str("type") == "check" }, "$group must be a checkbox group")
             assertTrue(rows.all { it.bool("deferred") }, "$group only applies to a new chat")
@@ -235,6 +237,28 @@ class JcefSettingsMenuTest {
 
         assertTrue(write(state, "reduceMotion", true))
         assertTrue(state.reduceMotion)
+    }
+
+    @Test
+    fun `the IDE servers and their rules are rows too, grouped by server, and write the ideMcp state`() {
+        val state = ClaudeSettings.State().apply { ideMcp.rules = "index.read" }
+        val rows = menu(state).filter { it.str("group") == "IDE rules" }
+
+        assertEquals(IdeRule.entries.size, rows.size)
+        assertEquals(IdeServer.INDEX.label, rows.first { it.str("key") == "iderule:index.read" }.str("sub"))
+        assertEquals("Always", rows.first { it.str("key") == "iderule:common.agents" }.str("sub"))
+        assertEquals(listOf("iderule:index.read"), rows.filter { it.bool("on") }.map { it.str("key") })
+
+        assertTrue(write(state, "iderule:debugger.debug", true))
+        assertEquals("index.read,debugger.debug", state.ideMcp.rules)
+        assertTrue(write(state, "iderule:index.read", false))
+        assertEquals("debugger.debug", state.ideMcp.rules)
+        assertFalse(write(state, "iderule:index.nope", true))
+
+        assertTrue(write(state, "indexMcp", true))
+        assertTrue(state.ideMcp.indexEnabled)
+        assertTrue(write(state, "debuggerMcp", true))
+        assertTrue(state.ideMcp.debuggerEnabled)
     }
 
     @Test

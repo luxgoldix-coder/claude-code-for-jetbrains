@@ -54,6 +54,7 @@ internal object PageAssembly {
         "models/composer/settings/data.js",
         "views/composer/settings/rows.js",
         "controllers/composer/settings.js",
+        "views/composer/robot.js",
         "views/composer/toggles.js",
         "controllers/composer/send.js",
         "controllers/composer/composer.js",

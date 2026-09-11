@@ -6,6 +6,8 @@ import dev.lain.claudejb.model.permission.vocab.SecurityRule
 import dev.lain.claudejb.model.protocol.EffortLevel
 import dev.lain.claudejb.model.protocol.PermissionMode
 import dev.lain.claudejb.model.protocol.models.ModelInfo
+import dev.lain.claudejb.model.session.launch.IdeRule
+import dev.lain.claudejb.model.session.launch.IdeServer
 import dev.lain.claudejb.model.session.transcript.ToolNaming
 import dev.lain.claudejb.model.settings.ClaudeSettings
 import dev.lain.claudejb.model.settings.LaunchDefaults
@@ -18,6 +20,7 @@ import dev.lain.claudejb.view.payload.menu.JcefSettingsMenu.APPROVAL
 import dev.lain.claudejb.view.payload.menu.JcefSettingsMenu.DENY
 import dev.lain.claudejb.view.payload.menu.JcefSettingsMenu.EFFORT
 import dev.lain.claudejb.view.payload.menu.JcefSettingsMenu.GUARD_MODE
+import dev.lain.claudejb.view.payload.menu.JcefSettingsMenu.IDE_RULE
 import dev.lain.claudejb.view.payload.menu.JcefSettingsMenu.MODE
 import dev.lain.claudejb.view.payload.menu.JcefSettingsMenu.MODEL
 import dev.lain.claudejb.view.payload.menu.JcefSettingsMenu.REMOTE_CONTROL
@@ -56,6 +59,7 @@ internal object SettingsMenuRows {
         toolRows(DENY, "Disallowed tools", state.disallowedTools, deferred = true)
         toolRows(ALWAYS, "Always allowed tools", state.alwaysAllowTools, deferred = false)
         mcpRows(state)
+        ideRuleRows(state)
     }
 
     private fun JsonArrayBuilder.modelRows(selected: Selected) {
@@ -133,7 +137,17 @@ internal object SettingsMenuRows {
 
     private fun JsonArrayBuilder.mcpRows(s: ClaudeSettings.State) {
         entry("ideMcp", "MCP", "JetBrains MCP server", s.ideMcpEnabled, deferred = true)
+        entry("indexMcp", "MCP", IdeServer.INDEX.label, s.ideMcp.indexEnabled, deferred = true)
+        entry("debuggerMcp", "MCP", IdeServer.DEBUGGER.label, s.ideMcp.debuggerEnabled, deferred = true)
         entry("strictMcp", "MCP", "Only the MCP servers configured here", s.strictMcpConfig, deferred = true)
+    }
+
+    private fun JsonArrayBuilder.ideRuleRows(s: ClaudeSettings.State) {
+        val on = IdeRule.parse(s.ideMcp.rules)
+        IdeRule.entries.forEach { rule ->
+            val sub = rule.server?.label ?: IDE_RULES_COMMON
+            entry(IDE_RULE + ":" + rule.key, IDE_RULES, rule.label, rule in on, deferred = true, sub = sub)
+        }
     }
 
     private fun JsonArrayBuilder.entry(
@@ -167,4 +181,6 @@ internal object SettingsMenuRows {
 
     private const val TYPE_CHECK = "check"
     private const val TYPE_RADIO = "radio"
+    private const val IDE_RULES = "IDE rules"
+    private const val IDE_RULES_COMMON = "Always"
 }

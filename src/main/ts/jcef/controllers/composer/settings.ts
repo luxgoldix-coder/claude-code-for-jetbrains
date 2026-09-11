@@ -64,6 +64,12 @@
     refreshFromHost();
   };
 
+  ST.openGroup = function (path: string): void {
+    if (!btn) CX.mountSettingsButton();
+    if (!menu) open();
+    ST.enterGroup(path);
+  };
+
   ST.leaveGroup = function (): void {
     const came = String(ST.view);
     const cut = came.lastIndexOf(ST.SEP);

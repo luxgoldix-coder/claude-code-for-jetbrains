@@ -14,6 +14,30 @@
   let rcOn = false;
   let rcError: string | null = null;
   let rcBtnRef: HTMLElement | null = null;
+  let ideOn = false;
+  let ideRules = 0;
+  let robotBtnRef: HTMLElement | null = null;
+
+  function applyIdeIntegration(): void {
+    if (!robotBtnRef) return;
+    robotBtnRef.classList.toggle('active', ideOn);
+    robotBtnRef.innerHTML = CX.robotGlyph(ideOn);
+    robotBtnRef.title = ideOn
+      ? 'IDE integration is on — ' +
+        ideRules +
+        (ideRules === 1 ? ' IDE rule' : ' IDE rules') +
+        ' active. Click to change them'
+      : "IDE integration is off — click to connect Claude to the IDE's MCP servers";
+  }
+
+  CX.setIdeIntegration = function (on: boolean | undefined, rules: unknown): void {
+    const next = on === true;
+    const count = typeof rules === 'number' && rules > 0 ? rules : 0;
+    if (next === ideOn && count === ideRules) return;
+    ideOn = next;
+    ideRules = count;
+    applyIdeIntegration();
+  };
 
   function applyFollow(): void {
     if (followBtnRef) {
@@ -152,6 +176,20 @@
     rcBtnRef = rcBtn;
     applyRemoteControl();
 
+    const robotBtn = h('button', {
+      class: 'bar-icon robot',
+      attrs: { type: 'button', 'aria-label': 'IDE integration' },
+      on: {
+        click: function (e: Event) {
+          e.preventDefault();
+          e.stopPropagation();
+          CX.settings.openGroup('IDE rules');
+        },
+      },
+    });
+    robotBtnRef = robotBtn;
+    applyIdeIntegration();
+
     const guardMenu = CC.durationMenu({
       anchor: guardBtn,
       home: barRight,
@@ -172,6 +210,6 @@
     });
 
     applyGuard();
-    return { follow: followBtn, guard: guardBtn, rc: rcBtn, vibe: vibeBtn };
+    return { follow: followBtn, guard: guardBtn, rc: rcBtn, robot: robotBtn, vibe: vibeBtn };
   };
 })();
