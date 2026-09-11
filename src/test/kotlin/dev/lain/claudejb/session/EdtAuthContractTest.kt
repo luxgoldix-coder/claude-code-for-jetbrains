@@ -108,7 +108,7 @@ class EdtAuthContractTest {
 
     private fun bodyOf(file: File, signature: String): List<String> {
         val lines = file.readLines()
-        val from = lines.indexOfFirst { it.startsWith(INDENT) && it.trimStart().startsWith(signature) }
+        val from = lines.indexOfFirst { it.startsWith(INDENT) && it.trimStart().removePrefix(PRIVATE).startsWith(signature) }
         assertTrue(from >= 0) { "no `$signature` declared at member level in ${file.path}" }
         val length = lines.drop(from).indexOfFirst { it == CLOSING_BRACE }
         assertTrue(length > 0) { "`$signature` in ${file.path} has no closing brace at member level" }
@@ -130,6 +130,7 @@ class EdtAuthContractTest {
         const val EDT_HOP = "edt {"
 
         const val INDENT = "    "
+        const val PRIVATE = "private "
         const val CLOSING_BRACE = "    }"
 
         val SESSION_LIFECYCLE = source("SessionLifecycle.kt")
