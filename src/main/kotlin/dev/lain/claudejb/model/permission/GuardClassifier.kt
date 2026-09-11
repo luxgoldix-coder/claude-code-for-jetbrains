@@ -140,10 +140,13 @@ internal object GuardClassifier {
 
         if (projRoot == null) return null
         val certain = policy.pathProbe == null || commitsToDisk(input)
+        val mounted = mountHosts(input, projRoot, policy)
         return ToolInputScanner.locationCandidates(input, policy.home, policy.envValues)
             .mapNotNull { GuardPaths.absoluteForm(it, projRoot) }
             .filterNot { ScriptExecution.inSystemBinDir(it) || SystemDevices.isDeviceNode(it) }
-            .firstOrNull { !GuardPaths.under(it, projRoot, policy.caseInsensitivePaths) && (certain || present(it, policy)) }
+            .firstOrNull {
+                !GuardPaths.under(it, projRoot, policy.caseInsensitivePaths) && (certain || it in mounted || present(it, policy))
+            }
             ?.let { Hit(SecurityRule.OUTSIDE_PROJECT, "reaches outside the project: $it") }
     }
 
@@ -151,6 +154,12 @@ internal object GuardClassifier {
         stringField(input, CONTENT_KEY) != null ||
             ShellFileWrites.shellFileWrite(input) != null ||
             ToolInputScanner.commandCandidates(input).any { ContainerMounts.writesHost(it) }
+
+    private fun mountHosts(input: JsonObject, projRoot: String, policy: Policy): Set<String> =
+        ToolInputScanner.commandCandidates(input)
+            .flatMap { ContainerMounts.hostSides(CommandRules.deobfuscate(it, policy.home, policy.envValues)) }
+            .mapNotNull { GuardPaths.absoluteForm(GuardPaths.normalize(it, policy.home, policy.envValues), projRoot) }
+            .toSet()
 
     private fun present(path: String, policy: Policy): Boolean =
         path.indexOf(':', PATH_LIST_COLON_FROM) >= 0 || policy.pathProbe?.invoke(path) != PathPresence.MISSING

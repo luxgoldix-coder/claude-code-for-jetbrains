@@ -109,6 +109,9 @@ class RealAccessTest : GuardProbe(GuardFixture.basePolicy().copy(guardedRoots = 
             "kubectl cp mypod:/var/log/app.log ./app.log",
             "kubectl cp /home/me/proj/x default/mypod:/tmp/x",
             "oc cp ns/pod:/etc/config ./config",
+            "docker run --rm -v /data alpine ls /data",
+            "docker run -v mydata:/var/lib/data img",
+            "docker run --mount type=volume,source=mydata,target=/data img",
         ).forEach { assertEquals(Verdict.ALLOW, v(bash(it), probing), it) }
     }
 
