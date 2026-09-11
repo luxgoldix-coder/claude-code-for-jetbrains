@@ -1,6 +1,5 @@
 package dev.lain.claudejb.view.payload.chat
 
-import dev.lain.claudejb.model.mcp.OwnTools
 import dev.lain.claudejb.model.permission.vocab.SecurityRule
 import dev.lain.claudejb.model.session.transcript.EntryDTO
 import dev.lain.claudejb.model.session.transcript.Speaker
@@ -37,9 +36,7 @@ object JcefTranscriptPayload {
     }
 
     private fun kotlinx.serialization.json.JsonObjectBuilder.cardFlags(e: TranscriptEntry) {
-        if (e.speaker != Speaker.TOOL) return
-        if (OwnTools.isOwn(e.meta)) put("open", true)
-        if (e.toolUseId != null && e.meta in REVIEWABLE_TOOLS) put("reviewable", true)
+        if (e.speaker == Speaker.TOOL && e.toolUseId != null && e.meta in REVIEWABLE_TOOLS) put("reviewable", true)
     }
 
     private val REVIEWABLE_TOOLS = setOf("Edit", "Write", "MultiEdit")

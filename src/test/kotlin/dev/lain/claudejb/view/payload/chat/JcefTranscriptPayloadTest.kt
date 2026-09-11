@@ -60,17 +60,12 @@ class JcefTranscriptPayloadTest {
     }
 
     @Test
-    fun `an own tool card is open from its first frame`() {
-        val entry = TranscriptEntry(1, Speaker.TOOL, "code ▸ search_text", meta = "mcp__code__run", toolUseId = "tu_own")
-
-        assertTrue(JcefTranscriptPayload.entryJson(entry, 0).toString().contains("\"open\":true"))
-    }
-
-    @Test
-    fun `a third-party tool card stays collapsed until its result asks otherwise`() {
+    fun `every tool card starts collapsed, an own one included, so only its args line shows until clicked`() {
+        val own = TranscriptEntry(1, Speaker.TOOL, "code ▸ search_text", meta = "mcp__code__run", toolUseId = "tu_own")
         val bash = TranscriptEntry(2, Speaker.TOOL, "Bash(ls)", meta = "Bash", toolUseId = "tu_bash")
         val output = TranscriptEntry(3, Speaker.TOOL_OUTPUT, "rows", meta = "mcp__code__run", toolUseId = "tu_own")
 
+        assertFalse(JcefTranscriptPayload.entryJson(own, 0).toString().contains("\"open\""))
         assertFalse(JcefTranscriptPayload.entryJson(bash, 0).toString().contains("\"open\""))
         assertFalse(JcefTranscriptPayload.entryJson(output, 1).toString().contains("\"open\""))
     }
