@@ -15,7 +15,7 @@ object EnvIndirection {
 
     private val FOR_VAR = Regex("""\bfor\s+(?:\(\(\s*)?([A-Za-z_][A-Za-z0-9_]*)\b""")
     private val READ_STMT = Regex("""\bread\b([^;&|\n]*)""")
-    private val LOCAL_ASSIGN = Regex("""(?:^|[\s;&|(])([A-Za-z_][A-Za-z0-9_]*)=""")
+    private val LOCAL_ASSIGN = Regex("""(?:^|[\s;&|(])(?:set\s+)?"?([A-Za-z_][A-Za-z0-9_]*)=""")
 
     internal class Verdict(val rule: SecurityRule, val text: String)
 
