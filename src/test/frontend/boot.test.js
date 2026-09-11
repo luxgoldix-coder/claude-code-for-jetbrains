@@ -7,24 +7,21 @@ describe('boot screen', () => {
   });
 
   const boot = () => win.document.getElementById('boot');
-  const app = () => win.document.getElementById('app');
 
   it('is declared in the static shell and starts visible', () => {
     expect(boot()).toBeTruthy();
     expect(boot().hidden).toBe(false);
   });
 
-  it('stays up while the session is starting, and blocks input', () => {
+  it('stays up while the session is starting', () => {
     win.cc.state({ starting: true, running: false });
     expect(boot().hidden).toBe(false);
-    expect(app().classList.contains('booting')).toBe(true);
   });
 
   it('comes down once the process is running', () => {
     win.cc.state({ starting: true, running: false });
     win.cc.state({ starting: false, running: true });
     expect(boot().hidden).toBe(true);
-    expect(app().classList.contains('booting')).toBe(false);
   });
 
   it('stays up when the launch FAILED — the chat is not reachable without a session', () => {

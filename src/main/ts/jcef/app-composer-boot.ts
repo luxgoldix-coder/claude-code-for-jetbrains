@@ -13,7 +13,6 @@
 
   CX.renderBoot = function (s: ComposerState): void {
     const boot = document.getElementById('boot');
-    const app = document.getElementById('app');
     if (!boot) return;
     const missing = !!s.binaryMissing;
     const awaitingAuth = CX.authWanted(s);
@@ -26,7 +25,6 @@
       CC.announce && CC.announce('Loading Claude Code');
     }
     if (!showBoot) announcedBoot = false;
-    if (app) app.classList.toggle('booting', booting);
     CC.coverTranscript && CC.coverTranscript('waiting', showBoot || awaitingAuth);
     const card = document.getElementById('boot-missing');
     if (card) card.hidden = !missing;
