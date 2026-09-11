@@ -252,7 +252,6 @@ interface SettingItem {
   type?: unknown;
   on?: boolean;
   hostOwned?: boolean;
-  deferred?: boolean;
 }
 
 interface SettingsPanel {

@@ -10,22 +10,33 @@ class LaunchOptionsTest {
 
     @Test
     fun `the MCP configuration is read at launch, so any MCP field that changes differs`() {
-        assertTrue(base.mcpDiffers(base.copy(ideMcpEnabled = false)))
-        assertTrue(base.mcpDiffers(base.copy(ideMcpTransport = "streamable-http")))
-        assertTrue(base.mcpDiffers(base.copy(ideMcpPort = 64343)))
-        assertTrue(base.mcpDiffers(base.copy(customMcpServers = """{"b":{}}""")))
-        assertTrue(base.mcpDiffers(base.copy(strictMcpConfig = true)))
+        assertTrue(base.relaunchDiffers(base.copy(ideMcpEnabled = false)))
+        assertTrue(base.relaunchDiffers(base.copy(ideMcpTransport = "streamable-http")))
+        assertTrue(base.relaunchDiffers(base.copy(ideMcpPort = 64343)))
+        assertTrue(base.relaunchDiffers(base.copy(customMcpServers = """{"b":{}}""")))
+        assertTrue(base.relaunchDiffers(base.copy(strictMcpConfig = true)))
     }
 
     @Test
     fun `our own servers and their sockets ride the launch too, so they differ as well`() {
-        assertTrue(base.mcpDiffers(base.copy(ideIntegration = true)))
-        assertTrue(base.mcpDiffers(base.copy(ideSockets = mapOf(IdeServer.CODE to "/tmp/x/code.sock"))))
+        assertTrue(base.relaunchDiffers(base.copy(ideIntegration = true)))
+        assertTrue(base.relaunchDiffers(base.copy(ideSockets = mapOf(IdeServer.CODE to "/tmp/x/code.sock"))))
     }
 
     @Test
-    fun `a change the binary takes live is not an MCP difference`() {
-        assertFalse(base.mcpDiffers(base.copy(model = "opus", permissionMode = "plan", effort = "high", thinkingTokens = 8)))
-        assertFalse(base.mcpDiffers(base))
+    fun `the tool filters and the other flags only reach the binary as arguments, so they differ`() {
+        assertTrue(base.relaunchDiffers(base.copy(allowedTools = "Bash,Read")))
+        assertTrue(base.relaunchDiffers(base.copy(disallowedTools = "WebFetch")))
+        assertTrue(base.relaunchDiffers(base.copy(settingSources = "user")))
+        assertTrue(base.relaunchDiffers(base.copy(includePartialMessages = false)))
+        assertTrue(base.relaunchDiffers(base.copy(maxTurns = 3, maxBudgetUsd = 1.0, fallbackModel = "haiku")))
+        assertTrue(base.relaunchDiffers(base.copy(addDirs = listOf("/tmp/x"), betas = "b")))
+    }
+
+    @Test
+    fun `a change the binary takes live, and the session identity, are not a relaunch`() {
+        assertFalse(base.relaunchDiffers(base.copy(model = "opus", permissionMode = "plan", effort = "high", thinkingTokens = 8)))
+        assertFalse(base.relaunchDiffers(base.copy(sessionId = "s-1", fork = true)))
+        assertFalse(base.relaunchDiffers(base))
     }
 }

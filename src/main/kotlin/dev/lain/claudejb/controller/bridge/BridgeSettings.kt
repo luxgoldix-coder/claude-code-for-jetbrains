@@ -2,6 +2,7 @@ package dev.lain.claudejb.controller.bridge
 
 import com.intellij.openapi.options.ShowSettingsUtil
 import dev.lain.claudejb.controller.commands.LivePanels
+import dev.lain.claudejb.controller.session.ChatSessionManager
 import dev.lain.claudejb.model.bridge.Msg
 import dev.lain.claudejb.model.settings.ClaudeSettings
 import dev.lain.claudejb.model.settings.LaunchDefaults
@@ -9,7 +10,6 @@ import dev.lain.claudejb.model.settings.Provider
 import dev.lain.claudejb.util.thisLogger
 import dev.lain.claudejb.view.feed.ChatTheme
 import dev.lain.claudejb.view.payload.menu.JcefSettingsMenu
-import dev.lain.claudejb.view.payload.menu.SettingsMenuApply
 import dev.lain.claudejb.view.settings.ClaudeSettingsConfigurable
 import dev.lain.claudejb.view.window.JcefChatPanel
 
@@ -76,7 +76,7 @@ internal class BridgeSettings(private val panel: JcefChatPanel) {
         val models = session.catalog.models.map { it.value }
         if (!JcefSettingsMenu.apply(scope, settings.state, m.key, m.on, models)) return false
         settings.update { JcefSettingsMenu.apply(scope, it, m.key, m.on, models) }
-        SettingsMenuApply.toSession(session, m.key, m.on)
+        ChatSessionManager.getInstance(panel.project).adoptSettings()
         return true
     }
 }

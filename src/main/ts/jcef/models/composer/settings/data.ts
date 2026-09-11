@@ -99,7 +99,6 @@
         it.key,
         ST.labelOf(it),
         ST.isRadio(it) ? 'r' : 'c',
-        it.deferred ? '1' : '0',
       ];
       sig += f.join(ST.SEP) + '|';
     }

@@ -9,8 +9,6 @@
 
   let groupSeq = 0;
 
-  const DEFER_NOTE = 'Applies to new chats';
-
   function settingRow(it: SettingItem, group: string): SettingsRow {
     const radio = ST.isRadio(it);
     const on = !!it.on;
@@ -101,18 +99,9 @@
       },
       h('span', { class: 'menu-item-label', text: name })
     ) as SettingsRow;
-    if (isDeferred(list)) {
-      row.appendChild(h('span', { class: 'settings-defer', text: DEFER_NOTE }));
-    }
     row.appendChild(h('span', { class: 'menu-group-caret', attrs: { 'aria-hidden': 'true' } }));
     row.__ccFocusId = 'g' + ST.SEP + path;
     return row;
-  }
-
-  function isDeferred(list: SettingItem[]): boolean {
-    return list.some(function (it) {
-      return !!it.deferred;
-    });
   }
 
   function groupHead(name: string): HTMLElement {

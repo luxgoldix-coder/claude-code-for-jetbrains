@@ -55,9 +55,9 @@ internal object SettingsMenuRows {
         securityRows(scope, state)
         sessionApprovalRows(selected.approvals)
         sourceRows(state)
-        toolRows(ALLOW, "Allowed tools", state.allowedTools, deferred = true)
-        toolRows(DENY, "Disallowed tools", state.disallowedTools, deferred = true)
-        toolRows(ALWAYS, "Always allowed tools", state.alwaysAllowTools, deferred = false)
+        toolRows(ALLOW, "Allowed tools", state.allowedTools)
+        toolRows(DENY, "Disallowed tools", state.disallowedTools)
+        toolRows(ALWAYS, "Always allowed tools", state.alwaysAllowTools)
         mcpRows(state)
         godModeRows(state)
     }
@@ -125,23 +125,23 @@ internal object SettingsMenuRows {
     private fun JsonArrayBuilder.sourceRows(s: ClaudeSettings.State) {
         LaunchDefaults.SETTING_SOURCES.forEach { source ->
             val label = source.replaceFirstChar { it.uppercase() }
-            entry("$SOURCE:$source", "Setting sources", label, JcefSettingsMenu.csvHas(s.settingSources, source), deferred = true)
+            entry("$SOURCE:$source", "Setting sources", label, JcefSettingsMenu.csvHas(s.settingSources, source))
         }
     }
 
-    private fun JsonArrayBuilder.toolRows(prefix: String, group: String, csv: String, deferred: Boolean) {
+    private fun JsonArrayBuilder.toolRows(prefix: String, group: String, csv: String) {
         ToolNaming.BUILTIN_TOOLS.forEach { tool ->
-            entry("$prefix:$tool", group, tool, JcefSettingsMenu.csvHas(csv, tool), deferred = deferred)
+            entry("$prefix:$tool", group, tool, JcefSettingsMenu.csvHas(csv, tool))
         }
     }
 
     private fun JsonArrayBuilder.mcpRows(s: ClaudeSettings.State) {
-        entry("ideMcp", "MCP", IdeServer.JETBRAINS.label, s.ideMcpEnabled, deferred = true)
-        entry("strictMcp", "MCP", "Only the MCP servers configured here", s.strictMcpConfig, deferred = true)
+        entry("ideMcp", "MCP", IdeServer.JETBRAINS.label, s.ideMcpEnabled)
+        entry("strictMcp", "MCP", "Only the MCP servers configured here", s.strictMcpConfig)
     }
 
     private fun JsonArrayBuilder.godModeRows(s: ClaudeSettings.State) {
-        entry(GOD_MODE, GodMode.LABEL, GodMode.TAGLINE, GodMode.isOn(s), deferred = true)
+        entry(GOD_MODE, GodMode.LABEL, GodMode.TAGLINE, GodMode.isOn(s))
     }
 
     private fun JsonArrayBuilder.entry(
@@ -150,7 +150,6 @@ internal object SettingsMenuRows {
         label: String,
         on: Boolean,
         radio: Boolean = false,
-        deferred: Boolean = false,
         sub: String? = null,
         hostOwned: Boolean = false,
     ) = addJsonObject {
@@ -160,7 +159,6 @@ internal object SettingsMenuRows {
         put("label", label)
         put("on", on)
         put("type", if (radio) TYPE_RADIO else TYPE_CHECK)
-        put("deferred", deferred)
         if (hostOwned) put("hostOwned", true)
     }
 

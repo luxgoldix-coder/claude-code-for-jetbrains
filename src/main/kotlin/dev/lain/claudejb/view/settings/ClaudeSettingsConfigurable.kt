@@ -1,14 +1,11 @@
 package dev.lain.claudejb.view.settings
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.ui.dsl.builder.panel
 import dev.lain.claudejb.controller.commands.CleanSettings
-import dev.lain.claudejb.controller.git.GitHistoryService
 import dev.lain.claudejb.controller.session.ChatSessionManager
 import dev.lain.claudejb.controller.session.ClaudeSession
-import dev.lain.claudejb.model.session.launch.LaunchOptions
 import dev.lain.claudejb.model.settings.ClaudeSettings
 import dev.lain.claudejb.view.settings.sections.SettingsAdvancedSection
 import dev.lain.claudejb.view.settings.sections.SettingsExecutableSection
@@ -72,7 +69,7 @@ class ClaudeSettingsConfigurable(private val project: Project) : Configurable {
         val s = settings.state
         sections.forEach { it.apply(s) }
         settings.save()
-        session.settings.adopt(LaunchOptions.from(settings))
+        ChatSessionManager.getInstance(project).adoptSettings()
         shown = s
     }
 

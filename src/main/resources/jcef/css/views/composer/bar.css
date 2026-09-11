@@ -202,20 +202,6 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.settings-defer {
-  flex: 0 0 auto;
-  margin-left: auto;
-  font-size: 10px;
-  line-height: 14px;
-  color: var(--dim);
-  border: 1px solid var(--border);
-  border-radius: 3px;
-  padding: 0 4px;
-  white-space: nowrap;
-}
-.settings-defer + .menu-group-caret {
-  margin-left: 0;
-}
 .settings-item {
   width: 100%;
   box-sizing: border-box;

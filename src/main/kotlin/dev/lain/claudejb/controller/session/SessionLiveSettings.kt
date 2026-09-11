@@ -24,7 +24,7 @@ class SessionLiveSettings(
 ) {
 
     fun changeModel(value: String?, persist: Boolean = true) {
-        val resolved = if (value == LaunchDefaults.RECOMMENDED_ALIAS) session.catalog.preferredDefaultModel() else value
+        val resolved = resolve(value)
         val previous = session.launch.model
         session.launch = session.launch.copy(model = resolved)
         if (persist) ClaudeSettings.getInstance(project).update { it.model = value.orEmpty() }
@@ -110,11 +110,12 @@ class SessionLiveSettings(
     }
 
     fun adopt(next: LaunchOptions) {
-        val mcpChanged = session.launch.mcpDiffers(next)
-        val thinkingChanged = session.launch.thinkingTokens != next.thinkingTokens
-        changeModel(next.model, persist = false)
-        changeEffort(next.effort, persist = false)
-        changePermissionMode(next.permissionMode)
+        val before = session.launch
+        val relaunch = before.relaunchDiffers(next)
+        val thinkingChanged = before.thinkingTokens != next.thinkingTokens
+        if (resolve(before.model) != resolve(next.model)) changeModel(next.model, persist = false)
+        if (before.effort != next.effort) changeEffort(next.effort, persist = false)
+        if (before.permissionMode != next.permissionMode) changePermissionMode(next.permissionMode)
         changeThinkingTokens(next.thinkingTokens, persist = false)
         val live = session.launch
         session.launch = next.copy(
@@ -125,9 +126,12 @@ class SessionLiveSettings(
             sessionId = live.sessionId,
         )
         fireState()
-        if (mcpChanged && !thinkingChanged && session.isRunning()) {
-            session.systemNotice("MCP servers changed — restarting session.")
+        if (relaunch && !thinkingChanged && session.isRunning()) {
+            session.systemNotice("Launch settings changed — restarting session.")
             session.restart(resume = true)
         }
     }
+
+    private fun resolve(value: String?): String? =
+        if (value == LaunchDefaults.RECOMMENDED_ALIAS) session.catalog.preferredDefaultModel() else value
 }

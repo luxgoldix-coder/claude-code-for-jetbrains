@@ -28,14 +28,10 @@ data class LaunchOptions(
     val fork: Boolean = false,
 ) {
 
-    fun mcpDiffers(other: LaunchOptions): Boolean =
-        ideMcpEnabled != other.ideMcpEnabled ||
-            ideMcpTransport != other.ideMcpTransport ||
-            ideMcpPort != other.ideMcpPort ||
-            customMcpServers != other.customMcpServers ||
-            strictMcpConfig != other.strictMcpConfig ||
-            ideIntegration != other.ideIntegration ||
-            ideSockets != other.ideSockets
+    fun relaunchDiffers(other: LaunchOptions): Boolean = argvOnly() != other.argvOnly()
+
+    private fun argvOnly(): LaunchOptions =
+        copy(model = null, effort = null, permissionMode = "", thinkingTokens = null, sessionId = null, fork = false)
 
     companion object {
 

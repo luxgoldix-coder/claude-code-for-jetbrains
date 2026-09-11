@@ -8,8 +8,8 @@ const payload = () => ({
     { key: 'effort:low', group: 'Effort', label: 'Low', on: false, type: 'radio' },
     { key: 'blockCredentials', group: 'Security', label: 'Block credential files', on: true },
     { key: 'sandbox', group: 'Security', label: 'Sandbox commands', on: false },
-    { key: 'source:user', group: 'Setting sources', label: 'user', on: true, deferred: true },
-    { key: 'source:project', group: 'Setting sources', label: 'project', on: false, deferred: true },
+    { key: 'source:user', group: 'Setting sources', label: 'user', on: true },
+    { key: 'source:project', group: 'Setting sources', label: 'project', on: false },
   ],
 });
 
@@ -48,7 +48,7 @@ const nestedPayload = () => ({
       label: 'Block shell writes',
       on: true,
     },
-    { key: 'source:user', group: 'Setting sources', label: 'user', on: true, deferred: true },
+    { key: 'source:user', group: 'Setting sources', label: 'user', on: true },
   ],
 });
 
@@ -278,7 +278,7 @@ describe('the sections', () => {
       'Model',
       'Effort',
       'Security',
-      'Setting sourcesApplies to new chats',
+      'Setting sources',
       'Open Plugin Settings',
     ]);
     expect(q.focused()).toBe('Model');
@@ -356,14 +356,9 @@ describe('the sections', () => {
     expect(fresh.sent.filter((m) => m.type === 'settingsRefresh')).toHaveLength(2);
   });
 
-  it('a deferred section says so in text, on the entry, before you go in', () => {
-    const note = q.entry('Setting sources').querySelector('.settings-defer');
-    expect(note).toBeTruthy();
-    expect(note.textContent).toBe('Applies to new chats');
-    expect(note.getAttribute('aria-hidden')).toBeNull();
-    expect(q.entry('Setting sources').textContent).toContain('Applies to new chats');
-    expect(q.entry('Security').querySelector('.settings-defer')).toBeNull();
-    expect(q.entry('Model').querySelector('.settings-defer')).toBeNull();
+  it('no section carries a deferral note: every switch reaches the open chats', () => {
+    expect(q.entry('Setting sources').textContent).toBe('Setting sources');
+    expect(q.win.document.querySelector('.settings-defer')).toBeNull();
   });
 });
 
@@ -669,14 +664,6 @@ describe('host pushes while the menu is open and while it is shut', () => {
     expect(q.row('Block credential files').getAttribute('role')).toBe('menuitemradio');
   });
 
-  it('a push that changes only `deferred` DOES rebuild, and the note appears', () => {
-    q.win.cc.settingsMenu(payload());
-    q.gear().click();
-    expect(q.entry('Security').querySelector('.settings-defer')).toBeNull();
-    q.win.cc.settingsMenu({ items: withField((it) => it.group === 'Security', { deferred: true }) });
-    expect(q.entry('Security').querySelector('.settings-defer')).toBeTruthy();
-  });
-
   it('a state-only push updates the rows in place, keeping the focus', () => {
     q.win.cc.settingsMenu(payload());
     q.gear().click();
@@ -752,11 +739,6 @@ describe('the row’s CSS contract', () => {
     expect(rule).toMatch(/text-align:\s*left/);
     expect(rule).not.toMatch(/\bcolor\s*:/);
     expect(rule).not.toMatch(/font-size\s*:/);
-  });
-
-  it('the deferred note is a rule of its own and cannot be squeezed out by the caret', () => {
-    expect(ruleBody('.settings-defer')).toMatch(/margin-left:\s*auto/);
-    expect(ruleBody('.settings-defer + .menu-group-caret')).toMatch(/margin-left:\s*0/);
   });
 
   it('the row label is what is capped, not the panel', () => {

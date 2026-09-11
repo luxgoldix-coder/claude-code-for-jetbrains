@@ -55,26 +55,24 @@ class JcefSettingsMenuTest {
     }
 
     @Test
-    fun `each row carries the type and the deferral of its group`() {
+    fun `each row carries the type of its group, and none is deferred to a new chat`() {
         val byGroup = menu().groupBy { it.str("group") }
 
         listOf("Model", "Effort", "Permission mode").forEach { group ->
-            val rows = byGroup.getValue(group)
-            assertTrue(rows.all { it.str("type") == "radio" }, "$group must be a radio group")
-            assertTrue(rows.none { it.bool("deferred") }, "$group takes effect on the live session")
+            assertTrue(byGroup.getValue(group).all { it.str("type") == "radio" }, group + " must be a radio group")
         }
 
-        listOf("Chat", "Remote control", "Security", "Always allowed tools").forEach { group ->
-            val rows = byGroup.getValue(group)
-            assertTrue(rows.all { it.str("type") == "check" }, "$group must be a checkbox group")
-            assertTrue(rows.none { it.bool("deferred") }, "$group takes effect immediately")
+        listOf(
+            "Chat", "Remote control", "Security", "Always allowed tools",
+            "Setting sources", "Allowed tools", "Disallowed tools", "MCP", "Claude God Mode",
+        ).forEach { group ->
+            assertTrue(byGroup.getValue(group).all { it.str("type") == "check" }, group + " must be a checkbox group")
         }
 
-        listOf("Setting sources", "Allowed tools", "Disallowed tools", "MCP", "Claude God Mode").forEach { group ->
-            val rows = byGroup.getValue(group)
-            assertTrue(rows.all { it.str("type") == "check" }, "$group must be a checkbox group")
-            assertTrue(rows.all { it.bool("deferred") }, "$group only applies to a new chat")
-        }
+        assertTrue(
+            menu().none { "deferred" in it.keys },
+            "every switch reaches the open chats; nothing waits for a new one",
+        )
     }
 
     @Test
@@ -247,7 +245,6 @@ class JcefSettingsMenuTest {
         assertEquals("godMode", row.str("key"))
         assertEquals("Claude becomes one with your IDE", row.str("label"))
         assertFalse(row.bool("on"), "the JetBrains server alone is not God Mode")
-        assertTrue(row.bool("deferred"), "the servers and the prompt ride the next chat")
 
         assertTrue(write(state, "godMode", true))
         assertTrue(state.ideMcp.enabled)
