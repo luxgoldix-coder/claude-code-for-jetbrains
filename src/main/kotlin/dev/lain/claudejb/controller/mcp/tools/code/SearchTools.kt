@@ -3,7 +3,6 @@ package dev.lain.claudejb.controller.mcp.tools.code
 import com.intellij.find.FindModel
 import com.intellij.find.impl.FindInProjectUtil
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.IndexNotReadyException
@@ -79,7 +78,7 @@ internal class SearchTools(private val project: Project, private val io: Corouti
         if (document != null) {
             val line = document.getLineNumber(info.navigationOffset)
             put("line", line + 1)
-            put("text", lineText(document, line))
+            put("text", Locations.lineText(document, line))
         }
     }
 
@@ -115,13 +114,7 @@ internal class SearchTools(private val project: Project, private val io: Corouti
         return out.sorted()
     }
 
-    private fun relative(file: VirtualFile): String {
-        val base = project.basePath ?: return file.path
-        return file.path.removePrefix("$base/")
-    }
-
-    private fun lineText(document: Document, line: Int): String =
-        document.immutableCharSequence.subSequence(document.getLineStartOffset(line), document.getLineEndOffset(line)).toString().trim()
+    private fun relative(file: VirtualFile): String = Locations.relative(project, file)
 
     companion object {
 

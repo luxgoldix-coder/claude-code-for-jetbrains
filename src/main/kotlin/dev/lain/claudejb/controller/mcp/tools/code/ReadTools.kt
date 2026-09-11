@@ -30,7 +30,7 @@ internal class ReadTools(private val project: Project) {
         val limit = args.int("limit", DEFAULT_LIMIT)
         if (offset < 1 || limit < 1) throw ToolException("offset and limit start at 1")
         return readAction {
-            val file = resolve(path)
+            val file = resolveFile(project, path)
             val text = FileDocumentManager.getInstance().getDocument(file)?.immutableCharSequence?.toString()
                 ?: String(file.contentsToByteArray(), file.charset)
             val lines = text.lines()
@@ -48,14 +48,14 @@ internal class ReadTools(private val project: Project) {
         }
     }
 
-    private fun resolve(path: String): VirtualFile {
-        val file = locate(project, path)
-        if (file.isDirectory) throw ToolException("$path is a directory")
-        if (file.fileType.isBinary) throw ToolException("$path is binary")
-        return file
-    }
-
     companion object {
+
+        fun resolveFile(project: Project, path: String): VirtualFile {
+            val file = locate(project, path)
+            if (file.isDirectory) throw ToolException("$path is a directory")
+            if (file.fileType.isBinary) throw ToolException("$path is binary")
+            return file
+        }
 
         fun resolveDirectory(project: Project, path: String): VirtualFile {
             val dir = locate(project, path)
