@@ -13,6 +13,7 @@ import dev.lain.claudejb.controller.mcp.tools.code.OutlineTools
 import dev.lain.claudejb.controller.mcp.tools.code.ReadTools
 import dev.lain.claudejb.controller.mcp.tools.code.RefactorTools
 import dev.lain.claudejb.controller.mcp.tools.code.SearchTools
+import dev.lain.claudejb.controller.mcp.tools.ops.ServiceTools
 import dev.lain.claudejb.controller.mcp.tools.run.BreakpointTools
 import dev.lain.claudejb.controller.mcp.tools.run.BuildTools
 import dev.lain.claudejb.controller.mcp.tools.run.DebugTools
@@ -29,7 +30,7 @@ import kotlinx.coroutines.CoroutineScope
 
 internal object IdeToolCatalog {
 
-    private val DOMAINS: Map<IdeServer, List<(Project, CoroutineScope) -> ToolDomain>> = mapOf(
+    private val DOMAINS: Map<IdeServer, List<(Project, CoroutineScope) -> ToolDomain?>> = mapOf(
         IdeServer.CODE to listOf(
             { p, _ -> ReadTools(p).domain() },
             { p, _ -> SearchTools(p).domain() },
@@ -56,12 +57,15 @@ internal object IdeToolCatalog {
             { p, _ -> GitWriteTools(p).domain() },
             { p, s -> ForgeTools(p, IdeActions(p, s)).domain() },
         ),
+        IdeServer.OPS to listOf(
+            { p, s -> ServiceTools(p, s).domain() },
+        ),
     )
 
     private val REQUIRES: Map<IdeServer, () -> Boolean> = mapOf(IdeServer.VCS to GitAvailability::isGitPluginEnabled)
 
     fun catalog(server: IdeServer, project: Project, scope: CoroutineScope): ToolCatalog {
         if (REQUIRES[server]?.invoke() == false) return ToolCatalog(emptyList())
-        return ToolCatalog(DOMAINS[server].orEmpty().map { it(project, scope) })
+        return ToolCatalog(DOMAINS[server].orEmpty().mapNotNull { it(project, scope) })
     }
 }
