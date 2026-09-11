@@ -28,7 +28,7 @@ class SessionGuard(
 
     val approvals = GuardCommandApprovals()
 
-    val log = GuardLogTally()
+    val guardLog = GuardLogTally()
 
     private val alerts = CopyOnWriteArrayList<GuardAlert>()
 
@@ -147,7 +147,7 @@ class SessionGuard(
         val retention = settings.state.guardLogRetentionDays
         AppExecutorUtil.getAppExecutorService().execute {
             val submitted = GuardAlertLog.record(scope, alert, retentionDays = retention)
-            log.submitted(submitted != null)
+            guardLog.submitted(submitted != null)
         }
     }
 

@@ -15,8 +15,8 @@ internal class GuardFeed(private val panel: JcefChatPanel) {
     fun push() {
         val scope = scope()
         val sessionId = panel.session.sessionId
-        val recorded = panel.session.guard.log.recorded
-        val dropped = panel.session.guard.log.dropped
+        val recorded = panel.session.guard.guardLog.recorded
+        val dropped = panel.session.guard.guardLog.dropped
         offEdt {
             val json = JcefGuardData.guardJson(
                 alerts = read(scope, sessionId),
