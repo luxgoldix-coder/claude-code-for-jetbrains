@@ -32,7 +32,8 @@ that, and the plugin serves them.
 - The only thing that degrades is a **missing plugin** (Docker, `com.intellij.database`,
   `com.jetbrains.restClient`), never a missing platform version.
 - **No deprecated and no internal APIs.** The only tolerable warning is `@ApiStatus.Experimental`.
-  `@ApiStatus.Internal` is not: it does not even promise to stabilise.
+  `@ApiStatus.Internal` is not: it does not even promise to stabilise. The forbidden symbols, each with its
+  replacement, are in [`docs/PLATFORM_API_POLICY.md`](docs/PLATFORM_API_POLICY.md).
 
 ## Token cost
 
