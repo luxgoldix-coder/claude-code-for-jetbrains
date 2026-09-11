@@ -19,6 +19,7 @@ import dev.lain.claudejb.ui.jcef.JcefSessionData
 import dev.lain.claudejb.ui.jcef.JcefSettingsMenu
 import dev.lain.claudejb.ui.jcef.JcefState
 import dev.lain.claudejb.ui.jcef.JcefTheme
+import dev.lain.claudejb.ui.jcef.SettingsMenuRows
 import dev.lain.claudejb.util.edt
 import dev.lain.claudejb.vuln.VulnService
 import java.awt.BorderLayout

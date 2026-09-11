@@ -8,7 +8,7 @@ object GuardWhitelists {
     enum class Listed { RULE, CATEGORY, EVERYWHERE }
 
     fun all(state: ClaudeSettings.State, rule: SecurityRule): List<String> =
-        byRule(state.securityRuleWhitelists)[rule].orEmpty() +
+        byRule(state.securityRuleWhitelists)[rule].orEmpty().toList() +
             byCategory(state.securityCategoryWhitelists)[rule.category].orEmpty() +
             commands(state.securityCommandWhitelist)
 

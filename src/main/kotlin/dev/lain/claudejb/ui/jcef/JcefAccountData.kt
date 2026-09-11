@@ -13,7 +13,7 @@ internal object JcefAccountData {
 
     fun accountJson(session: ClaudeSession): JsonObject? = accountJson(
         session.catalog.account,
-        session.auth.status,
+        session.lifecycle.auth.status,
         AuthCli.stored(),
         CredentialsVault.subscriptionType(),
         AccountProfile.read(),
