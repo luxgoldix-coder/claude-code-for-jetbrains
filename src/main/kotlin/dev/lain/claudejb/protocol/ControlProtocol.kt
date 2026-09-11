@@ -99,9 +99,6 @@ object ControlProtocol {
             },
         )
 
-    fun initializeRequest(requestId: String): String =
-        controlRequest(requestId, buildJsonObject { put("subtype", "initialize") })
-
     fun renameSessionRequest(requestId: String, title: String): String =
         controlRequest(
             requestId,

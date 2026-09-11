@@ -4,7 +4,7 @@ val SecurityRule.blockedReason: String get() = BLOCKED.getValue(this).reason
 
 val SecurityRule.blockedWhy: String get() = BLOCKED.getValue(this).why
 
-internal class BlockText(val reason: String, val why: String)
+private class BlockText(val reason: String, val why: String)
 
 private val BLOCKED: Map<SecurityRule, BlockText> = mapOf(
     SecurityRule.CREDENTIALS to BlockText(
