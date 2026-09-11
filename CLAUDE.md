@@ -1,4 +1,8 @@
-t# Project rules
+# Project rules
+
+> **Read [`DIRECTIVES.md`](DIRECTIVES.md) before starting.** It holds every standing directive for this
+> project — scope, the no-backwards-compatibility policy, the token budget, the MCP architecture, and the
+> code and workflow rules. This file holds only what is absolutely forbidden.
 
 ## ⛔ NO COMMENTS IN THE CODE
 
