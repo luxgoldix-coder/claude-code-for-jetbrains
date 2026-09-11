@@ -33,11 +33,47 @@
 
   function fileLink(file: string, line: unknown): HTMLElement {
     const text = line ? file + ':' + line : file;
-    const a = el('a', { class: 'jb-link', text: text, attrs: { href: TX.jbHref(file, line), title: 'Open ' + text } });
+    const a = el('a', {
+      class: 'jb-link',
+      text: text,
+      attrs: { href: TX.jbHref(file, line), title: 'Open ' + text },
+    });
     a.addEventListener('click', function (e) {
       e.stopPropagation();
     });
     return a;
+  }
+
+  const DIFF_LINE = /^(diff --git|--- |\+\+\+ |@@ )/;
+
+  function isDiff(text: string): boolean {
+    return DIFF_LINE.test(text);
+  }
+
+  function diffLineClass(line: string): string {
+    if (line.startsWith('@@')) return 'hunk';
+    if (
+      line.startsWith('+++') ||
+      line.startsWith('---') ||
+      line.startsWith('diff ') ||
+      line.startsWith('index ')
+    )
+      return 'meta';
+    if (line.startsWith('+')) return 'add';
+    if (line.startsWith('-')) return 'del';
+    return 'ctx';
+  }
+
+  function diffBlock(text: string): HTMLElement {
+    const node = el('pre', { class: 'toon-diff' });
+    text.split('\n').forEach(function (line) {
+      node.appendChild(el('span', { class: 'toon-diff-' + diffLineClass(line), text: line + '\n' }));
+    });
+    return node;
+  }
+
+  function multiline(text: string): HTMLElement {
+    return isDiff(text) ? diffBlock(text) : el('pre', { class: 'toon-block', text: text });
   }
 
   function cell(row: Row, key: string, tag: string): HTMLElement {
@@ -47,6 +83,8 @@
       node.appendChild(fileLink(value, row.line));
     } else if (Array.isArray(value) || isRow(value)) {
       node.appendChild(render(value));
+    } else if (typeof value === 'string' && value.indexOf('\n') >= 0) {
+      node.appendChild(multiline(value));
     } else {
       node.textContent = scalar(value);
     }
@@ -98,7 +136,9 @@
     const node = el('div', { class: 'toon-fields' });
     Object.keys(row).forEach(function (key) {
       const value = row[key];
-      const field = el('div', { class: 'toon-field' + (Array.isArray(value) || isRow(value) ? ' toon-nested' : '') });
+      const nested =
+        Array.isArray(value) || isRow(value) || (typeof value === 'string' && value.indexOf('\n') >= 0);
+      const field = el('div', { class: 'toon-field' + (nested ? ' toon-nested' : '') });
       field.appendChild(el('span', { class: 'toon-key', text: key }));
       field.appendChild(cell(row, key, 'span'));
       node.appendChild(field);

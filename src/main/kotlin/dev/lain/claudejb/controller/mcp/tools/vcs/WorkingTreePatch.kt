@@ -22,6 +22,11 @@ internal object WorkingTreePatch {
         }
         val writer = StringWriter()
         UnifiedDiffWriter.write(project, patches, writer, "\n", null)
-        return Unified(patches.size, writer.toString())
+        return Unified(patches.size, stripIdeHeaders(writer.toString()))
     }
+
+    fun stripIdeHeaders(patch: String): String =
+        patch.lineSequence().filterNot { line -> IDE_HEADERS.any { line.startsWith(it) } }.joinToString("\n")
+
+    private val IDE_HEADERS = listOf("Index: ", "IDEA additional info:", "Subsystem: ", "<+>", "====")
 }

@@ -6,7 +6,11 @@ function row(id, order, speaker, text, extra = {}) {
 
 function withOwnCall(win, output) {
   win.cc.batch([
-    row(1, 0, 'TOOL', 'code ▸ find_symbols', { meta: 'mcp__code__run', toolUseId: 't1', message: 'query: Mcp' }),
+    row(1, 0, 'TOOL', 'code ▸ find_symbols', {
+      meta: 'mcp__code__run',
+      toolUseId: 't1',
+      message: 'query: Mcp',
+    }),
     row(2, 1, 'TOOL_OUTPUT', output, { meta: 'toon', toolUseId: 't1' }),
   ]);
   return win.document.querySelector('.tool');
@@ -29,7 +33,12 @@ describe('a result from one of our own servers is drawn from its data, not paste
 
     const table = card.querySelector('.tool-out .toon table.toon-table');
     expect(table).not.toBeNull();
-    expect([...table.querySelectorAll('th')].map((th) => th.textContent)).toEqual(['name', 'kind', 'file', 'in']);
+    expect([...table.querySelectorAll('th')].map((th) => th.textContent)).toEqual([
+      'name',
+      'kind',
+      'file',
+      'in',
+    ]);
     const link = table.querySelector('tbody tr td.toon-file a.jb-link');
     expect(link.textContent).toBe('src/A.kt:11');
     expect(link.getAttribute('href')).toBe('jb://open?file=src%2FA.kt&line=11');
@@ -38,7 +47,10 @@ describe('a result from one of our own servers is drawn from its data, not paste
 
   it('the scalars around the table stay readable as fields, and a flag reads as a mark', () => {
     const win = loadFrontend(['app-transcript.js']);
-    const card = withOwnCall(win, JSON.stringify({ path: 'src/A.kt', count: 2, truncated: true, problems: [] }));
+    const card = withOwnCall(
+      win,
+      JSON.stringify({ path: 'src/A.kt', count: 2, truncated: true, problems: [] })
+    );
 
     const keys = [...card.querySelectorAll('.toon-fields .toon-key')].map((k) => k.textContent);
     expect(keys).toEqual(['path', 'count', 'truncated', 'problems']);
@@ -51,6 +63,20 @@ describe('a result from one of our own servers is drawn from its data, not paste
 
     expect(card.querySelector('table')).toBeNull();
     expect(card.querySelectorAll('.toon-list > li .toon-fields').length).toBe(2);
+  });
+
+  it('a multi-line value keeps its lines, and a unified diff is drawn as a diff', () => {
+    const win = loadFrontend(['app-transcript.js']);
+    const diff = 'diff --git a/x.kt b/x.kt\n--- a/x.kt\n+++ b/x.kt\n@@ -1,2 +1,2 @@\n-old\n+new\n same';
+    const card = withOwnCall(win, JSON.stringify({ path: 'x.kt', files: 1, diff: diff, notes: 'one\ntwo' }));
+
+    const block = card.querySelector('.toon-diff .toon-diff');
+    expect(block).not.toBeNull();
+    expect(block.querySelector('.toon-diff-add').textContent).toBe('+new\n');
+    expect(block.querySelector('.toon-diff-del').textContent).toBe('-old\n');
+    expect(block.querySelector('.toon-diff-hunk').textContent).toBe('@@ -1,2 +1,2 @@\n');
+    expect(card.querySelector('.toon-notes pre.toon-block').textContent).toBe('one\ntwo');
+    expect(card.querySelector('.toon-field.toon-nested .toon-key').textContent).toBe('diff');
   });
 
   it('what is not JSON is shown as it came', () => {

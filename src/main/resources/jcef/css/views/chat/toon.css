@@ -55,3 +55,31 @@
 .toon-scalar {
   font-family: var(--mono);
 }
+.toon-block,
+.toon-diff {
+  margin: 0;
+  padding: 6px 8px;
+  font-family: var(--mono);
+  white-space: pre;
+  overflow: auto;
+  max-height: 420px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+.toon-diff span {
+  display: block;
+}
+.toon-diff-add {
+  color: var(--ok, #4caf50);
+  background: rgba(76, 175, 80, 0.08);
+}
+.toon-diff-del {
+  color: var(--err, #ef5350);
+  background: rgba(239, 83, 80, 0.08);
+}
+.toon-diff-hunk {
+  color: var(--accent, #64b5f6);
+}
+.toon-diff-meta {
+  color: var(--dim);
+}
