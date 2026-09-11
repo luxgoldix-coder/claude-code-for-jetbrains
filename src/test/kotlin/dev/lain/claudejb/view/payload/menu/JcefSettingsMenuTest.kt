@@ -49,7 +49,7 @@ class JcefSettingsMenuTest {
         assertEquals(
             listOf(
                 "Model", "Effort", "Permission mode", "Remote control", "Chat", "Guard mode", "Security",
-                "Setting sources", "Allowed tools", "Disallowed tools", "Always allowed tools", "MCP", "IDE rules",
+                "Setting sources", "Allowed tools", "Disallowed tools", "Always allowed tools", "MCP", "Claude God Mode",
             ),
             menu().map { it.str("group") }.distinct(),
         )
@@ -71,7 +71,7 @@ class JcefSettingsMenuTest {
             assertTrue(rows.none { it.bool("deferred") }, "$group takes effect immediately")
         }
 
-        listOf("Setting sources", "Allowed tools", "Disallowed tools", "MCP", "IDE rules").forEach { group ->
+        listOf("Setting sources", "Allowed tools", "Disallowed tools", "MCP", "Claude God Mode").forEach { group ->
             val rows = byGroup.getValue(group)
             assertTrue(rows.all { it.str("type") == "check" }, "$group must be a checkbox group")
             assertTrue(rows.all { it.bool("deferred") }, "$group only applies to a new chat")
@@ -240,9 +240,36 @@ class JcefSettingsMenuTest {
     }
 
     @Test
+    fun `God Mode is one switch that turns every IDE server and every rule on, and off again`() {
+        val state = ClaudeSettings.State().apply { ideMcp.rules = "index.read" }
+        val row = menu(state).single { it.str("key") == "godMode" }
+
+        assertEquals("Claude God Mode", row.str("group"))
+        assertEquals("Claude becomes one with your IDE", row.str("label"))
+        assertFalse(row.bool("on"), "one rule of many is not God Mode")
+        assertTrue(row.bool("deferred"), "the servers and the prompt ride the next chat")
+
+        assertTrue(write(state, "godMode", true))
+        assertTrue(state.ideMcpEnabled)
+        assertTrue(state.ideMcp.indexEnabled)
+        assertTrue(state.ideMcp.debuggerEnabled)
+        assertEquals(IdeRule.entries.toSet(), IdeRule.parse(state.ideMcp.rules))
+        assertTrue(menu(state).single { it.str("key") == "godMode" }.bool("on"))
+
+        assertTrue(write(state, "iderule:index.read", false))
+        assertFalse(menu(state).single { it.str("key") == "godMode" }.bool("on"), "one rule off is no longer God Mode")
+
+        assertTrue(write(state, "godMode", false))
+        assertFalse(state.ideMcpEnabled)
+        assertFalse(state.ideMcp.indexEnabled)
+        assertFalse(state.ideMcp.debuggerEnabled)
+        assertEquals("", state.ideMcp.rules)
+    }
+
+    @Test
     fun `the IDE servers and their rules are rows too, grouped by server, and write the ideMcp state`() {
         val state = ClaudeSettings.State().apply { ideMcp.rules = "index.read" }
-        val rows = menu(state).filter { it.str("group") == "IDE rules" }
+        val rows = menu(state).filter { it.str("group") == "Claude God Mode" && it.str("key") != "godMode" }
 
         assertEquals(IdeRule.entries.size, rows.size)
         assertEquals(IdeServer.INDEX.label, rows.first { it.str("key") == "iderule:index.read" }.str("sub"))

@@ -14,29 +14,34 @@
   let rcOn = false;
   let rcError: string | null = null;
   let rcBtnRef: HTMLElement | null = null;
-  let ideOn = false;
+  let godOn = false;
   let ideRules = 0;
-  let robotBtnRef: HTMLElement | null = null;
+  let flameBtnRef: HTMLElement | null = null;
+  let godSwitchRef: HTMLElement | null = null;
 
-  function applyIdeIntegration(): void {
-    if (!robotBtnRef) return;
-    robotBtnRef.classList.toggle('active', ideOn);
-    robotBtnRef.innerHTML = CX.robotGlyph(ideOn);
-    robotBtnRef.title = ideOn
-      ? 'IDE integration is on — ' +
-        ideRules +
-        (ideRules === 1 ? ' IDE rule' : ' IDE rules') +
-        ' active. Click to change them'
-      : "IDE integration is off — click to connect Claude to the IDE's MCP servers";
+  function godSwitchLabel(): string {
+    return godOn ? 'Turn God Mode off' : 'Turn God Mode on';
   }
 
-  CX.setIdeIntegration = function (on: boolean | undefined, rules: unknown): void {
+  function applyGodMode(): void {
+    if (!flameBtnRef) return;
+    flameBtnRef.classList.toggle('active', godOn);
+    flameBtnRef.innerHTML = CX.flameGlyph(godOn);
+    flameBtnRef.title = godOn
+      ? 'Claude God Mode is on — Claude is one with your IDE. Click to switch it off or configure it'
+      : 'Claude God Mode is off' +
+        (ideRules > 0 ? ' — ' + ideRules + (ideRules === 1 ? ' IDE rule' : ' IDE rules') + ' on' : '') +
+        '. Click to make Claude one with your IDE';
+    if (godSwitchRef) godSwitchRef.textContent = godSwitchLabel();
+  }
+
+  CX.setGodMode = function (on: boolean | undefined, rules: unknown): void {
     const next = on === true;
     const count = typeof rules === 'number' && rules > 0 ? rules : 0;
-    if (next === ideOn && count === ideRules) return;
-    ideOn = next;
+    if (next === godOn && count === ideRules) return;
+    godOn = next;
     ideRules = count;
-    applyIdeIntegration();
+    applyGodMode();
   };
 
   function applyFollow(): void {
@@ -176,19 +181,38 @@
     rcBtnRef = rcBtn;
     applyRemoteControl();
 
-    const robotBtn = h('button', {
-      class: 'bar-icon robot',
-      attrs: { type: 'button', 'aria-label': 'IDE integration' },
-      on: {
-        click: function (e: Event) {
-          e.preventDefault();
-          e.stopPropagation();
-          CX.settings.openGroup('IDE rules');
-        },
+    const flameBtn = h('button', {
+      class: 'bar-icon flame',
+      attrs: {
+        type: 'button',
+        'aria-label': 'Claude God Mode',
+        'aria-expanded': 'false',
+        'aria-haspopup': 'menu',
       },
     });
-    robotBtnRef = robotBtn;
-    applyIdeIntegration();
+    flameBtnRef = flameBtn;
+    const godMenu = CC.pickMenu({
+      anchor: flameBtn,
+      home: barRight,
+      label: 'Claude God Mode menu',
+      menuClass: 'god-mode-menu',
+      itemClass: 'god-mode-option',
+      items: [
+        { value: 'switch', label: godSwitchLabel() },
+        { value: 'configure', label: 'Configure God Mode' },
+      ],
+      onPick: function (value) {
+        if (value === 'switch') send({ type: 'settingsToggle', key: 'godMode', on: !godOn });
+        else CX.settings.openGroup('Claude God Mode');
+      },
+    });
+    godSwitchRef = godMenu.menu.querySelector('[role="menuitem"]');
+    flameBtn.addEventListener('click', function (e: Event) {
+      e.preventDefault();
+      e.stopPropagation();
+      godMenu.toggle();
+    });
+    applyGodMode();
 
     const guardMenu = CC.durationMenu({
       anchor: guardBtn,
@@ -210,6 +234,6 @@
     });
 
     applyGuard();
-    return { follow: followBtn, guard: guardBtn, rc: rcBtn, robot: robotBtn, vibe: vibeBtn };
+    return { follow: followBtn, guard: guardBtn, rc: rcBtn, flame: flameBtn, vibe: vibeBtn };
   };
 })();

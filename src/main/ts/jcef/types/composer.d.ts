@@ -46,7 +46,7 @@ interface ComposerState {
   guardOn?: boolean;
   remoteControlOn?: boolean;
   remoteControlError?: string | null;
-  ideIntegrationOn?: boolean;
+  godModeOn?: boolean;
   ideRulesOn?: number;
   queue?: unknown[];
   suggestion?: unknown;
@@ -367,13 +367,13 @@ interface ComposerNs {
   autosize(input: HTMLTextAreaElement | HTMLInputElement | null): void;
   setGuardOn(on: boolean | undefined): void;
   setRemoteControlOn(on: boolean | undefined, error: unknown): void;
-  setIdeIntegration(on: boolean | undefined, rules: unknown): void;
-  robotGlyph(powered: boolean): string;
+  setGodMode(on: boolean | undefined, rules: unknown): void;
+  flameGlyph(lit: boolean): string;
   buildToggles(barRight: HTMLElement): {
     follow: HTMLElement;
     guard: HTMLElement;
     rc: HTMLElement;
-    robot: HTMLElement;
+    flame: HTMLElement;
     vibe: HTMLElement;
   };
   applyFollow(): void;

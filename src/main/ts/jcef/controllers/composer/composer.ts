@@ -64,7 +64,7 @@
     const barRight = h('div', { class: 'bar-right' });
     const toggles = CX.buildToggles(barRight);
     barRight.appendChild(toggles.rc);
-    barRight.appendChild(toggles.robot);
+    barRight.appendChild(toggles.flame);
     barRight.appendChild(toggles.guard);
     barRight.appendChild(toggles.follow);
     barRight.appendChild(toggles.vibe);
@@ -154,7 +154,7 @@
     CX.announceTurnState(s);
     CX.setGuardOn(s.guardOn);
     CX.setRemoteControlOn(s.remoteControlOn, s.remoteControlError);
-    CX.setIdeIntegration(s.ideIntegrationOn, s.ideRulesOn);
+    CX.setGodMode(s.godModeOn, s.ideRulesOn);
     CX.renderAuth(s);
     CX.renderSendMode(s);
     CX.renderPills(s);

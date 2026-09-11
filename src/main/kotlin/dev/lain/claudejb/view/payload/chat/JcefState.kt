@@ -3,6 +3,7 @@ package dev.lain.claudejb.view.payload.chat
 import dev.lain.claudejb.controller.session.ClaudeSession
 import dev.lain.claudejb.model.protocol.models.RateLimitInfo
 import dev.lain.claudejb.model.protocol.models.UsageReport
+import dev.lain.claudejb.model.session.launch.GodMode
 import dev.lain.claudejb.model.session.launch.IdeRule
 import dev.lain.claudejb.model.session.launch.SessionLauncher
 import dev.lain.claudejb.model.session.transcript.StatusLineFormatter
@@ -70,7 +71,7 @@ object JcefState {
             put("remoteControlError", session.remote.error)
 
             val ideServers = SessionLauncher.ideServers(session.launch)
-            put("ideIntegrationOn", ideServers.isNotEmpty())
+            put("godModeOn", GodMode.isOn(settings.state))
             put("ideRulesOn", IdeRule.active(session.launch.ideRules, ideServers).size)
 
             put("provider", JcefComposerOptions.providerJson(settings.provider))

@@ -6,6 +6,7 @@ import dev.lain.claudejb.model.permission.vocab.SecurityRule
 import dev.lain.claudejb.model.protocol.EffortLevel
 import dev.lain.claudejb.model.protocol.PermissionMode
 import dev.lain.claudejb.model.protocol.models.ModelInfo
+import dev.lain.claudejb.model.session.launch.GodMode
 import dev.lain.claudejb.model.session.launch.IdeRule
 import dev.lain.claudejb.model.session.launch.IdeServer
 import dev.lain.claudejb.model.session.transcript.ToolNaming
@@ -19,6 +20,7 @@ import dev.lain.claudejb.view.payload.menu.JcefSettingsMenu.ALWAYS
 import dev.lain.claudejb.view.payload.menu.JcefSettingsMenu.APPROVAL
 import dev.lain.claudejb.view.payload.menu.JcefSettingsMenu.DENY
 import dev.lain.claudejb.view.payload.menu.JcefSettingsMenu.EFFORT
+import dev.lain.claudejb.view.payload.menu.JcefSettingsMenu.GOD_MODE
 import dev.lain.claudejb.view.payload.menu.JcefSettingsMenu.GUARD_MODE
 import dev.lain.claudejb.view.payload.menu.JcefSettingsMenu.IDE_RULE
 import dev.lain.claudejb.view.payload.menu.JcefSettingsMenu.MODE
@@ -59,7 +61,7 @@ internal object SettingsMenuRows {
         toolRows(DENY, "Disallowed tools", state.disallowedTools, deferred = true)
         toolRows(ALWAYS, "Always allowed tools", state.alwaysAllowTools, deferred = false)
         mcpRows(state)
-        ideRuleRows(state)
+        godModeRows(state)
     }
 
     private fun JsonArrayBuilder.modelRows(selected: Selected) {
@@ -142,11 +144,12 @@ internal object SettingsMenuRows {
         entry("strictMcp", "MCP", "Only the MCP servers configured here", s.strictMcpConfig, deferred = true)
     }
 
-    private fun JsonArrayBuilder.ideRuleRows(s: ClaudeSettings.State) {
+    private fun JsonArrayBuilder.godModeRows(s: ClaudeSettings.State) {
+        entry(GOD_MODE, GodMode.LABEL, GodMode.TAGLINE, GodMode.isOn(s), deferred = true)
         val on = IdeRule.parse(s.ideMcp.rules)
         IdeRule.entries.forEach { rule ->
             val sub = rule.server?.label ?: IDE_RULES_COMMON
-            entry(IDE_RULE + ":" + rule.key, IDE_RULES, rule.label, rule in on, deferred = true, sub = sub)
+            entry(IDE_RULE + ":" + rule.key, GodMode.LABEL, rule.label, rule in on, deferred = true, sub = sub)
         }
     }
 
@@ -181,6 +184,5 @@ internal object SettingsMenuRows {
 
     private const val TYPE_CHECK = "check"
     private const val TYPE_RADIO = "radio"
-    private const val IDE_RULES = "IDE rules"
     private const val IDE_RULES_COMMON = "Always"
 }

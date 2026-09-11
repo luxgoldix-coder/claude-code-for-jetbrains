@@ -3,6 +3,7 @@ package dev.lain.claudejb.view.settings.sections
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.Panel
+import dev.lain.claudejb.model.session.launch.GodMode
 import dev.lain.claudejb.model.session.launch.IdeRule
 import dev.lain.claudejb.model.session.launch.IdeServer
 import dev.lain.claudejb.model.settings.ClaudeSettings
@@ -28,7 +29,7 @@ internal class SettingsIdeMcpSection(
             IdeRuleBoxes(if (server == null) IdeRule.common else IdeRule.forServer(server))
         }
 
-    private val enableAll = JButton("Enable all IDE MCP integrations").apply {
+    private val enableAll = JButton("Turn " + GodMode.LABEL + " on — " + GodMode.TAGLINE).apply {
         addActionListener {
             jetbrainsCheck.isSelected = true
             indexCheck.isSelected = true
@@ -46,7 +47,7 @@ internal class SettingsIdeMcpSection(
     }
 
     override fun addTo(panel: Panel) {
-        panel.collapsibleGroup("IDE integration") {
+        panel.collapsibleGroup(GodMode.LABEL) {
             row { cell(enableAll) }.rowComment(ENABLE_ALL_NOTE, MAX_LINE_LENGTH_WORD_WRAP)
             row { cell(indexCheck) }
             row("Index port:") { cell(indexPort) }.rowComment(THIRD_PARTY_NOTE, MAX_LINE_LENGTH_WORD_WRAP)
@@ -126,8 +127,9 @@ internal class SettingsIdeMcpSection(
         const val MAX_PORT = 65_535
 
         const val ENABLE_ALL_NOTE =
-            "Switches every IDE MCP server on and every rule with it. Claude then reads, searches, edits, builds, " +
-                "tests and debugs through the IDE instead of through its own tools and shell commands."
+            "One switch, every IDE MCP server and every rule. Claude then reads, searches, edits, refactors, builds, " +
+                "tests and debugs through the IDE itself: faster, cheaper in tokens, and the results land where you " +
+                "work. Fine-tune below; the flame in the chat bar lights when everything is on."
 
         const val THIRD_PARTY_NOTE =
             "⚠ Third-party plugin by hechtcarmel, not affiliated with JetBrains or with this plugin. It runs with your " +
