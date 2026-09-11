@@ -35,7 +35,7 @@ data class AgentNode(
     val parentAgentId: String? get() = meta.parentAgentId
     val depth: Int get() = meta.spawnDepth
 
-    val kindLabel: String get() = if (parentAgentId != null) "Subagent" else "Agent"
+    val kindLabel: String get() = meta.workflowRun?.let { "Workflow agent" } ?: if (parentAgentId != null) "Subagent" else "Agent"
 }
 
 class AgentRegistry(
@@ -101,7 +101,7 @@ class AgentRegistry(
         val next = LinkedHashMap<String, AgentNode>()
         for (id in admitted.sortedWith(compareBy({ metas[it]?.spawnDepth ?: 1 }, { it }))) {
             val meta = metas[id] ?: continue
-            val (entries, ending) = transcriptOf(dir, id, previous[id])
+            val (entries, ending) = transcriptOf(meta.home(dir), id, previous[id])
             reopenIfGrown(meta, entries.size)
             val settled = settledStateOf(meta, next, ending)
             next[id] = AgentNode(
@@ -208,6 +208,7 @@ class AgentRegistry(
             .filter {
                 it.agentId in preAdmitted ||
                     (it.toolUseId != null && it.toolUseId in observedToolUse) ||
+                    it.workflowRun != null ||
                     restoring
             }
             .mapTo(HashSet()) { it.agentId }
@@ -225,18 +226,23 @@ class AgentRegistry(
         return admitted
     }
 
-    private fun readMetas(dir: Path): Map<String, AgentMeta> = runCatching {
-        Files.newDirectoryStream(dir, "*${AgentMeta.META_SUFFIX}").use { stream ->
-            stream.mapNotNull { path ->
-                val id = AgentMeta.agentIdOfMetaFile(path.fileName.toString()) ?: return@mapNotNull null
-                val body = runCatching { Files.readString(path) }.getOrNull() ?: return@mapNotNull null
-                AgentMeta.parse(id, body)?.let { id to it }
-            }.toMap()
-        }
+    private fun readMetas(dir: Path): Map<String, AgentMeta> =
+        metasIn(dir, workflowRun = null) + workflowRuns(dir).flatMap { run -> metasIn(run, run.fileName.toString()).toList() }
+
+    private fun workflowRuns(dir: Path): List<Path> = runCatching {
+        Files.newDirectoryStream(dir.resolve(AgentMeta.WORKFLOWS_DIR)).use { stream -> stream.filter { Files.isDirectory(it) } }
+    }.getOrDefault(emptyList())
+
+    private fun metasIn(dir: Path, workflowRun: String?): Map<String, AgentMeta> = runCatching {
+        Files.newDirectoryStream(dir, "*${AgentMeta.META_SUFFIX}").use { stream -> stream.mapNotNull { metaOf(it, workflowRun) }.toMap() }
     }.getOrDefault(emptyMap())
 
-    private fun readLines(dir: Path, agentId: String): List<String> {
-        val file = dir.resolve(AgentMeta.transcriptFile(agentId))
-        return runCatching { Files.readAllLines(file) }.getOrDefault(emptyList())
+    private fun metaOf(path: Path, workflowRun: String?): Pair<String, AgentMeta>? {
+        val id = AgentMeta.agentIdOfMetaFile(path.fileName.toString()) ?: return null
+        val body = runCatching { Files.readString(path) }.getOrNull() ?: return null
+        return AgentMeta.parse(id, body, workflowRun)?.let { id to it }
     }
+
+    private fun readLines(dir: Path, agentId: String): List<String> =
+        runCatching { Files.readAllLines(dir.resolve(AgentMeta.transcriptFile(agentId))) }.getOrDefault(emptyList())
 }

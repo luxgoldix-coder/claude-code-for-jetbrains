@@ -63,6 +63,28 @@ class AgentRegistryTest {
     }
 
     @Test
+    fun `a workflow's agents live under their run directory and are admitted without a Task call`() {
+        val run = dir.resolve(AgentMeta.WORKFLOWS_DIR).resolve("wf_abc-123")
+        Files.createDirectories(run)
+        Files.writeString(
+            run.resolve("${AgentMeta.FILE_PREFIX}wf1${AgentMeta.META_SUFFIX}"),
+            """{"agentType":"workflow-subagent","description":"build:E1-code","workflowPhase":"Build","spawnDepth":1}""",
+        )
+        Files.writeString(
+            run.resolve(AgentMeta.transcriptFile("wf1")),
+            """{"type":"assistant","message":{"content":[{"type":"text","text":"hello from the workflow"}]}}""",
+        )
+        val reg = registry()
+        assertEquals(listOf("wf1"), reg.scan())
+        val node = reg.nodes.getValue("wf1")
+        assertEquals("build:E1-code", node.meta.label())
+        assertEquals("wf_abc-123", node.meta.workflowRun)
+        assertEquals("Workflow agent", node.kindLabel)
+        assertEquals("hello from the workflow", node.entries.single().text)
+        assertEquals(run, node.meta.home(dir))
+    }
+
+    @Test
     fun `an agent whose Task call we saw is admitted, with its label and transcript`() {
         agent("mine", toolUseId = "toolu_ours", text = "hello from the agent")
         val reg = registry()

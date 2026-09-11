@@ -6,6 +6,7 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import java.nio.file.Path
 
 data class AgentMeta(
     val agentId: String,
@@ -14,11 +15,15 @@ data class AgentMeta(
     val toolUseId: String? = null,
     val parentAgentId: String? = null,
     val spawnDepth: Int = 1,
+    val workflowRun: String? = null,
 ) {
     fun label(): String =
         description?.takeIf { it.isNotBlank() }
             ?: agentType?.takeIf { it.isNotBlank() }
             ?: agentId
+
+    fun home(subagentsDir: Path): Path =
+        workflowRun?.let { subagentsDir.resolve(WORKFLOWS_DIR).resolve(it) } ?: subagentsDir
 
     companion object {
         private val JSON = Json {
@@ -29,8 +34,9 @@ data class AgentMeta(
         const val FILE_PREFIX = "agent-"
         const val META_SUFFIX = ".meta.json"
         const val TRANSCRIPT_SUFFIX = ".jsonl"
+        const val WORKFLOWS_DIR = "workflows"
 
-        fun parse(agentId: String, body: String): AgentMeta? {
+        fun parse(agentId: String, body: String, workflowRun: String? = null): AgentMeta? {
             val obj = runCatching { JSON.parseToJsonElement(body).jsonObject }.getOrNull() ?: return null
             return AgentMeta(
                 agentId = agentId,
@@ -39,6 +45,7 @@ data class AgentMeta(
                 toolUseId = obj.str("toolUseId"),
                 parentAgentId = obj.str("parentAgentId"),
                 spawnDepth = (obj["spawnDepth"]?.jsonPrimitive?.intOrNull ?: 1).coerceAtLeast(1),
+                workflowRun = workflowRun,
             )
         }
 
