@@ -93,10 +93,10 @@ class SessionLiveSettings(
     }
 
     fun changeThinkingTokens(tokens: Int?, persist: Boolean = true) {
+        if (persist) ClaudeSettings.getInstance(project).update { it.thinkingTokens = tokens ?: 0 }
         if (tokens == session.launch.thinkingTokens) return
         val wasRunning = session.isRunning()
         session.launch = session.launch.copy(thinkingTokens = tokens)
-        if (persist) ClaudeSettings.getInstance(project).update { it.thinkingTokens = tokens ?: 0 }
         fireState()
         if (wasRunning) {
             val state = if (tokens != null) "on" else "off"
