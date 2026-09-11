@@ -10,7 +10,7 @@
   const rows = TX.rows;
   const toolCards = TX.toolCards;
 
-  const MAX_ENTRIES = 2000;
+  const MAX_ENTRIES = 500;
 
   function dropRow(id: unknown): void {
     const rec = rows.get(id);

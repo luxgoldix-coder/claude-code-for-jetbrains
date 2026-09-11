@@ -23,6 +23,10 @@ traced, and a handful of bugs found on the way are fixed.
 - **Logging is consistent.** One level vocabulary across the plugin: `warn` means something went
   wrong, `info` marks a lifecycle step, `debug` is the trace. The binary's stderr and the page's own
   errors are recorded instead of dropped.
+- **The transcript keeps the last 500 rows on screen instead of 2,000.** A long session rendered
+  thousands of rows and the chat slowed down. The model and the page trim at the same number, the
+  notice at the top says how many earlier rows were dropped, and the session file on disk still holds
+  the whole conversation.
 
 ### Fixed
 - **Closing the last chat, or opening the only one, could leave a blank panel** — no composer, no

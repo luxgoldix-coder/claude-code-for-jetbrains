@@ -41,7 +41,7 @@ class TranscriptEntry(
 class TranscriptModel {
 
     companion object {
-        const val MAX_ENTRIES = 2000
+        const val MAX_ENTRIES = 500
     }
 
     interface Listener {

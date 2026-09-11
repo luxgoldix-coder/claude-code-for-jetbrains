@@ -15,6 +15,10 @@ refused — so the page never ran, the composer never appeared, and only *Open p
 brought a chat back. It now waits for the browser to exist and the dead routes are gone. Reloads
 after a failed delivery also come back with their state, instead of the loading screen.
 
+**Long chats stay quick.** The transcript keeps the last 500 rows on screen instead of 2,000; a
+notice at the top says how many earlier rows were dropped, and the session file on disk still holds
+all of them.
+
 **Small things that now do what they say.** The model, effort and thinking pills survive a new
 chat; a prompt typed mid-turn waits in the queue as a chip and goes out when the turn ends; Fork
 Session gets its own session id; closing a chat mid sign-in leaves no process behind; `Shift+Tab`
