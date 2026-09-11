@@ -66,12 +66,7 @@
     }
     view.__fit = fitOrRestore;
 
-    view.addEventListener('mousedown', function (ev: MouseEvent) {
-      if (ev.button !== 0) return;
-      from = { x: ev.clientX - at.x, y: ev.clientY - at.y, sx: ev.clientX, sy: ev.clientY };
-      moved = false;
-    });
-    document.addEventListener('mousemove', function (ev: MouseEvent) {
+    function onDrag(ev: MouseEvent): void {
       if (!from) return;
       if (!moved && Math.abs(ev.clientX - from.sx) + Math.abs(ev.clientY - from.sy) < SLOP) return;
       moved = true;
@@ -79,11 +74,20 @@
       at.x = ev.clientX - from.x;
       at.y = ev.clientY - from.y;
       apply();
-    });
-    document.addEventListener('mouseup', function () {
+    }
+    function onRelease(): void {
+      document.removeEventListener('mousemove', onDrag);
+      document.removeEventListener('mouseup', onRelease);
       if (!from) return;
       from = null;
       view.classList.remove('dragging');
+    }
+    view.addEventListener('mousedown', function (ev: MouseEvent) {
+      if (ev.button !== 0) return;
+      from = { x: ev.clientX - at.x, y: ev.clientY - at.y, sx: ev.clientX, sy: ev.clientY };
+      moved = false;
+      document.addEventListener('mousemove', onDrag);
+      document.addEventListener('mouseup', onRelease);
     });
     view.addEventListener(
       'wheel',
