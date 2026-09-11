@@ -191,6 +191,7 @@
   if (typeof cc.attachments !== 'function') cc.attachments = function () {};
   if (typeof cc.session !== 'function') cc.session = function () {};
   if (typeof cc.mcp !== 'function') cc.mcp = function () {};
+  if (typeof cc.toggleReasoning !== 'function') cc.toggleReasoning = function () {};
 
   function announceReady(): void {
     let tries = 0;

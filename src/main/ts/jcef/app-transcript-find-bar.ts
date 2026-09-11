@@ -117,6 +117,12 @@
     }
   }
 
+  function isTextField(target: EventTarget | null): boolean {
+    const el = target as HTMLElement | null;
+    if (!el || !el.tagName) return false;
+    return el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable === true;
+  }
+
   function ownsEscape(e: KeyboardEvent): boolean {
     if (!findBar || findBar.hidden) return false;
     const target = e.target as Node | null;
@@ -137,6 +143,7 @@
         e.preventDefault();
         openFindBar();
       } else if (isO && (e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey) {
+        if (isTextField(e.target)) return;
         e.preventDefault();
         if (cc.toggleReasoning) cc.toggleReasoning();
       } else if ((key === 'Escape' || e.keyCode === 27) && ownsEscape(e)) {
