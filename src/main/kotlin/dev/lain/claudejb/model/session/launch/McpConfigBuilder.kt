@@ -18,6 +18,8 @@ object McpConfigBuilder {
         val port: Int,
     )
 
+    data class HelperParams(val javaBin: File, val lib: File)
+
     fun mcpConfigJson(
         ideMcpEnabled: Boolean,
         transport: String,
@@ -25,18 +27,30 @@ object McpConfigBuilder {
         customMcpServers: String,
         stdioParams: StdioParams? = null,
         onCustomParseError: (Throwable) -> Unit = {},
-        hechtcarmelServers: Map<IdeServer, Int> = emptyMap(),
+        ownSockets: Map<IdeServer, String> = emptyMap(),
+        helper: HelperParams? = null,
     ): String? {
         val servers = buildJsonObject {
             if (ideMcpEnabled) jetbrainsMcpServer(transport, port, stdioParams)?.let { put(IdeServer.JETBRAINS.mcpName, it) }
-            hechtcarmelServers.forEach { (server, serverPort) ->
-                server.streamableHttpUrl(serverPort)?.let { put(server.mcpName, httpMcpServer("streamable-http", it)) }
-            }
+            if (helper != null) ownSockets.forEach { (server, socket) -> put(server.mcpName, ownMcpServer(helper, socket)) }
             customMcpServersObject(customMcpServers, onCustomParseError)?.forEach { (name, server) -> put(name, server) }
         }
         if (servers.isEmpty()) return null
         return buildJsonObject { put("mcpServers", servers) }.toString()
     }
+
+    fun ownMcpServer(helper: HelperParams, socket: String): JsonObject = buildJsonObject {
+        put("type", "stdio")
+        put("command", helper.javaBin.absolutePath)
+        putJsonArray("args") {
+            add("-cp")
+            add(helper.lib.absolutePath + File.separator + "*")
+            add(HELPER_MAIN)
+            add(socket)
+        }
+    }
+
+    const val HELPER_MAIN = "dev.lain.claudejb.mcp.StdioBridge"
 
     fun jetbrainsMcpServer(transport: String, port: Int, stdioParams: StdioParams?): JsonObject? = when (transport) {
         "stdio" -> stdioParams?.let { stdioMcpServer(it) }

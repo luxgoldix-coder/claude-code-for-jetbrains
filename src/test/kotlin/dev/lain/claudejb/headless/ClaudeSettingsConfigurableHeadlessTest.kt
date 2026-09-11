@@ -234,7 +234,7 @@ class ClaudeSettingsConfigurableHeadlessTest : BasePlatformTestCase() {
         addDirs = "/tmp/a\n/tmp/b"
         betas = "beta-one"
         strictMcpConfig = true
-        ideMcp = IdeMcpState(indexEnabled = true, indexPort = 29175, debuggerPort = 29199, rules = "index.read,common.agents")
+        ideMcp = IdeMcpState(enabled = true)
         enableFileCheckpointing = false
         rewindFallback = "never"
         sensitiveExtraGlobs = "**/secret.env"

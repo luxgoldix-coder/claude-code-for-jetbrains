@@ -18,13 +18,9 @@ class LaunchOptionsTest {
     }
 
     @Test
-    fun `the IDE servers and the IDE rules ride the launch too, so they differ as well`() {
-        assertTrue(base.mcpDiffers(base.copy(indexMcpEnabled = true)))
-        assertTrue(base.mcpDiffers(base.copy(indexMcpPort = 29171)))
-        assertTrue(base.mcpDiffers(base.copy(debuggerMcpEnabled = true)))
-        assertTrue(base.mcpDiffers(base.copy(debuggerMcpPort = 29191)))
-        assertTrue(base.mcpDiffers(base.copy(ideRules = setOf(IdeRule.INDEX_READ))))
-        assertFalse(base.mcpDiffers(base.copy(knownIdeTools = setOf("ide_read_file"))))
+    fun `our own servers and their sockets ride the launch too, so they differ as well`() {
+        assertTrue(base.mcpDiffers(base.copy(ideIntegration = true)))
+        assertTrue(base.mcpDiffers(base.copy(ideSockets = mapOf(IdeServer.CODE to "/tmp/x/code.sock"))))
     }
 
     @Test

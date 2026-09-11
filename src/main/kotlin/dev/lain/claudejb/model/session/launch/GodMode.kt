@@ -6,16 +6,9 @@ object GodMode {
     const val LABEL = "Claude God Mode"
     const val TAGLINE = "Claude becomes one with your IDE"
 
-    fun isOn(s: ClaudeSettings.State): Boolean =
-        s.ideMcpEnabled &&
-            s.ideMcp.indexEnabled &&
-            s.ideMcp.debuggerEnabled &&
-            IdeRule.parse(s.ideMcp.rules) == IdeRule.entries.toSet()
+    fun isOn(s: ClaudeSettings.State): Boolean = s.ideMcp.enabled
 
     fun set(s: ClaudeSettings.State, on: Boolean) {
-        s.ideMcpEnabled = on
-        s.ideMcp.indexEnabled = on
-        s.ideMcp.debuggerEnabled = on
-        s.ideMcp.rules = if (on) IdeRule.csv(IdeRule.entries) else ""
+        s.ideMcp.enabled = on
     }
 }

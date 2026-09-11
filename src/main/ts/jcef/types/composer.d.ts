@@ -47,7 +47,6 @@ interface ComposerState {
   remoteControlOn?: boolean;
   remoteControlError?: string | null;
   godModeOn?: boolean;
-  ideRulesOn?: number;
   queue?: unknown[];
   suggestion?: unknown;
   thinkingStatus?: string | null;
@@ -367,7 +366,7 @@ interface ComposerNs {
   autosize(input: HTMLTextAreaElement | HTMLInputElement | null): void;
   setGuardOn(on: boolean | undefined): void;
   setRemoteControlOn(on: boolean | undefined, error: unknown): void;
-  setGodMode(on: boolean | undefined, rules: unknown): void;
+  setGodMode(on: boolean | undefined): void;
   flameGlyph(lit: boolean): string;
   buildToggles(barRight: HTMLElement): {
     follow: HTMLElement;

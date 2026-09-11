@@ -4,7 +4,6 @@ import dev.lain.claudejb.model.permission.vocab.SecurityRule
 import dev.lain.claudejb.model.protocol.EffortLevel
 import dev.lain.claudejb.model.protocol.PermissionMode
 import dev.lain.claudejb.model.session.launch.GodMode
-import dev.lain.claudejb.model.session.launch.IdeRule
 import dev.lain.claudejb.model.session.transcript.ToolNaming
 import dev.lain.claudejb.model.settings.ClaudeSettings
 import dev.lain.claudejb.model.settings.LaunchDefaults
@@ -42,8 +41,6 @@ internal object JcefSettingsMenu {
         "checkpointing" to { s, on -> s.enableFileCheckpointing = on },
         "partialMessages" to { s, on -> s.includePartialMessages = on },
         "ideMcp" to { s, on -> s.ideMcpEnabled = on },
-        "indexMcp" to { s, on -> s.ideMcp.indexEnabled = on },
-        "debuggerMcp" to { s, on -> s.ideMcp.debuggerEnabled = on },
         "strictMcp" to { s, on -> s.strictMcpConfig = on },
         GOD_MODE to { s, on -> GodMode.set(s, on) },
     )
@@ -107,17 +104,8 @@ internal object JcefSettingsMenu {
                 state.disallowedTools = it
             }
 
-            IDE_RULE -> applyIdeRule(state, value, on)
-
             else -> null
         }
-
-    private fun applyIdeRule(state: ClaudeSettings.State, value: String, on: Boolean): Boolean {
-        val rule = IdeRule.of(value) ?: return false
-        val current = IdeRule.parse(state.ideMcp.rules)
-        state.ideMcp.rules = IdeRule.csv(if (on) current + rule else current - rule)
-        return true
-    }
 
     private fun applyRule(scope: String, state: ClaudeSettings.State, value: String, on: Boolean): Boolean {
         val rule = SecurityRule.from(value) ?: return false
@@ -166,6 +154,5 @@ internal object JcefSettingsMenu {
     internal const val ALLOW = "allow"
     internal const val DENY = "deny"
     internal const val ALWAYS = "always"
-    internal const val IDE_RULE = "iderule"
     internal const val GOD_MODE = "godMode"
 }

@@ -10,7 +10,6 @@ import dev.lain.claudejb.controller.session.auth.LoginDetection
 import dev.lain.claudejb.controller.session.turn.ReviewPrompt
 import dev.lain.claudejb.model.protocol.ClaudeEvent
 import dev.lain.claudejb.model.protocol.control.ControlProtocol
-import dev.lain.claudejb.model.session.launch.IdeToolInventory
 import dev.lain.claudejb.model.session.launch.SessionLauncher
 import dev.lain.claudejb.model.session.transcript.Speaker
 import dev.lain.claudejb.model.settings.ClaudeSettings
@@ -62,22 +61,11 @@ class ConversationEvents(
             s.write(ControlProtocol.setPermissionModeRequest(ControlProtocol.newRequestId(), ours))
         }
         s.lifecycle.ready = true
-        val toolsChanged = rememberIdeTools(event.info.tools)
         edt {
             s.systemNotice("Connected · ${event.info.model.ifBlank { "claude" }} · ${event.info.cwd}")
-            if (toolsChanged) s.systemNotice(IDE_TOOLS_CHANGED)
             fireState()
             s.prompts.pump()
         }
-    }
-
-    private fun rememberIdeTools(toolNames: List<String>): Boolean {
-        val settings = ClaudeSettings.getInstance(project)
-        val seen = IdeToolInventory.fromToolNames(toolNames)
-        val known = IdeToolInventory.parse(settings.state.ideMcp.knownTools)
-        if (seen == known) return false
-        settings.update { it.ideMcp.knownTools = IdeToolInventory.csv(seen) }
-        return known.isNotEmpty() && s.launch.ideRules.isNotEmpty()
     }
 
     private fun onTurnResult(event: ClaudeEvent.Result) = edt {
@@ -130,10 +118,6 @@ class ConversationEvents(
     }
 
     private companion object {
-        const val IDE_TOOLS_CHANGED =
-            "The IDE exposes a different set of MCP tools than last time. The IDE rules in the system prompt " +
-                "name the old set; restart the session to apply the new one."
-
         const val EXPIRED_TOKEN_NOTICE =
             "Your access token expired while this chat was open. The sign-in itself is still valid and is " +
                 "renewed when a session starts, but a running one cannot pick up the new token — so this turn " +

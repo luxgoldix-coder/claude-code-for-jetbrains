@@ -31,19 +31,21 @@ class PluginInstallerTest {
 
     private val project: Project? = null
 
+    private val pluginId = IdeServer.JETBRAINS_PLUGIN_ID
+
     private fun installer(presence: PluginPresence, answer: (title: String, message: String, yes: String) -> Boolean) =
         PluginInstaller(project, presence, answer)
 
     @Test
     fun `an installed plugin is taken as is, without asking`() {
-        val presence = FakePresence(mutableMapOf(IdeServer.INDEX.pluginId to PluginState.READY))
+        val presence = FakePresence(mutableMapOf(pluginId to PluginState.READY))
         var asked = false
         val installer = installer(presence) { _, _, _ ->
             asked = true
             true
         }
         var outcome: PluginState? = null
-        installer.install(IdeServer.INDEX) { outcome = it }
+        installer.install { outcome = it }
         assertEquals(PluginState.READY, outcome)
         assertFalse(asked)
         assertTrue(presence.installed.isEmpty())
@@ -60,12 +62,13 @@ class PluginInstallerTest {
             true
         }
         var outcome: PluginState? = null
-        installer.install(IdeServer.DEBUGGER) { outcome = it }
+        installer.install { outcome = it }
         assertEquals(PluginState.PENDING_RESTART, outcome)
-        assertEquals(listOf(IdeServer.DEBUGGER.pluginId), presence.installed)
+        assertEquals(listOf(pluginId), presence.installed)
         assertEquals("Install", button)
-        assertTrue(shown.contains("third-party plugin by hechtcarmel"), shown)
-        assertEquals(PluginState.PENDING_RESTART, installer.state(IdeServer.DEBUGGER))
+        assertTrue(shown.contains(IdeServer.JETBRAINS.label), shown)
+        assertFalse(shown.contains("third-party"), shown)
+        assertEquals(PluginState.PENDING_RESTART, installer.state())
     }
 
     @Test
@@ -73,7 +76,7 @@ class PluginInstallerTest {
         val presence = FakePresence(mutableMapOf(), afterInstall = PluginState.READY)
         val installer = installer(presence) { _, _, _ -> true }
         var outcome: PluginState? = null
-        installer.install(IdeServer.INDEX) { outcome = it }
+        installer.install { outcome = it }
         assertEquals(PluginState.READY, outcome)
     }
 
@@ -82,21 +85,21 @@ class PluginInstallerTest {
         val presence = FakePresence(mutableMapOf())
         val installer = installer(presence) { _, _, _ -> false }
         var outcome: PluginState? = null
-        installer.install(IdeServer.INDEX) { outcome = it }
+        installer.install { outcome = it }
         assertEquals(PluginState.MISSING, outcome)
         assertTrue(presence.installed.isEmpty())
     }
 
     @Test
     fun `a plugin pending a restart is not installed twice`() {
-        val presence = FakePresence(mutableMapOf(IdeServer.INDEX.pluginId to PluginState.PENDING_RESTART))
+        val presence = FakePresence(mutableMapOf(pluginId to PluginState.PENDING_RESTART))
         var asked = false
         val installer = installer(presence) { _, _, _ ->
             asked = true
             true
         }
         var outcome: PluginState? = null
-        installer.install(IdeServer.INDEX) { outcome = it }
+        installer.install { outcome = it }
         assertEquals(PluginState.PENDING_RESTART, outcome)
         assertFalse(asked)
         assertTrue(presence.installed.isEmpty())
@@ -104,7 +107,7 @@ class PluginInstallerTest {
 
     @Test
     fun `restarting asks first, names the plugin, and only a yes restarts the IDE`() {
-        val presence = FakePresence(mutableMapOf(IdeServer.INDEX.pluginId to PluginState.PENDING_RESTART))
+        val presence = FakePresence(mutableMapOf(pluginId to PluginState.PENDING_RESTART))
         var shown = ""
         var button = ""
         var answer = false
@@ -114,19 +117,13 @@ class PluginInstallerTest {
             answer
         }
 
-        installer.restart(IdeServer.INDEX)
+        installer.restart()
         assertEquals(0, presence.restarts)
         assertEquals("Restart", button)
-        assertTrue(shown.contains(IdeServer.INDEX.label), shown)
+        assertTrue(shown.contains(IdeServer.JETBRAINS.label), shown)
 
         answer = true
-        installer.restart(IdeServer.INDEX)
+        installer.restart()
         assertEquals(1, presence.restarts)
-    }
-
-    @Test
-    fun `the JetBrains server carries no third-party disclaimer`() {
-        assertFalse(PluginInstaller.installMessage(IdeServer.JETBRAINS).contains("third-party"))
-        assertTrue(PluginInstaller.installMessage(IdeServer.INDEX).contains("localhost port"))
     }
 }

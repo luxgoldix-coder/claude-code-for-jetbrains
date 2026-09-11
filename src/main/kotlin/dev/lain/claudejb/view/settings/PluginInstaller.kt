@@ -43,38 +43,32 @@ internal class PluginInstaller(
     },
 ) {
 
-    fun state(server: IdeServer): PluginState = presence.state(server.pluginId)
+    fun state(): PluginState = presence.state(IdeServer.JETBRAINS_PLUGIN_ID)
 
-    fun install(server: IdeServer, onOutcome: (PluginState) -> Unit) {
-        val now = state(server)
+    fun install(onOutcome: (PluginState) -> Unit) {
+        val now = state()
         if (now != PluginState.MISSING) {
             onOutcome(now)
             return
         }
-        if (!confirm("${server.label} is not installed", installMessage(server), "Install")) {
+        if (!confirm(IdeServer.JETBRAINS.label + " is not installed", INSTALL_MESSAGE, "Install")) {
             onOutcome(PluginState.MISSING)
             return
         }
-        presence.install(project, server.pluginId) { onOutcome(state(server)) }
+        presence.install(project, IdeServer.JETBRAINS_PLUGIN_ID) { onOutcome(state()) }
     }
 
-    fun restart(server: IdeServer) {
-        if (confirm("Restart to finish installing", restartMessage(server), "Restart")) presence.restart()
+    fun restart() {
+        if (confirm("Restart to finish installing", RESTART_MESSAGE, "Restart")) presence.restart()
     }
 
     companion object {
-        fun installMessage(server: IdeServer): String = buildString {
-            append("Claude talks to the IDE through the ${server.label} plugin, which is not installed or is disabled.\n\n")
-            if (server.thirdParty) {
-                append("This is a third-party plugin by ${server.vendor}, not affiliated with JetBrains or with ")
-                append("Claude Code Native. It runs inside the IDE with your privileges and listens on a localhost ")
-                append("port that any local process can reach. Review it before you rely on it.\n\n")
-            }
-            append("Install and enable it now? The IDE's own plugin dialog takes over from here.")
-        }
+        val INSTALL_MESSAGE: String =
+            "Claude can also talk to the IDE through the " + IdeServer.JETBRAINS.label + " plugin, which is not " +
+                "installed or is disabled.\n\nInstall and enable it now? The IDE's own plugin dialog takes over from here."
 
-        fun restartMessage(server: IdeServer): String =
-            "The ${server.label} plugin is installed but will only load after the IDE restarts. " +
+        val RESTART_MESSAGE: String =
+            "The " + IdeServer.JETBRAINS.label + " plugin is installed but will only load after the IDE restarts. " +
                 "Restart now? Your work is saved first."
     }
 }

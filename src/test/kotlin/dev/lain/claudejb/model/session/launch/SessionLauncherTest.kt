@@ -2,8 +2,12 @@ package dev.lain.claudejb.model.session.launch
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import java.io.File
+import java.nio.file.Path
 
 class SessionLauncherTest {
 
@@ -57,21 +61,41 @@ class SessionLauncherTest {
     private val promptTail = listOf("--append-system-prompt", PluginContextPrompt.TEXT)
 
     @Test
-    fun `IDE rules ride the system prompt after the plugin context, and the IDE servers ride the mcp config`() {
-        val withIde = opts().copy(indexMcpEnabled = true, ideRules = setOf(IdeRule.INDEX_READ, IdeRule.DEBUGGER_DEBUG))
+    fun `the IDE block rides the system prompt after the plugin context, and our servers ride the mcp config`(
+        @TempDir tmp: Path,
+    ) {
+        val sockets = mapOf(IdeServer.CODE to "/tmp/x/code.sock", IdeServer.RUN to "/tmp/x/run.sock")
+        val withIde = opts().copy(ideIntegration = true, ideSockets = sockets)
         val prompt = SessionLauncher.systemPrompt(withIde)
         assertTrue(prompt.startsWith(PluginContextPrompt.TEXT))
-        assertTrue(prompt.contains("ide_read_file"))
-        assertFalse(prompt.contains("start_debug_session"), "the Debugger server is off, so its rule is left out")
-        val args = SessionLauncher.buildArgs(withIde, resume = false, mcpConfig = SessionLauncher.mcpConfigJson(withIde))
+        assertTrue(prompt.contains("code ("))
+        assertFalse(prompt.contains("vcs ("), "a server without a socket is not promised")
+        val config = SessionLauncher.mcpConfigJson(withIde, helper(tmp))
+        val args = SessionLauncher.buildArgs(withIde, resume = false, mcpConfig = config)
         assertEquals(prompt, args[args.indexOf("--append-system-prompt") + 1])
-        assertTrue(args[args.indexOf("--mcp-config") + 1].contains("index-mcp/streamable-http"))
+        assertTrue(config!!.contains("/tmp/x/code.sock") && config.contains("/tmp/x/run.sock"), config)
+        assertTrue(config.contains(McpConfigBuilder.HELPER_MAIN), config)
     }
 
     @Test
-    fun `no IDE server keeps the system prompt exactly as before`() {
-        assertEquals(PluginContextPrompt.TEXT, SessionLauncher.systemPrompt(opts().copy(ideRules = IdeRule.entries.toSet())))
+    fun `the switch alone, with no socket behind it, injects nothing and claims nothing`(@TempDir tmp: Path) {
+        val on = opts().copy(ideIntegration = true)
+        assertEquals(PluginContextPrompt.TEXT, SessionLauncher.systemPrompt(on))
+        assertNull(SessionLauncher.mcpConfigJson(on, helper(tmp)))
+        val off = opts().copy(ideSockets = mapOf(IdeServer.CODE to "/tmp/x/code.sock"))
+        assertEquals(PluginContextPrompt.TEXT, SessionLauncher.systemPrompt(off))
+        assertNull(SessionLauncher.mcpConfigJson(off, helper(tmp)))
     }
+
+    @Test
+    fun `outside a running IDE there is no plugin lib to launch the helper from, so no server is claimed`() {
+        assertNull(SessionLauncher.resolveHelper())
+        val on = opts().copy(ideIntegration = true, ideSockets = mapOf(IdeServer.CODE to "/tmp/x/code.sock"))
+        assertNull(SessionLauncher.mcpConfigJson(on))
+    }
+
+    private fun helper(tmp: Path) =
+        McpConfigBuilder.HelperParams(File(tmp.toFile(), "java"), File(tmp.toFile(), "lib").apply { mkdirs() })
 
     @Test
     fun `minimal options emit the mandatory header and the appended context`() {

@@ -15,7 +15,6 @@
   let rcError: string | null = null;
   let rcBtnRef: HTMLElement | null = null;
   let godOn = false;
-  let ideRules = 0;
   let flameBtnRef: HTMLElement | null = null;
   let godSwitchRef: HTMLElement | null = null;
 
@@ -29,18 +28,14 @@
     flameBtnRef.innerHTML = CX.flameGlyph(godOn);
     flameBtnRef.title = godOn
       ? 'Claude God Mode is on — Claude is one with your IDE. Click to switch it off or configure it'
-      : 'Claude God Mode is off' +
-        (ideRules > 0 ? ' — ' + ideRules + (ideRules === 1 ? ' IDE rule' : ' IDE rules') + ' on' : '') +
-        '. Click to make Claude one with your IDE';
+      : 'Claude God Mode is off. Click to make Claude one with your IDE';
     if (godSwitchRef) godSwitchRef.textContent = godSwitchLabel();
   }
 
-  CX.setGodMode = function (on: boolean | undefined, rules: unknown): void {
+  CX.setGodMode = function (on: boolean | undefined): void {
     const next = on === true;
-    const count = typeof rules === 'number' && rules > 0 ? rules : 0;
-    if (next === godOn && count === ideRules) return;
+    if (next === godOn) return;
     godOn = next;
-    ideRules = count;
     applyGodMode();
   };
 

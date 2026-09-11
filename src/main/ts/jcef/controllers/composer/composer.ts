@@ -154,7 +154,7 @@
     CX.announceTurnState(s);
     CX.setGuardOn(s.guardOn);
     CX.setRemoteControlOn(s.remoteControlOn, s.remoteControlError);
-    CX.setGodMode(s.godModeOn, s.ideRulesOn);
+    CX.setGodMode(s.godModeOn);
     CX.renderAuth(s);
     CX.renderSendMode(s);
     CX.renderPills(s);

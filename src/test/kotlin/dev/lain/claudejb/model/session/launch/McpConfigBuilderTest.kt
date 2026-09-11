@@ -2,6 +2,7 @@ package dev.lain.claudejb.model.session.launch
 
 import dev.lain.claudejb.model.protocol.ClaudeJson
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -175,34 +176,60 @@ class McpConfigBuilderTest {
     }
 
     @Test
-    fun `the Index and Debugger servers are streamable-http entries on their own ports`() {
+    fun `our own servers are stdio entries, one per socket, launching the helper by a bare java`(@TempDir tmp: Path) {
+        val helper = helper(tmp)
         val out = McpConfigBuilder.mcpConfigJson(
             ideMcpEnabled = false,
             transport = "sse",
             port = 0,
             customMcpServers = "",
-            hechtcarmelServers = mapOf(IdeServer.INDEX to 29170, IdeServer.DEBUGGER to 29199),
+            ownSockets = mapOf(IdeServer.CODE to "/run/x/code.sock", IdeServer.OPS to "/run/x/ops.sock"),
+            helper = helper,
         )
         val s = servers(out!!)
         assertNull(s["jetbrains"])
-        val index = s["index"]!!.jsonObject
-        assertEquals("streamable-http", index["type"]!!.jsonPrimitive.content)
-        assertEquals("http://127.0.0.1:29170/index-mcp/streamable-http", index["url"]!!.jsonPrimitive.content)
-        val debugger = s["debugger"]!!.jsonObject
-        assertEquals("http://127.0.0.1:29199/debugger-mcp/streamable-http", debugger["url"]!!.jsonPrimitive.content)
+        assertEquals(listOf("code", "ops"), s.keys.toList())
+        val code = s["code"]!!.jsonObject
+        assertEquals("stdio", code["type"]!!.jsonPrimitive.content)
+        assertEquals(helper.javaBin.absolutePath, code["command"]!!.jsonPrimitive.content)
+        assertEquals(
+            listOf("-cp", helper.lib.absolutePath + File.separator + "*", McpConfigBuilder.HELPER_MAIN, "/run/x/code.sock"),
+            code["args"]!!.jsonArray.map { it.jsonPrimitive.content },
+        )
+        assertNull(code["env"], "the credential never travels by environment")
+        assertEquals("/run/x/ops.sock", s["ops"]!!.jsonObject["args"]!!.jsonArray.last().jsonPrimitive.content)
     }
 
     @Test
-    fun `a custom server named like an IDE server wins, as it always did for jetbrains`() {
-        val custom = """{"index":{"type":"sse","url":"http://localhost:1/sse","headers":{}}}"""
+    fun `without a helper to launch, a socket earns no entry`() {
+        val out = McpConfigBuilder.mcpConfigJson(
+            ideMcpEnabled = false,
+            transport = "sse",
+            port = 0,
+            customMcpServers = "",
+            ownSockets = mapOf(IdeServer.CODE to "/run/x/code.sock"),
+        )
+        assertNull(out)
+    }
+
+    @Test
+    fun `a custom server named like an IDE server wins, as it always did for jetbrains`(@TempDir tmp: Path) {
+        val custom = """{"code":{"type":"sse","url":"http://localhost:1/sse","headers":{}}}"""
         val out = McpConfigBuilder.mcpConfigJson(
             ideMcpEnabled = false,
             transport = "sse",
             port = 0,
             customMcpServers = custom,
-            hechtcarmelServers = mapOf(IdeServer.INDEX to 29170),
+            ownSockets = mapOf(IdeServer.CODE to "/run/x/code.sock"),
+            helper = helper(tmp),
         )
-        assertEquals("http://localhost:1/sse", servers(out!!)["index"]!!.jsonObject["url"]!!.jsonPrimitive.content)
+        assertEquals("http://localhost:1/sse", servers(out!!)["code"]!!.jsonObject["url"]!!.jsonPrimitive.content)
+    }
+
+    private fun helper(tmp: Path): McpConfigBuilder.HelperParams {
+        val javaBin = File(tmp.toFile(), "java").apply { writeText("#!/bin/sh\n") }
+        val lib = File(tmp.toFile(), "lib").apply { mkdirs() }
+        return McpConfigBuilder.HelperParams(javaBin, lib)
     }
 
     @Test

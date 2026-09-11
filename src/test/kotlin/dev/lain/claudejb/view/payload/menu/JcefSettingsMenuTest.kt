@@ -2,7 +2,6 @@ package dev.lain.claudejb.view.payload.menu
 
 import dev.lain.claudejb.model.permission.vocab.SecurityRule
 import dev.lain.claudejb.model.protocol.models.ModelInfo
-import dev.lain.claudejb.model.session.launch.IdeRule
 import dev.lain.claudejb.model.session.launch.IdeServer
 import dev.lain.claudejb.model.settings.ClaudeSettings
 import dev.lain.claudejb.model.settings.guard.SecuritySuspensions
@@ -240,52 +239,35 @@ class JcefSettingsMenuTest {
     }
 
     @Test
-    fun `God Mode is one switch that turns every IDE server and every rule on, and off again`() {
-        val state = ClaudeSettings.State().apply { ideMcp.rules = "index.read" }
-        val row = menu(state).single { it.str("key") == "godMode" }
+    fun `God Mode is one switch, our servers, and the JetBrains server is not part of it`() {
+        val state = ClaudeSettings.State().apply { ideMcpEnabled = true }
+        val rows = menu(state).filter { it.str("group") == "Claude God Mode" }
+        val row = rows.single()
 
-        assertEquals("Claude God Mode", row.str("group"))
+        assertEquals("godMode", row.str("key"))
         assertEquals("Claude becomes one with your IDE", row.str("label"))
-        assertFalse(row.bool("on"), "one rule of many is not God Mode")
+        assertFalse(row.bool("on"), "the JetBrains server alone is not God Mode")
         assertTrue(row.bool("deferred"), "the servers and the prompt ride the next chat")
 
         assertTrue(write(state, "godMode", true))
-        assertTrue(state.ideMcpEnabled)
-        assertTrue(state.ideMcp.indexEnabled)
-        assertTrue(state.ideMcp.debuggerEnabled)
-        assertEquals(IdeRule.entries.toSet(), IdeRule.parse(state.ideMcp.rules))
+        assertTrue(state.ideMcp.enabled)
         assertTrue(menu(state).single { it.str("key") == "godMode" }.bool("on"))
 
-        assertTrue(write(state, "iderule:index.read", false))
-        assertFalse(menu(state).single { it.str("key") == "godMode" }.bool("on"), "one rule off is no longer God Mode")
-
         assertTrue(write(state, "godMode", false))
-        assertFalse(state.ideMcpEnabled)
-        assertFalse(state.ideMcp.indexEnabled)
-        assertFalse(state.ideMcp.debuggerEnabled)
-        assertEquals("", state.ideMcp.rules)
+        assertFalse(state.ideMcp.enabled)
+        assertTrue(state.ideMcpEnabled, "God Mode leaves the JetBrains server alone")
     }
 
     @Test
-    fun `the IDE servers and their rules are rows too, grouped by server, and write the ideMcp state`() {
-        val state = ClaudeSettings.State().apply { ideMcp.rules = "index.read" }
-        val rows = menu(state).filter { it.str("group") == "Claude God Mode" && it.str("key") != "godMode" }
+    fun `the MCP group offers the JetBrains server and the strict flag, and the removed servers are gone`() {
+        val state = ClaudeSettings.State()
+        val rows = menu(state).filter { it.str("group") == "MCP" }
 
-        assertEquals(IdeRule.entries.size, rows.size)
-        assertEquals(IdeServer.INDEX.label, rows.first { it.str("key") == "iderule:index.read" }.str("sub"))
-        assertEquals("Always", rows.first { it.str("key") == "iderule:common.agents" }.str("sub"))
-        assertEquals(listOf("iderule:index.read"), rows.filter { it.bool("on") }.map { it.str("key") })
-
-        assertTrue(write(state, "iderule:debugger.debug", true))
-        assertEquals("index.read,debugger.debug", state.ideMcp.rules)
-        assertTrue(write(state, "iderule:index.read", false))
-        assertEquals("debugger.debug", state.ideMcp.rules)
-        assertFalse(write(state, "iderule:index.nope", true))
-
-        assertTrue(write(state, "indexMcp", true))
-        assertTrue(state.ideMcp.indexEnabled)
-        assertTrue(write(state, "debuggerMcp", true))
-        assertTrue(state.ideMcp.debuggerEnabled)
+        assertEquals(listOf("ideMcp", "strictMcp"), rows.map { it.str("key") })
+        assertEquals(IdeServer.JETBRAINS.label, rows.first().str("label"))
+        assertFalse(write(state, "indexMcp", true))
+        assertFalse(write(state, "debuggerMcp", true))
+        assertFalse(write(state, "iderule:index.read", true))
     }
 
     @Test

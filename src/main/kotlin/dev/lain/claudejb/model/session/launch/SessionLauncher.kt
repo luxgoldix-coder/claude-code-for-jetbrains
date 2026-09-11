@@ -1,5 +1,6 @@
 package dev.lain.claudejb.model.session.launch
 
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.SystemInfo
 import dev.lain.claudejb.util.InstalledPlugins
@@ -9,8 +10,6 @@ import java.io.File
 object SessionLauncher {
 
     private val log = thisLogger()
-
-    private const val MCP_SERVER_PLUGIN_ID = "com.intellij.mcpServer"
 
     fun binaryPermissionMode(mode: String): String =
         if (mode == "acceptEdits" || mode == "bypassPermissions") "default" else mode
@@ -57,15 +56,12 @@ object SessionLauncher {
         prompt.trim().ifBlank { null }?.let { listOf("--append-system-prompt", it) } ?: emptyList()
 
     fun systemPrompt(opts: LaunchOptions): String =
-        listOf(PluginContextPrompt.TEXT, IdeMcpPrompt.text(opts.ideRules, ideServers(opts), opts.knownIdeTools))
+        listOf(PluginContextPrompt.TEXT, IdeMcpPrompt.text(ownSockets(opts).keys))
             .filter { it.isNotBlank() }
             .joinToString("\n\n")
 
-    fun ideServers(opts: LaunchOptions): Set<IdeServer> = buildSet {
-        if (opts.ideMcpEnabled) add(IdeServer.JETBRAINS)
-        if (opts.indexMcpEnabled) add(IdeServer.INDEX)
-        if (opts.debuggerMcpEnabled) add(IdeServer.DEBUGGER)
-    }
+    fun ownSockets(opts: LaunchOptions): Map<IdeServer, String> =
+        if (opts.ideIntegration) opts.ideSockets.filterKeys { it.own } else emptyMap()
 
     private fun advancedFlags(opts: LaunchOptions): List<String> = buildList {
         opts.maxTurns?.let { addAll(listOf("--max-turns", it.toString())) }
@@ -76,7 +72,7 @@ object SessionLauncher {
         if (opts.strictMcpConfig) add("--strict-mcp-config")
     }
 
-    fun mcpConfigJson(opts: LaunchOptions): String? =
+    fun mcpConfigJson(opts: LaunchOptions, helper: McpConfigBuilder.HelperParams? = resolveHelper()): String? =
         McpConfigBuilder.mcpConfigJson(
             ideMcpEnabled = opts.ideMcpEnabled,
             transport = opts.ideMcpTransport,
@@ -84,18 +80,24 @@ object SessionLauncher {
             customMcpServers = opts.customMcpServers,
             stdioParams = if (opts.ideMcpEnabled && opts.ideMcpTransport == "stdio") resolveStdioParams(opts) else null,
             onCustomParseError = { log.debug { "Failed to parse custom MCP servers JSON: $it" } },
-            hechtcarmelServers = buildMap {
-                if (opts.indexMcpEnabled) put(IdeServer.INDEX, opts.indexMcpPort)
-                if (opts.debuggerMcpEnabled) put(IdeServer.DEBUGGER, opts.debuggerMcpPort)
-            },
+            ownSockets = ownSockets(opts),
+            helper = helper,
         )
 
     fun resolveStdioParams(opts: LaunchOptions): McpConfigBuilder.StdioParams? {
-        if (!InstalledPlugins.isEnabled(MCP_SERVER_PLUGIN_ID)) return null
+        if (!InstalledPlugins.isEnabled(IdeServer.JETBRAINS_PLUGIN_ID)) return null
         val pluginLib = findMcpServerLib() ?: return null
-        val javaBin = File(File(System.getProperty("java.home"), "bin"), if (SystemInfo.isWindows) "java.exe" else "java")
-        return McpConfigBuilder.StdioParams(javaBin, pluginLib, PathManager.getLibPath(), opts.ideMcpPort)
+        return McpConfigBuilder.StdioParams(javaBin(), pluginLib, PathManager.getLibPath(), opts.ideMcpPort)
     }
+
+    fun resolveHelper(): McpConfigBuilder.HelperParams? {
+        val lib = PluginManager.getPluginByClass(McpConfigBuilder::class.java)?.pluginPath?.resolve("lib")?.toFile()
+        if (lib == null || !lib.isDirectory) return null
+        return McpConfigBuilder.HelperParams(javaBin(), lib)
+    }
+
+    private fun javaBin(): File =
+        File(File(System.getProperty("java.home"), "bin"), if (SystemInfo.isWindows) "java.exe" else "java")
 
     fun findMcpServerLib(): File? {
         val names = listOf("mcpServer", "mcp-server", "MCP Server")

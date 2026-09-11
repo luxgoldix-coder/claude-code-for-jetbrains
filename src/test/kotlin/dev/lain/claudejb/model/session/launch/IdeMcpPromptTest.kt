@@ -7,57 +7,52 @@ import org.junit.jupiter.api.Test
 
 class IdeMcpPromptTest {
 
-    private val all = IdeRule.entries.toSet()
-    private val servers = IdeServer.entries.toSet()
+    private val own = IdeServer.OWN.toSet()
 
     @Test
-    fun `no server means no block, and rules of a server that is off are left out`() {
-        assertEquals("", IdeMcpPrompt.text(all, emptySet()))
-        val onlyIndex = IdeMcpPrompt.text(all, setOf(IdeServer.INDEX))
-        assertTrue(onlyIndex.contains("ide_read_file"))
-        assertFalse(onlyIndex.contains("start_debug_session"))
-        assertFalse(onlyIndex.contains("apply_patch"))
-        assertTrue(onlyIndex.contains("Always:"))
+    fun `no server of our own means no block, and the JetBrains server alone does not earn one`() {
+        assertEquals("", IdeMcpPrompt.text(emptySet()))
+        assertEquals("", IdeMcpPrompt.text(setOf(IdeServer.JETBRAINS)))
     }
 
     @Test
-    fun `every rule names at least one of its tools and reads as an order, not a preference`() {
-        val text = IdeMcpPrompt.text(all, servers)
-        val lines = text.lines().filter { it.substringBefore('.').toIntOrNull() != null }
-        assertEquals(IdeRule.entries.size, lines.size)
-        IdeRule.entries.filter { it.tools.isNotEmpty() }.forEach { rule ->
-            assertTrue(lines.any { line -> rule.tools.any { line.contains(it) } }, rule.key)
-        }
-        listOf("subagent", ".claudetools", "fallback", "defect").forEach { assertTrue(text.contains(it), it) }
+    fun `only the servers that are on are listed, each with what it is for`() {
+        val text = IdeMcpPrompt.text(setOf(IdeServer.CODE, IdeServer.VCS, IdeServer.JETBRAINS))
+        assertTrue(text.contains("code ("))
+        assertTrue(text.contains("vcs ("))
+        assertFalse(text.contains("run ("))
+        assertFalse(text.contains("ops ("))
+        assertFalse(text.contains("jetbrains"))
+    }
+
+    @Test
+    fun `the block names the three meta-tools and no tool of any domain`() {
+        val text = IdeMcpPrompt.text(own)
+        listOf("domains()", "tools(domain)", "run(tool, args)").forEach { assertTrue(text.contains(it), it) }
+        assertFalse(SNAKE_CASE.containsMatchIn(text), "a domain tool is named: " + SNAKE_CASE.find(text)?.value)
+        assertFalse(text.contains("mcp__"))
+    }
+
+    @Test
+    fun `the block reads as an order, is one paragraph, and carries the common rules`() {
+        val text = IdeMcpPrompt.text(own)
+        assertTrue(text.startsWith(IdeMcpPrompt.OPEN) && text.endsWith(IdeMcpPrompt.CLOSE))
+        assertEquals(3, text.lines().size, "open, one paragraph, close")
+        listOf("subagent", "verbatim", "fallback", "domains() first").forEach { assertTrue(text.contains(it), it) }
         listOf("prefer", "try to", "if possible", "consider", "when possible").forEach {
             assertFalse(text.lowercase().contains(it), it)
         }
-        assertTrue(text.startsWith(IdeMcpPrompt.OPEN) && text.endsWith(IdeMcpPrompt.CLOSE))
     }
 
     @Test
-    fun `the whole block with everything on stays under the token budget`() {
-        val text = IdeMcpPrompt.text(all, servers)
-        assertTrue(text.length < BUDGET_CHARS, "length=${text.length}")
-    }
-
-    @Test
-    fun `only tools the IDE actually exposes are promised`() {
-        val known = setOf("ide_search_text", "list_run_configurations")
-        val text = IdeMcpPrompt.text(all, servers, known)
-        assertTrue(text.contains("ide_search_text"))
-        assertFalse(text.contains("ide_read_file"))
-        assertFalse(text.contains("apply_patch"))
-        assertTrue(text.contains("Every agent"))
-    }
-
-    @Test
-    fun `rules are numbered in one sequence across servers`() {
-        val numbers = IdeMcpPrompt.text(all, servers).lines().mapNotNull { it.substringBefore('.').toIntOrNull() }
-        assertEquals((1..IdeRule.entries.size).toList(), numbers)
+    fun `the whole block with every server on stays under the tightened budget`() {
+        val text = IdeMcpPrompt.text(own)
+        assertTrue(text.length < BUDGET_CHARS, "length=" + text.length)
     }
 
     private companion object {
-        const val BUDGET_CHARS = 2600
+        const val BUDGET_CHARS = 800
+
+        val SNAKE_CASE = Regex("[a-z]+_[a-z_]+")
     }
 }

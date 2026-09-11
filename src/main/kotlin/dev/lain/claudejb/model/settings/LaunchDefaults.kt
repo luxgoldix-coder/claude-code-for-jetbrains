@@ -37,10 +37,6 @@ object LaunchDefaults {
 
     const val DEFAULT_IDE_MCP_PORT = 64342
 
-    const val DEFAULT_INDEX_MCP_PORT = 29170
-
-    const val DEFAULT_DEBUGGER_MCP_PORT = 29190
-
     private const val MAX_PORT = 65_535
 
     internal val VALID_PORTS = 1..MAX_PORT

@@ -7,7 +7,6 @@ function state(extra = {}) {
     running: true,
     guardOn: true,
     godModeOn: false,
-    ideRulesOn: 0,
     provider: { id: 'anthropic', label: 'Anthropic', options: [{ id: 'anthropic', label: 'Anthropic' }] },
     model: { label: 'Opus 5', options: [{ value: 'opus[1m]', label: 'Opus 5', selected: true }] },
     mode: { wire: 'default', label: 'Default', options: [{ wire: 'default', label: 'Default' }] },
@@ -53,18 +52,17 @@ describe('the flame says whether Claude God Mode is on', () => {
     expect(flame.innerHTML).not.toMatch(/url\(|<image|href/);
   });
 
-  it('is unlit and says so while God Mode is off, even with some IDE rules on', () => {
-    const { flame } = mount({ ideRulesOn: 3 });
+  it('is unlit and says so while God Mode is off', () => {
+    const { flame } = mount();
     expect(flame.classList.contains('active')).toBe(false);
     expect(flame.title).toContain('off');
-    expect(flame.title).toContain('3 IDE rules');
   });
 
   it('lights from the host and goes out again', () => {
     const { win, flame } = mount();
     const unlit = flame.innerHTML;
 
-    win.cc.state(state({ godModeOn: true, ideRulesOn: 25 }));
+    win.cc.state(state({ godModeOn: true }));
     expect(flame.classList.contains('active')).toBe(true);
     expect(flame.title).toContain('on');
     expect(flame.innerHTML).not.toBe(unlit);
@@ -103,13 +101,6 @@ describe('the flame says whether Claude God Mode is on', () => {
       items: [
         { key: 'model:opus[1m]', group: 'Model', label: 'Opus 5', on: true, type: 'radio' },
         { key: 'godMode', group: 'Claude God Mode', label: 'Claude becomes one with your IDE', on: false },
-        {
-          key: 'iderule:index.read',
-          group: 'Claude God Mode',
-          sub: 'IDE Index MCP Server',
-          label: 'Read',
-          on: false,
-        },
       ],
     });
 
