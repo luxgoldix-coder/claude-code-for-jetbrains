@@ -9,6 +9,7 @@ import dev.lain.claudejb.session.ChatSessionManager
 import dev.lain.claudejb.session.ClaudeSession
 import dev.lain.claudejb.session.EntryDTO
 import dev.lain.claudejb.session.SessionHistory
+import dev.lain.claudejb.session.SessionListing
 import dev.lain.claudejb.session.SessionRef
 import dev.lain.claudejb.session.SessionStore
 import dev.lain.claudejb.session.SessionTitleReader
@@ -40,7 +41,7 @@ internal class TabSessionCommands(
         ApplicationManager.getApplication().executeOnPooledThread {
             val ids = SessionHistory.getInstance(project).openSessions()
                 .filter { SessionStore.exists(it) }
-                .ifEmpty { listOfNotNull(SessionTranscriptReader.listSessions(project).firstOrNull()?.sessionId) }
+                .ifEmpty { listOfNotNull(SessionListing.list(project).firstOrNull()?.sessionId) }
             val restored = ids
                 .map {
                     RestoredSession(
@@ -107,7 +108,7 @@ internal class TabSessionCommands(
 
     fun openPreviousSession() {
         ApplicationManager.getApplication().executeOnPooledThread {
-            val refs = SessionTranscriptReader.listSessions(project)
+            val refs = SessionListing.list(project)
             edt {
                 if (refs.isEmpty()) {
                     Messages.showInfoMessage(project, "No previous sessions have been saved yet.", "Claude Code")

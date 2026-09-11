@@ -1,43 +1,16 @@
 package dev.lain.claudejb.session
 
-import com.intellij.openapi.project.Project
 import dev.lain.claudejb.permission.ToolInputScanner
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import java.nio.file.Files
 import java.time.Instant
-
-data class EntryDTO(
-    val speaker: String,
-    val text: String,
-    val meta: String? = null,
-    val toolUseId: String? = null,
-    val parentToolUseId: String? = null,
-    val atMillis: Long? = null,
-    val filePath: String? = null,
-    val commandText: String? = null,
-    val messageText: String? = null,
-    val inFlight: Boolean = false,
-    val failed: Boolean = false,
-    val blockedRule: String? = null,
-    val bypassedRule: String? = null,
-    val bypassAction: String? = null,
-)
-
-data class SessionRef(
-    val sessionId: String,
-    val title: String,
-    val lastModified: Long,
-    val firstPrompt: String? = null,
-    val gitBranch: String? = null,
-    val createdAt: String? = null,
-)
 
 object SessionTranscriptReader {
 
@@ -54,10 +27,10 @@ object SessionTranscriptReader {
     fun parseEntries(lines: List<String>, maxEntries: Int? = null, projectRoot: String? = null): List<EntryDTO> =
         entriesOf(parseRecords(lines), maxEntries, projectRoot)
 
-    fun parseRecords(lines: List<String>): List<JsonObject> =
-        lines.mapNotNull { line ->
-            if (line.isBlank()) null else runCatching { JSON.parseToJsonElement(line).jsonObject }.getOrNull()
-        }
+    fun parseRecord(line: String): JsonObject? =
+        if (line.isBlank()) null else runCatching { JSON.parseToJsonElement(line).jsonObject }.getOrNull()
+
+    fun parseRecords(lines: List<String>): List<JsonObject> = lines.mapNotNull(::parseRecord)
 
     fun entriesOf(
         records: List<JsonObject>,
@@ -227,70 +200,9 @@ object SessionTranscriptReader {
         }
     }
 
-    private const val MAX_LISTED_SESSIONS = 30
-
-    fun listSessions(project: Project): List<SessionRef> {
-        val base = project.basePath ?: return emptyList()
-        return SessionStore.listFiles(base).take(MAX_LISTED_SESSIONS).mapNotNull { path ->
-            val id = path.fileName.toString().removeSuffix(".jsonl")
-            val lines = runCatching { Files.readAllLines(path) }.getOrNull() ?: return@mapNotNull null
-            val title = SessionTitleReader.pickTitle(lines) ?: id
-            val mtime = runCatching { Files.getLastModifiedTime(path).toMillis() }.getOrDefault(0L)
-            val meta = parseMetadata(lines)
-            SessionRef(id, title, mtime, meta.firstPrompt, meta.gitBranch, meta.createdAt)
-        }
-    }
-
-    data class Metadata(val firstPrompt: String?, val gitBranch: String?, val createdAt: String?)
-
-    fun parseMetadata(lines: List<String>): Metadata {
-        val acc = MetadataAccumulator()
-        for (line in lines) {
-            val obj = runCatching { JSON.parseToJsonElement(line).jsonObject }.getOrNull() ?: continue
-            acc.absorb(obj)
-            if (acc.isComplete) break
-        }
-        return acc.build()
-    }
-
-    private class MetadataAccumulator {
-        private var firstPrompt: String? = null
-        private var branch: String? = null
-        private var createdAt: String? = null
-
-        val isComplete: Boolean get() = firstPrompt != null && branch != null && createdAt != null
-
-        fun absorb(obj: JsonObject) {
-            if (branch == null) branch = obj.nonBlank("gitBranch")
-            if (createdAt == null) createdAt = obj.nonBlank("timestamp")
-            if (firstPrompt == null && obj["type"]?.jsonPrimitive?.contentOrNull == "user") {
-                firstPrompt = firstUserText(obj)
-            }
-        }
-
-        fun build() = Metadata(firstPrompt, branch, createdAt)
-
-        private fun JsonObject.nonBlank(key: String): String? =
-            this[key]?.jsonPrimitive?.contentOrNull?.takeIf { it.isNotBlank() }
-    }
-
-    private fun firstUserText(obj: JsonObject): String? {
-        val content = (obj["message"] as? JsonObject)?.get("content") ?: return null
-        return when (content) {
-            is JsonPrimitive -> content.contentOrNull?.takeIf { it.isNotBlank() }
-
-            is JsonArray -> content.asSequence()
-                .mapNotNull { it as? JsonObject }
-                .firstOrNull { it["type"]?.jsonPrimitive?.contentOrNull == "text" }
-                ?.text()?.takeIf { it.isNotBlank() }
-
-            else -> null
-        }
-    }
-
     private fun JsonObject.text(): String? = this["text"]?.jsonPrimitive?.contentOrNull
 
-    private fun toolResultText(content: kotlinx.serialization.json.JsonElement?): String = when (content) {
+    private fun toolResultText(content: JsonElement?): String = when (content) {
         is JsonPrimitive -> content.contentOrNull.orEmpty()
         is JsonArray -> content.mapNotNull { (it as? JsonObject)?.text() }.joinToString("\n")
         else -> ""

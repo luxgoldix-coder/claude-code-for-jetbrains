@@ -153,7 +153,7 @@ class SessionTranscriptReaderTest {
             """{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"sure"}]}}""",
             """{"type":"user","gitBranch":"feature/y","message":{"role":"user","content":"and another"}}""",
         )
-        val meta = SessionTranscriptReader.parseMetadata(lines)
+        val meta = SessionListing.parseMetadata(lines)
         assertEquals("do the thing", meta.firstPrompt)
         assertEquals("feature/x", meta.gitBranch)
         assertEquals("2026-05-27T21:29:10.205Z", meta.createdAt)
@@ -165,13 +165,13 @@ class SessionTranscriptReaderTest {
             """{"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"t1","content":"x"}]}}""",
             """{"type":"user","message":{"role":"user","content":[{"type":"text","text":"real prompt"}]}}""",
         )
-        val meta = SessionTranscriptReader.parseMetadata(lines)
+        val meta = SessionListing.parseMetadata(lines)
         assertEquals("real prompt", meta.firstPrompt)
     }
 
     @Test
     fun `parseMetadata returns nulls when nothing is present and never throws on junk`() {
-        val meta = SessionTranscriptReader.parseMetadata(listOf("", "  ", "{not json", """{"type":"summary"}"""))
+        val meta = SessionListing.parseMetadata(listOf("", "  ", "{not json", """{"type":"summary"}"""))
         assertNull(meta.firstPrompt)
         assertNull(meta.gitBranch)
         assertNull(meta.createdAt)

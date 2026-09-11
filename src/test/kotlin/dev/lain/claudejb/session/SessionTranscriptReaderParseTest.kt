@@ -146,7 +146,7 @@ class SessionTranscriptReaderParseTest {
 
     @Test
     fun `metadata takes the first prompt, branch and timestamp it finds`() {
-        val meta = SessionTranscriptReader.parseMetadata(
+        val meta = SessionListing.parseMetadata(
             listOf(
                 "garbage",
                 """{"type":"user","gitBranch":"feature/x","timestamp":"2026-08-06T10:00:00Z",
@@ -163,7 +163,7 @@ class SessionTranscriptReaderParseTest {
 
     @Test
     fun `metadata is all-null for a transcript that carries none of it`() {
-        val meta = SessionTranscriptReader.parseMetadata(listOf(assistantText("model only"), "{}"))
+        val meta = SessionListing.parseMetadata(listOf(assistantText("model only"), "{}"))
         assertNull(meta.firstPrompt)
         assertNull(meta.gitBranch)
         assertNull(meta.createdAt)
