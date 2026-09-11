@@ -12,7 +12,9 @@ import dev.lain.claudejb.controller.mcp.tools.code.OutlineTools
 import dev.lain.claudejb.controller.mcp.tools.code.ReadTools
 import dev.lain.claudejb.controller.mcp.tools.code.RefactorTools
 import dev.lain.claudejb.controller.mcp.tools.code.SearchTools
+import dev.lain.claudejb.controller.mcp.tools.run.BreakpointTools
 import dev.lain.claudejb.controller.mcp.tools.run.BuildTools
+import dev.lain.claudejb.controller.mcp.tools.run.DebugTools
 import dev.lain.claudejb.controller.mcp.tools.run.RunTools
 import dev.lain.claudejb.controller.mcp.tools.run.TerminalTools
 import dev.lain.claudejb.controller.mcp.tools.run.TestTools
@@ -42,6 +44,8 @@ internal object IdeToolCatalog {
             { p, s -> RunTools(p, s).domain() },
             { p, s -> TestTools(p, s).domain() },
             { p, s -> TerminalTools(p, s).domain() },
+            { p, _ -> DebugTools(p).domain() },
+            { p, _ -> BreakpointTools(p).domain() },
         ),
     )
 
