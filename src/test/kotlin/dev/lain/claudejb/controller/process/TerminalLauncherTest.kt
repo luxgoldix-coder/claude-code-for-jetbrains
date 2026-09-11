@@ -53,35 +53,39 @@ class TerminalLauncherTest {
 class TerminalApiContractTest {
 
     @Test
-    fun `the createNewSession overload the launcher reflects on exists on this platform`() {
+    fun `the public tab creation API the launcher calls exists on this platform`() {
         val cls = Class.forName("org.jetbrains.plugins.terminal.TerminalToolWindowManager")
         val m = cls.getMethod(
-            "createNewSession",
+            "createShellWidget",
             String::class.java,
             String::class.java,
-            List::class.java,
             java.lang.Boolean.TYPE,
             java.lang.Boolean.TYPE,
         )
-        assertTrue(m.returnType != Void.TYPE, "createNewSession must return a widget we can null-check")
+        assertEquals(
+            "com.intellij.terminal.ui.TerminalWidget",
+            m.returnType.name,
+            "createShellWidget must return the widget the launcher sends the command to",
+        )
+        assertTrue(
+            m.returnType.methods.any { it.name == "sendCommandToExecute" && it.parameterCount == 1 },
+            "TerminalWidget.sendCommandToExecute is how the command reaches the shell",
+        )
     }
 
     @Test
-    fun `the launcher asks the platform for exactly the overload this test pins`() {
+    fun `the launcher reaches the terminal without reflection`() {
         val source = sequenceOf(
             java.io.File("src/main/kotlin/dev/lain/claudejb/controller/process/TerminalLauncher.kt"),
             java.io.File("../src/main/kotlin/dev/lain/claudejb/controller/process/TerminalLauncher.kt"),
         ).first { it.isFile }.readText()
 
-        val call = source.substringAfter("getMethod(").substringBefore(")").filterNot { it.isWhitespace() }
-        assertEquals(
-            "\"createNewSession\",String::class.java,String::class.java,List::class.java," +
-                "java.lang.Boolean.TYPE,java.lang.Boolean.TYPE,",
-            call,
-            "TerminalLauncher reflects on a different signature than TerminalApiContractTest verifies",
-        )
-        assertEquals(1, Regex("""\bgetMethod\(""").findAll(source).count()) {
-            "more than one reflective lookup in TerminalLauncher — this contract only covers the first"
+        assertEquals(0, Regex("""\bgetMethod\(""").findAll(source).count()) {
+            "TerminalLauncher went back to reflection; the five-argument createNewSession is @ApiStatus.Internal"
         }
+        assertTrue(
+            source.contains("createShellWidget("),
+            "TerminalLauncher must call the public createShellWidget",
+        )
     }
 }

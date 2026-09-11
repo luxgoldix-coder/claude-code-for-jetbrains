@@ -542,6 +542,7 @@ intellijPlatform {
 kotlin {
     jvmToolchain(21)
     compilerOptions {
+        allWarningsAsErrors.set(true)
         freeCompilerArgs.add("-Xjvm-default=all")
     }
 }

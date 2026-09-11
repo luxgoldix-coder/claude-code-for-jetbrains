@@ -9,12 +9,14 @@ import dev.lain.claudejb.model.diff.EditSnapshot
 
 object FileRollback {
 
+    private const val UNDO_NAME = "Revert Claude's Edit"
+
     fun revert(project: Project, snapshot: EditSnapshot): Boolean {
         if (!DiffPresenter.isWithinRoot(snapshot.filePath, project.basePath)) return false
         var wrote = false
         val wasCreation = !snapshot.existedBefore
         runCatching {
-            WriteCommandAction.runWriteCommandAction(project) {
+            WriteCommandAction.writeCommandAction(project).withName(UNDO_NAME).run<Throwable> {
                 val lfs = LocalFileSystem.getInstance()
                 val vf = lfs.refreshAndFindFileByPath(snapshot.filePath) ?: lfs.findFileByPath(snapshot.filePath)
                 when {
