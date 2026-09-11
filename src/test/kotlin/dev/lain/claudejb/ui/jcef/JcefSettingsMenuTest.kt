@@ -28,12 +28,12 @@ class JcefSettingsMenuTest {
     private fun modelIds() = models().map { it.value }
 
     private fun selected(model: String = "opus[1m]", effort: String? = "high", mode: String = "default") =
-        JcefSettingsMenu.Selected(models = models(), model = model, effort = effort, mode = mode)
+        SettingsMenuRows.Selected(models = models(), model = model, effort = effort, mode = mode)
 
     private fun menu(
         state: ClaudeSettings.State = ClaudeSettings.State(),
-        selected: JcefSettingsMenu.Selected = selected(),
-    ): List<JsonObject> = JcefSettingsMenu.json(scope, state, selected).map { it.jsonObject }
+        selected: SettingsMenuRows.Selected = selected(),
+    ): List<JsonObject> = SettingsMenuRows.json(scope, state, selected).map { it.jsonObject }
 
     private fun JsonObject.str(key: String): String = getValue(key).jsonPrimitive.content
 
