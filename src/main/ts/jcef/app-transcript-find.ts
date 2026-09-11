@@ -147,6 +147,8 @@
   TX.resetSearch = function (): void {
     currentQuery = '';
     searchHits = [];
+    activeIndex = 0;
+    if (typeof TX.resetFindBar === 'function') TX.resetFindBar();
   };
 
   function subscribe(): boolean {

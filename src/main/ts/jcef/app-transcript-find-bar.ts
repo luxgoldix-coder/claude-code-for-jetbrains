@@ -117,6 +117,12 @@
     }
   }
 
+  TX.resetFindBar = function (): void {
+    if (findInput) findInput.value = '';
+    if (findCount) findCount.textContent = '';
+    if (findBar) findBar.hidden = true;
+  };
+
   function isTextField(target: EventTarget | null): boolean {
     const el = target as HTMLElement | null;
     if (!el || !el.tagName) return false;

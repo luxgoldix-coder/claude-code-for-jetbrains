@@ -178,6 +178,7 @@ interface TranscriptNs {
   hitCount(): number;
   activeHit(): number;
   updateFindCount(): void;
+  resetFindBar(): void;
   scheduleScroll(stick: boolean): void;
   stickToBottom(): boolean;
   [name: string]: unknown;
