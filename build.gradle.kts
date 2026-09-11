@@ -196,7 +196,7 @@ tasks {
         from(rootProject.file("LICENSES")) { into("META-INF/licenses") }
     }
     runIde {
-        jvmArgs("-Djb.privacy.policy.text=<!--999.999-->", "-Djb.consents.confirmation.enabled=false")
+        jvmArgs("-Djb.privacy.policy.text=<!--999.999-->", "-Djb.consents.confirmation.enabled=false", "-Dclaudejb.debug=true")
     }
     test {
         // Exclude the live drift check: it downloads the latest SDK from npm and spawns the real binary,
