@@ -1,6 +1,5 @@
 package dev.lain.claudejb.view.settings.sections
 
-import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.Panel
 import dev.lain.claudejb.model.session.launch.GodMode
@@ -11,112 +10,107 @@ import dev.lain.claudejb.model.settings.LaunchDefaults
 import dev.lain.claudejb.view.settings.PluginInstaller
 import dev.lain.claudejb.view.settings.SettingsSection
 import javax.swing.JButton
+import javax.swing.JComboBox
 import javax.swing.JSpinner
 import javax.swing.SpinnerNumberModel
 
-internal class SettingsIdeMcpSection(
-    private val installer: PluginInstaller,
-    private val jetbrainsCheck: JBCheckBox,
-) : SettingsSection {
+internal class SettingsIdeMcpSection(installer: PluginInstaller) : SettingsSection {
 
-    private val indexCheck = JBCheckBox("Enable ${IdeServer.INDEX.label} — code intelligence, edits, builds and tests")
+    private val servers: Map<IdeServer, IdeServerControls> =
+        IdeServer.entries.associateWith { IdeServerControls(it, installer) { syncEnabled() } }
+
+    private val jetbrainsTransport = JComboBox(LaunchDefaults.IDE_MCP_TRANSPORTS.toTypedArray())
+    private val jetbrainsPort = portSpinner(LaunchDefaults.DEFAULT_IDE_MCP_PORT)
     private val indexPort = portSpinner(LaunchDefaults.DEFAULT_INDEX_MCP_PORT)
-    private val debuggerCheck = JBCheckBox("Enable ${IdeServer.DEBUGGER.label} — run configurations and live debugging")
     private val debuggerPort = portSpinner(LaunchDefaults.DEFAULT_DEBUGGER_MCP_PORT)
-
-    private val rules: Map<IdeServer?, IdeRuleBoxes> =
-        (IdeServer.entries.map { it } + null).associateWith { server ->
-            IdeRuleBoxes(if (server == null) IdeRule.common else IdeRule.forServer(server))
-        }
+    private val commonRules = IdeRuleBoxes(IdeRule.common)
 
     private val enableAll = JButton("Turn " + GodMode.LABEL + " on — " + GodMode.TAGLINE).apply {
         addActionListener {
-            jetbrainsCheck.isSelected = true
-            indexCheck.isSelected = true
-            debuggerCheck.isSelected = true
-            rules.values.forEach { it.checkAll() }
-            listOf(IdeServer.JETBRAINS, IdeServer.INDEX, IdeServer.DEBUGGER).forEach { ensureInstalled(it) }
+            servers.values.forEach { it.turnOn() }
+            commonRules.checkAll()
             syncEnabled()
         }
     }
 
-    init {
-        indexCheck.addActionListener { onServerToggled(IdeServer.INDEX, indexCheck) }
-        debuggerCheck.addActionListener { onServerToggled(IdeServer.DEBUGGER, debuggerCheck) }
-        jetbrainsCheck.addActionListener { onServerToggled(IdeServer.JETBRAINS, jetbrainsCheck) }
-    }
-
     override fun addTo(panel: Panel) {
-        panel.collapsibleGroup(GodMode.LABEL) {
+        panel.collapsibleGroup(TITLE) {
             row { cell(enableAll) }.rowComment(ENABLE_ALL_NOTE, MAX_LINE_LENGTH_WORD_WRAP)
-            row { cell(indexCheck) }
-            row("Index port:") { cell(indexPort) }.rowComment(THIRD_PARTY_NOTE, MAX_LINE_LENGTH_WORD_WRAP)
-            row { cell(rules.getValue(IdeServer.INDEX).component) }
-            row { cell(debuggerCheck) }
-            row("Debugger port:") { cell(debuggerPort) }.rowComment(THIRD_PARTY_NOTE, MAX_LINE_LENGTH_WORD_WRAP)
-            row { cell(rules.getValue(IdeServer.DEBUGGER).component) }
-            row("JetBrains MCP Server rules:") { cell(rules.getValue(IdeServer.JETBRAINS).component) }
-                .rowComment(JETBRAINS_NOTE, MAX_LINE_LENGTH_WORD_WRAP)
-            row("With any server:") { cell(rules.getValue(null).component) }
-                .rowComment(RULES_NOTE, MAX_LINE_LENGTH_WORD_WRAP)
+            serverBlock(IdeServer.JETBRAINS, JETBRAINS_NOTE) {
+                row("Transport:") { cell(jetbrainsTransport) }
+                row("Port:") { cell(jetbrainsPort) }
+            }
+            serverBlock(IdeServer.INDEX, THIRD_PARTY_NOTE) { row("Port:") { cell(indexPort) } }
+            serverBlock(IdeServer.DEBUGGER, THIRD_PARTY_NOTE) { row("Port:") { cell(debuggerPort) } }
+            row("With any server:") { cell(commonRules.component) }.rowComment(RULES_NOTE, MAX_LINE_LENGTH_WORD_WRAP)
         }
     }
 
+    private fun Panel.serverBlock(server: IdeServer, note: String, ports: Panel.() -> Unit) {
+        val c = servers.getValue(server)
+        row {
+            cell(c.check)
+            cell(c.action)
+            cell(c.status)
+        }
+        ports()
+        row { cell(c.rules.component) }.rowComment(note, MAX_LINE_LENGTH_WORD_WRAP)
+    }
+
     override fun reset(s: ClaudeSettings.State) {
-        indexCheck.isSelected = s.ideMcp.indexEnabled
+        check(IdeServer.JETBRAINS).isSelected = s.ideMcpEnabled
+        jetbrainsTransport.selectedItem = s.ideMcpTransport
+        jetbrainsPort.value = s.ideMcpPort
+        check(IdeServer.INDEX).isSelected = s.ideMcp.indexEnabled
         indexPort.value = s.ideMcp.indexPort
-        debuggerCheck.isSelected = s.ideMcp.debuggerEnabled
+        check(IdeServer.DEBUGGER).isSelected = s.ideMcp.debuggerEnabled
         debuggerPort.value = s.ideMcp.debuggerPort
         val selected = IdeRule.parse(s.ideMcp.rules)
-        rules.values.forEach { it.setFrom(selected) }
+        servers.values.forEach {
+            it.rules.setFrom(selected)
+            it.refresh()
+        }
+        commonRules.setFrom(selected)
         syncEnabled()
     }
 
     override fun apply(s: ClaudeSettings.State) {
-        s.ideMcp.indexEnabled = indexCheck.isSelected
+        s.ideMcpEnabled = check(IdeServer.JETBRAINS).isSelected
+        s.ideMcpTransport = transportText()
+        s.ideMcpPort = port(jetbrainsPort)
+        s.ideMcp.indexEnabled = check(IdeServer.INDEX).isSelected
         s.ideMcp.indexPort = port(indexPort)
-        s.ideMcp.debuggerEnabled = debuggerCheck.isSelected
+        s.ideMcp.debuggerEnabled = check(IdeServer.DEBUGGER).isSelected
         s.ideMcp.debuggerPort = port(debuggerPort)
         s.ideMcp.rules = IdeRule.csv(selectedRules())
     }
 
     override fun changedFields(s: ClaudeSettings.State): List<Boolean> = listOf(
-        indexCheck.isSelected != s.ideMcp.indexEnabled,
+        check(IdeServer.JETBRAINS).isSelected != s.ideMcpEnabled,
+        transportText() != s.ideMcpTransport,
+        port(jetbrainsPort) != s.ideMcpPort,
+        check(IdeServer.INDEX).isSelected != s.ideMcp.indexEnabled,
         port(indexPort) != s.ideMcp.indexPort,
-        debuggerCheck.isSelected != s.ideMcp.debuggerEnabled,
+        check(IdeServer.DEBUGGER).isSelected != s.ideMcp.debuggerEnabled,
         port(debuggerPort) != s.ideMcp.debuggerPort,
         selectedRules() != IdeRule.parse(s.ideMcp.rules),
     )
 
-    private fun selectedRules(): Set<IdeRule> = rules.values.flatMap { it.selected() }.toSet()
+    private fun check(server: IdeServer) = servers.getValue(server).check
 
-    private fun onServerToggled(server: IdeServer, check: JBCheckBox) {
-        if (check.isSelected) {
-            if (rules.getValue(server).selected().isEmpty()) rules.getValue(server).checkAll()
-            ensureInstalled(server)
-        }
-        syncEnabled()
-    }
-
-    private fun ensureInstalled(server: IdeServer) {
-        installer.ensureInstalled(server) { installed ->
-            if (!installed) checkOf(server).isSelected = false
-            syncEnabled()
-        }
-    }
-
-    private fun checkOf(server: IdeServer): JBCheckBox = when (server) {
-        IdeServer.INDEX -> indexCheck
-        IdeServer.DEBUGGER -> debuggerCheck
-        IdeServer.JETBRAINS -> jetbrainsCheck
-    }
+    private fun selectedRules(): Set<IdeRule> =
+        servers.values.flatMap { it.rules.selected() }.toSet() + commonRules.selected()
 
     private fun syncEnabled() {
-        IdeServer.entries.forEach { rules.getValue(it).setEnabled(checkOf(it).isSelected) }
-        indexPort.isEnabled = indexCheck.isSelected
-        debuggerPort.isEnabled = debuggerCheck.isSelected
-        rules.getValue(null).setEnabled(IdeServer.entries.any { checkOf(it).isSelected })
+        servers.values.forEach { it.syncEnabled() }
+        jetbrainsTransport.isEnabled = check(IdeServer.JETBRAINS).isSelected
+        jetbrainsPort.isEnabled = check(IdeServer.JETBRAINS).isSelected
+        indexPort.isEnabled = check(IdeServer.INDEX).isSelected
+        debuggerPort.isEnabled = check(IdeServer.DEBUGGER).isSelected
+        commonRules.setEnabled(servers.values.any { it.isOn() })
     }
+
+    private fun transportText() = (jetbrainsTransport.selectedItem as? String) ?: "sse"
 
     private fun port(spinner: JSpinner) = (spinner.value as Number).toInt()
 
@@ -126,17 +120,23 @@ internal class SettingsIdeMcpSection(
         const val MIN_PORT = 1
         const val MAX_PORT = 65_535
 
+        const val TITLE = "Claude IDE Integration"
+
         const val ENABLE_ALL_NOTE =
             "One switch, every IDE MCP server and every rule. Claude then reads, searches, edits, refactors, builds, " +
                 "tests and debugs through the IDE itself: faster, cheaper in tokens, and the results land where you " +
-                "work. Fine-tune below; the flame in the chat bar lights when everything is on."
+                "work. Each server needs its plugin installed and the IDE restarted once; the buttons say where " +
+                "each one stands. Fine-tune below; the flame in the chat bar lights when everything is on."
+
+        const val JETBRAINS_NOTE =
+            "⚠ JetBrains' own MCP Server plugin, bundled with recent IDEs. <code>sse</code> and " +
+                "<code>streamable-http</code> expose a localhost port any local process can reach; <code>stdio</code> " +
+                "launches a helper instead. Tool calls are still gated by the permission prompt and by the guard."
 
         const val THIRD_PARTY_NOTE =
             "⚠ Third-party plugin by hechtcarmel, not affiliated with JetBrains or with this plugin. It runs with your " +
-                "IDE's privileges and listens on a localhost port any local process can reach. If it is missing, " +
-                "switching it on offers to install it through the IDE's own dialog."
-
-        const val JETBRAINS_NOTE = "These apply once the JetBrains MCP server above is switched on."
+                "IDE's privileges and listens on a localhost port any local process can reach. Install goes through " +
+                "the IDE's own plugin dialog."
 
         const val RULES_NOTE =
             "Each rule adds one short instruction to Claude's system prompt, naming the exact tools to use. Only " +
