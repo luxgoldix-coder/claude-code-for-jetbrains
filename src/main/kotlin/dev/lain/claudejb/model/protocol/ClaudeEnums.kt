@@ -28,14 +28,3 @@ enum class EffortLevel(val wire: String) {
         fun from(wire: String?): EffortLevel? = entries.firstOrNull { it.wire == wire }
     }
 }
-
-enum class McpTransport(val wire: String) {
-    SSE("sse"),
-    STREAMABLE_HTTP("streamable-http"),
-    STDIO("stdio"),
-    ;
-
-    companion object {
-        fun from(wire: String?): McpTransport? = entries.firstOrNull { it.wire == wire }
-    }
-}

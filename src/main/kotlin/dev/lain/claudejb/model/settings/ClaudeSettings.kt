@@ -31,12 +31,6 @@ class ClaudeSettings(internal val project: Project? = null) {
 
         @JvmField var disallowedTools: String = ""
 
-        @JvmField var ideMcpEnabled: Boolean = false
-
-        @JvmField var ideMcpTransport: String = "sse"
-
-        @JvmField var ideMcpPort: Int = LaunchDefaults.DEFAULT_IDE_MCP_PORT
-
         @JvmField var customMcpServers: String = ""
 
         @JvmField var claudePath: String = ""

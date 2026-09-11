@@ -1,7 +1,6 @@
 package dev.lain.claudejb.model.session.launch
 
 import dev.lain.claudejb.model.settings.ClaudeSettings
-import dev.lain.claudejb.model.settings.LaunchDefaults
 
 data class LaunchOptions(
     val model: String? = null,
@@ -12,16 +11,8 @@ data class LaunchOptions(
     val disallowedTools: String = "",
     val settingSources: String = "user,project,local",
     val includePartialMessages: Boolean = true,
-    val ideMcpEnabled: Boolean = false,
-    val ideMcpTransport: String = "sse",
-    val ideMcpPort: Int = LaunchDefaults.DEFAULT_IDE_MCP_PORT,
     val customMcpServers: String = "",
-    val indexMcpEnabled: Boolean = false,
-    val indexMcpPort: Int = LaunchDefaults.DEFAULT_INDEX_MCP_PORT,
-    val debuggerMcpEnabled: Boolean = false,
-    val debuggerMcpPort: Int = LaunchDefaults.DEFAULT_DEBUGGER_MCP_PORT,
     val ideRules: Set<IdeRule> = emptySet(),
-    val knownIdeTools: Set<String> = emptySet(),
     val ideIntegration: Boolean = false,
     val ideSockets: Map<IdeServer, String> = emptyMap(),
     val maxTurns: Int? = null,
@@ -43,7 +34,6 @@ data class LaunchOptions(
         thinkingTokens = null,
         allowedTools = "",
         disallowedTools = "",
-        knownIdeTools = emptySet(),
         sessionId = null,
         fork = false,
     )
@@ -61,17 +51,8 @@ data class LaunchOptions(
                 disallowedTools = s.disallowedTools,
                 settingSources = s.settingSources,
                 includePartialMessages = s.includePartialMessages,
-                ideMcpEnabled = s.ideMcpEnabled,
-                ideMcpTransport = s.ideMcpTransport.ifBlank { "sse" },
-                ideMcpPort = s.ideMcpPort.takeIf { it in LaunchDefaults.VALID_PORTS } ?: LaunchDefaults.DEFAULT_IDE_MCP_PORT,
                 customMcpServers = s.customMcpServers,
-                indexMcpEnabled = s.ideMcp.indexEnabled,
-                indexMcpPort = s.ideMcp.indexPort.takeIf { it in LaunchDefaults.VALID_PORTS } ?: LaunchDefaults.DEFAULT_INDEX_MCP_PORT,
-                debuggerMcpEnabled = s.ideMcp.debuggerEnabled,
-                debuggerMcpPort = s.ideMcp.debuggerPort.takeIf { it in LaunchDefaults.VALID_PORTS }
-                    ?: LaunchDefaults.DEFAULT_DEBUGGER_MCP_PORT,
                 ideRules = IdeRule.parse(s.ideMcp.rules),
-                knownIdeTools = IdeToolInventory.parse(s.ideMcp.knownTools),
                 ideIntegration = s.ideMcp.enabled,
                 maxTurns = settings.maxTurns,
                 maxBudgetUsd = settings.maxBudgetUsd,

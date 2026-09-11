@@ -36,9 +36,6 @@ class SessionLauncherTest {
         disallowedTools = disallowedTools,
         settingSources = settingSources,
         includePartialMessages = includePartialMessages,
-        ideMcpEnabled = false,
-        ideMcpTransport = "sse",
-        ideMcpPort = 64342,
         customMcpServers = "",
         sessionId = sessionId,
         maxTurns = maxTurns,
@@ -95,25 +92,26 @@ class SessionLauncherTest {
     }
 
     @Test
-    fun `IDE rules ride the system prompt after the plugin context, and the plugin servers ride the mcp config`() {
-        val withIndex = opts().copy(indexMcpEnabled = true, ideRules = setOf(IdeRule.INDEX_READ, IdeRule.DEBUGGER_DEBUG))
-        val prompt = SessionLauncher.systemPrompt(withIndex)
+    fun `IDE rules ride the system prompt, and only those of a server with a socket behind it`() {
+        val sockets = mapOf(IdeServer.CODE to "/tmp/x/code.sock")
+        val withCode = opts().copy(ideIntegration = true, ideSockets = sockets, ideRules = setOf(IdeRule.CODE_READ, IdeRule.RUN_DEBUG))
+        val prompt = SessionLauncher.systemPrompt(withCode)
         assertTrue(prompt.startsWith(PluginContextPrompt.TEXT))
-        assertTrue(prompt.contains("ide_read_file"))
-        assertFalse(prompt.contains("start_debug_session"), "a rule of a server that is off is left out")
-        val config = SessionLauncher.mcpConfigJson(withIndex)
-        val args = SessionLauncher.buildArgs(withIndex, resume = false, mcpConfig = config)
+        assertTrue(prompt.contains("read_file"))
+        assertFalse(prompt.contains("breakpoint"), "a rule of a server that is off is left out")
+        val args = SessionLauncher.buildArgs(withCode, resume = false, mcpConfig = null)
         assertEquals(prompt, args[args.indexOf("--append-system-prompt") + 1])
-        assertTrue(config!!.contains("index-mcp/streamable-http"), config)
     }
 
     @Test
-    fun `the block the hook injects is the text the launch carries, and nothing without a plugin server`() {
+    fun `the block the hook injects is the text the launch carries, and nothing without a server`() {
         assertEquals("", SessionLauncher.rulesBlock(opts().copy(ideRules = IdeRule.entries.toSet())))
-        val withIndex = opts().copy(indexMcpEnabled = true, ideRules = IdeRule.entries.toSet())
-        val block = SessionLauncher.rulesBlock(withIndex)
+        val off = opts().copy(ideSockets = mapOf(IdeServer.CODE to "/tmp/x/code.sock"), ideRules = IdeRule.entries.toSet())
+        assertEquals("", SessionLauncher.rulesBlock(off), "a socket behind a switch that is off promises nothing")
+        val on = off.copy(ideIntegration = true)
+        val block = SessionLauncher.rulesBlock(on)
         assertTrue(block.isNotBlank())
-        val prompt = SessionLauncher.systemPrompt(withIndex).lines()
+        val prompt = SessionLauncher.systemPrompt(on).lines()
         block.lines().forEach { assertTrue(it in prompt, it) }
     }
 

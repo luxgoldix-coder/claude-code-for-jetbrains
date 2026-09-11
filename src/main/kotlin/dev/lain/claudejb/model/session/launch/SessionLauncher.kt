@@ -1,9 +1,7 @@
 package dev.lain.claudejb.model.session.launch
 
 import com.intellij.ide.plugins.PluginManager
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.SystemInfo
-import dev.lain.claudejb.util.InstalledPlugins
 import dev.lain.claudejb.util.thisLogger
 import java.io.File
 
@@ -56,25 +54,13 @@ object SessionLauncher {
         prompt.trim().ifBlank { null }?.let { listOf("--append-system-prompt", it) } ?: emptyList()
 
     fun systemPrompt(opts: LaunchOptions): String =
-        listOf(PluginContextPrompt.TEXT, IdeMcpPrompt.text(ownSockets(opts).keys + ideServers(opts), opts.ideRules, opts.knownIdeTools))
+        listOf(PluginContextPrompt.TEXT, IdeMcpPrompt.text(ownSockets(opts).keys, opts.ideRules))
             .filter { it.isNotBlank() }
             .joinToString("\n\n")
 
-    fun rulesBlock(opts: LaunchOptions): String = IdeMcpPrompt.rulesBlock(opts.ideRules, ideServers(opts), opts.knownIdeTools)
+    fun rulesBlock(opts: LaunchOptions): String = IdeMcpPrompt.rulesBlock(opts.ideRules, ownSockets(opts).keys)
 
-    fun ownSockets(opts: LaunchOptions): Map<IdeServer, String> =
-        if (opts.ideIntegration) opts.ideSockets.filterKeys { it.own } else emptyMap()
-
-    fun ideServers(opts: LaunchOptions): Set<IdeServer> = buildSet {
-        if (opts.ideMcpEnabled) add(IdeServer.JETBRAINS)
-        if (opts.indexMcpEnabled) add(IdeServer.INDEX)
-        if (opts.debuggerMcpEnabled) add(IdeServer.DEBUGGER)
-    }
-
-    private fun hechtcarmelServers(opts: LaunchOptions): Map<IdeServer, Int> = buildMap {
-        if (opts.indexMcpEnabled) put(IdeServer.INDEX, opts.indexMcpPort)
-        if (opts.debuggerMcpEnabled) put(IdeServer.DEBUGGER, opts.debuggerMcpPort)
-    }
+    fun ownSockets(opts: LaunchOptions): Map<IdeServer, String> = if (opts.ideIntegration) opts.ideSockets else emptyMap()
 
     private fun advancedFlags(opts: LaunchOptions): List<String> = buildList {
         opts.maxTurns?.let { addAll(listOf("--max-turns", it.toString())) }
@@ -87,22 +73,11 @@ object SessionLauncher {
 
     fun mcpConfigJson(opts: LaunchOptions, helper: McpConfigBuilder.HelperParams? = resolveHelper()): String? =
         McpConfigBuilder.mcpConfigJson(
-            ideMcpEnabled = opts.ideMcpEnabled,
-            transport = opts.ideMcpTransport,
-            port = opts.ideMcpPort,
             customMcpServers = opts.customMcpServers,
-            stdioParams = if (opts.ideMcpEnabled && opts.ideMcpTransport == "stdio") resolveStdioParams(opts) else null,
-            onCustomParseError = { log.debug { "Failed to parse custom MCP servers JSON: $it" } },
             ownSockets = ownSockets(opts),
             helper = helper,
-            hechtcarmelServers = hechtcarmelServers(opts),
+            onCustomParseError = { log.debug { "Failed to parse custom MCP servers JSON: $it" } },
         )
-
-    fun resolveStdioParams(opts: LaunchOptions): McpConfigBuilder.StdioParams? {
-        if (!InstalledPlugins.isEnabled(IdeServer.JETBRAINS.plugin)) return null
-        val pluginLib = findMcpServerLib() ?: return null
-        return McpConfigBuilder.StdioParams(javaBin(), pluginLib, PathManager.getLibPath(), opts.ideMcpPort)
-    }
 
     fun resolveHelper(): McpConfigBuilder.HelperParams? {
         val lib = PluginManager.getPluginByClass(McpConfigBuilder::class.java)?.pluginPath?.resolve("lib")?.toFile()
@@ -112,19 +87,4 @@ object SessionLauncher {
 
     private fun javaBin(): File =
         File(File(System.getProperty("java.home"), "bin"), if (SystemInfo.isWindows) "java.exe" else "java")
-
-    fun findMcpServerLib(): File? {
-        val names = listOf("mcpServer", "mcp-server", "MCP Server")
-        val roots = listOfNotNull(
-            runCatching { java.nio.file.Paths.get(PathManager.getPluginsPath()) }.getOrNull(),
-            runCatching { java.nio.file.Paths.get(PathManager.getPreInstalledPluginsPath()) }.getOrNull(),
-        )
-        for (root in roots) {
-            for (name in names) {
-                val lib = root.resolve(name).resolve("lib")
-                if (java.nio.file.Files.isDirectory(lib)) return lib.toFile()
-            }
-        }
-        return null
-    }
 }

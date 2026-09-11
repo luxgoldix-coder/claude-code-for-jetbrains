@@ -40,7 +40,6 @@ internal object JcefSettingsMenu {
         "reduceMotion" to { s, on -> s.reduceMotion = on },
         "checkpointing" to { s, on -> s.enableFileCheckpointing = on },
         "partialMessages" to { s, on -> s.includePartialMessages = on },
-        "ideMcp" to { s, on -> s.ideMcpEnabled = on },
         "strictMcp" to { s, on -> s.strictMcpConfig = on },
         GOD_MODE to { s, on -> GodMode.set(s, on) },
     )

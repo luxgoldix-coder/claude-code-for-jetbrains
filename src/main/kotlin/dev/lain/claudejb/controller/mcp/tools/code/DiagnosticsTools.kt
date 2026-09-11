@@ -9,6 +9,7 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import dev.lain.claudejb.model.mcp.Param
 import dev.lain.claudejb.model.mcp.Tool
 import dev.lain.claudejb.model.mcp.ToolArgs
@@ -116,10 +117,13 @@ internal class DiagnosticsTools(private val project: Project, private val daemon
 
     private fun tabs(): List<ProblemsTab> {
         val toolWindow = ProblemsViewToolWindowUtils.getToolWindow(project) ?: throw ToolException("this IDE has no Problems tool window")
-        return toolWindow.contentManager.contents
-            .mapNotNull { it.component as? ProblemsViewTab }
-            .map { ProblemsTab(it.getTabId(), it.getName(0)) }
+        return toolWindow.contentManager.contents.mapNotNull { content ->
+            val tab = content.component as? ProblemsViewTab ?: return@mapNotNull null
+            ProblemsTab(tab.getTabId(), plain(content.displayName ?: tab.getName(0)))
+        }
     }
+
+    private fun plain(title: String): String = StringUtil.removeHtmlTags(title).replace(WHITESPACE, " ").trim()
 
     private fun tab(tabs: List<ProblemsTab>, name: String): ProblemsTab =
         tabs.firstOrNull { it.id.equals(name, ignoreCase = true) || it.name.equals(name, ignoreCase = true) }
@@ -145,6 +149,7 @@ internal class DiagnosticsTools(private val project: Project, private val daemon
     companion object {
 
         private const val DEFAULT_MAX = 100
+        private val WHITESPACE = Regex("\\s+")
 
         val PROBLEMS = ToolSpec(
             "problems",

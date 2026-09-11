@@ -28,7 +28,7 @@ internal class GitCommands(private val project: Project) {
     fun stage(paths: List<FilePath>) {
         requireGit()
         val repository = repository()
-        vcs { GitFileUtils.addPaths(project, repository.root, paths) }
+        vcs { GitFileUtils.addPaths(project, repository.root, paths, false, false) }
         refresh(repository, worktree = false)
     }
 
@@ -42,7 +42,7 @@ internal class GitCommands(private val project: Project) {
     fun commit(message: String, paths: List<FilePath>, amend: Boolean) {
         requireGit()
         val repository = repository()
-        if (paths.isNotEmpty()) vcs { GitFileUtils.addPaths(project, repository.root, paths) }
+        if (paths.isNotEmpty()) vcs { GitFileUtils.addPaths(project, repository.root, paths, false, false) }
         val messageFile = GitCheckinEnvironment.createCommitMessageFile(project, repository.root, message)
         val handler = GitLineHandler(project, repository.root, GitCommand.COMMIT)
         if (amend) handler.addParameters("--amend")

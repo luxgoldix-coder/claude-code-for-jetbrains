@@ -212,9 +212,6 @@ class ClaudeSettingsConfigurableHeadlessTest : BasePlatformTestCase() {
         settingSources = "user,local"
         allowedTools = "Read,Write"
         disallowedTools = "Bash"
-        ideMcpEnabled = true
-        ideMcpTransport = "stdio"
-        ideMcpPort = 4711
         customMcpServers = """{"demo":{"type":"sse","url":"http://127.0.0.1:1/sse"}}"""
         claudePath = "/opt/claude/bin/claude"
         nodePath = "/opt/node/bin/node"
@@ -234,7 +231,7 @@ class ClaudeSettingsConfigurableHeadlessTest : BasePlatformTestCase() {
         addDirs = "/tmp/a\n/tmp/b"
         betas = "beta-one"
         strictMcpConfig = true
-        ideMcp = IdeMcpState(enabled = true, indexEnabled = true, indexPort = 29175, debuggerPort = 29199, rules = "index.read,common.agents")
+        ideMcp = IdeMcpState(enabled = false, approveClients = true, rules = "code.read,common.agents")
         enableFileCheckpointing = false
         rewindFallback = "never"
         sensitiveExtraGlobs = "**/secret.env"
@@ -247,7 +244,7 @@ class ClaudeSettingsConfigurableHeadlessTest : BasePlatformTestCase() {
             "provider",
             "claudePath", "nodePath", "sourceScript", "envVars",
             "settingSources", "allowedTools", "disallowedTools", "alwaysAllowTools",
-            "ideMcpEnabled", "ideMcpTransport", "ideMcpPort", "customMcpServers", "strictMcpConfig", "ideMcp",
+            "customMcpServers", "strictMcpConfig", "ideMcp",
             "maxTurns", "maxBudgetUsd", "fallbackModel", "addDirs", "betas",
         )
 

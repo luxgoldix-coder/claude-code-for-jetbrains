@@ -26,7 +26,7 @@ class ClaudeSettingsConfigurable(private val project: Project) : Configurable {
     private val providerSection = SettingsProviderSection(settings)
     private val executableSection = SettingsExecutableSection()
     private val toolsSection = SettingsToolsSection(settings)
-    private val ideMcpSection = SettingsIdeMcpSection(PluginInstaller(project))
+    private val ideMcpSection = SettingsIdeMcpSection()
     private val mcpSection = SettingsMcpSection()
     private val advancedSection = SettingsAdvancedSection()
     private val transferSection = SettingsTransferSection(project) { reset() }

@@ -7,25 +7,23 @@ import org.junit.jupiter.api.Test
 
 class IdeMcpPromptTest {
 
-    private val own = IdeServer.OWN.toSet()
-    private val plugins = IdeServer.PLUGINS.toSet()
+    private val own = IdeServer.entries.toSet()
     private val all = IdeRule.entries.toSet()
 
     @Test
-    fun `no server of our own and no rule means no block, and a plugin server alone without rules earns none`() {
+    fun `no server and no rule means no block, and rules without a server earn none`() {
         assertEquals("", IdeMcpPrompt.text(emptySet()))
-        assertEquals("", IdeMcpPrompt.text(setOf(IdeServer.JETBRAINS)))
-        assertEquals("", IdeMcpPrompt.rulesBlock(all, own, emptySet()))
+        assertEquals("", IdeMcpPrompt.text(emptySet(), all))
+        assertEquals("", IdeMcpPrompt.rulesBlock(all, emptySet()))
     }
 
     @Test
-    fun `only the servers of our own that are on are listed, each with what it is for`() {
-        val text = IdeMcpPrompt.text(setOf(IdeServer.CODE, IdeServer.VCS, IdeServer.JETBRAINS))
+    fun `only the servers that are on are listed, each with what it is for`() {
+        val text = IdeMcpPrompt.text(setOf(IdeServer.CODE, IdeServer.VCS))
         assertTrue(text.contains("code ("))
         assertTrue(text.contains("vcs ("))
         assertFalse(text.contains("run ("))
         assertFalse(text.contains("ops ("))
-        assertFalse(text.contains("jetbrains"))
     }
 
     @Test
@@ -35,7 +33,6 @@ class IdeMcpPromptTest {
         assertFalse(SNAKE_CASE.containsMatchIn(text), "a domain tool is named: " + SNAKE_CASE.find(text)?.value)
         assertTrue(text.startsWith(IdeMcpPrompt.OPEN) && text.endsWith(IdeMcpPrompt.CLOSE))
         assertEquals(3, text.lines().size, "open, one paragraph, close")
-        listOf("subagent", "verbatim", "fallback", "domains() first").forEach { assertTrue(text.contains(it), it) }
         listOf("prefer", "try to", "if possible", "consider", "when possible").forEach {
             assertFalse(text.lowercase().contains(it), it)
         }
@@ -44,12 +41,12 @@ class IdeMcpPromptTest {
 
     @Test
     fun `rules of a server that is off are left out, and every rule names one of its tools in one sequence`() {
-        val onlyIndex = IdeMcpPrompt.text(setOf(IdeServer.INDEX), all)
-        assertTrue(onlyIndex.contains("ide_read_file"))
-        assertFalse(onlyIndex.contains("start_debug_session"))
-        assertFalse(onlyIndex.contains("apply_patch"))
-        assertTrue(onlyIndex.contains("Always:"))
-        val text = IdeMcpPrompt.rulesBlock(all, plugins, emptySet())
+        val onlyCode = IdeMcpPrompt.text(setOf(IdeServer.CODE), all)
+        assertTrue(onlyCode.contains("read_file"))
+        assertFalse(onlyCode.contains("git_commit"))
+        assertFalse(onlyCode.contains("run_tests"))
+        assertTrue(onlyCode.contains("Always:"))
+        val text = IdeMcpPrompt.rulesBlock(all, own)
         val numbered = text.lines().filter { it.substringBefore('.').toIntOrNull() != null }
         assertEquals(IdeRule.entries.size, numbered.size)
         assertEquals((1..IdeRule.entries.size).toList(), numbered.map { it.substringBefore('.').toInt() })
@@ -61,23 +58,21 @@ class IdeMcpPromptTest {
     }
 
     @Test
-    fun `only tools the IDE actually exposes are promised`() {
-        val known = setOf("ide_search_text", "list_run_configurations")
-        val text = IdeMcpPrompt.text(plugins, all, known)
-        assertTrue(text.contains("ide_search_text"))
-        assertFalse(text.contains("ide_read_file"))
-        assertFalse(text.contains("apply_patch"))
-        assertTrue(text.contains("Every agent"))
+    fun `the rules replace the native tools by name, batch by default, and bind agents to the same way of working`() {
+        val text = IdeMcpPrompt.rulesBlock(all, own)
+        val expected = "never Bash|never grep|write_file|one message|verbatim|in batches|never from memory|.idea/runConfigurations"
+        expected.split('|').forEach { assertTrue(text.contains(it), it) }
+        listOf("ide_read_file", "jetbrains", "hechtcarmel", "apply_patch").forEach { assertFalse(text.contains(it), it) }
     }
 
     @Test
     fun `with everything on there is one block holding both parts, and the hook's block is contained in it`() {
-        val text = IdeMcpPrompt.text(own + plugins, all)
+        val text = IdeMcpPrompt.text(own, all)
         assertEquals(1, text.lines().count { it == IdeMcpPrompt.OPEN })
         assertEquals(1, text.lines().count { it == IdeMcpPrompt.CLOSE })
-        assertTrue(text.contains("domains()") && text.contains("ide_read_file"))
+        assertTrue(text.contains("domains()") && text.contains("read_file"))
         assertTrue(text.length < BUDGET_ALL, "length=" + text.length)
-        val hook = IdeMcpPrompt.rulesBlock(all, own + plugins, emptySet())
+        val hook = IdeMcpPrompt.rulesBlock(all, own)
         hook.lines().forEach { assertTrue(it in text.lines(), it) }
     }
 

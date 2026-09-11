@@ -51,7 +51,7 @@ internal class IdeMcpService(private val project: Project, private val scope: Co
         val home = SocketHome.create(listOf(Path.of(PathManager.getTempPath()), Path.of(System.getProperty("java.io.tmpdir"))))
         home.writeToken(tokens.token)
         val gate = GuardGate { ClaudeSettings.getInstance(project).sensitiveDecision(it, project.basePath) }
-        endpoints = IdeServer.OWN.mapNotNull { server ->
+        endpoints = IdeServer.entries.mapNotNull { server ->
             val catalog = IdeToolCatalog.catalog(server, project, scope)
             if (catalog.domains.isEmpty()) return@mapNotNull null
             val mcp = McpServer(server.key, PluginIdentity.PLUGIN_VERSION, MetaTools(catalog, gate, OutputBudget()))

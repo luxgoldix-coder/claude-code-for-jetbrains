@@ -36,6 +36,11 @@ object TextEdit {
         return Outcome(out.toString(), newlines(body), listOf(line))
     }
 
+    fun whole(text: String, content: String): Outcome {
+        if (text == content) throw ToolException("the file already has exactly that content; nothing to change")
+        return Outcome(content, 1, emptyList())
+    }
+
     private fun occurrences(text: String, old: String, new: String): List<Int> {
         if (old.isEmpty()) throw ToolException("old_string must not be empty")
         if (old == new) throw ToolException("old_string and new_string are identical; nothing to change")

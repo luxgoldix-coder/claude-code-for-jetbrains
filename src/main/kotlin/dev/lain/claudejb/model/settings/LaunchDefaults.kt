@@ -2,7 +2,6 @@ package dev.lain.claudejb.model.settings
 
 import dev.lain.claudejb.model.protocol.ClaudeJson
 import dev.lain.claudejb.model.protocol.EffortLevel
-import dev.lain.claudejb.model.protocol.McpTransport
 import dev.lain.claudejb.model.protocol.PermissionMode
 import dev.lain.claudejb.model.protocol.models.ModelInfo
 import kotlinx.serialization.json.JsonObject
@@ -35,17 +34,11 @@ object LaunchDefaults {
 
     val SETTING_SOURCES = listOf("user", "project", "local")
 
-    const val DEFAULT_IDE_MCP_PORT = 64342
-
-    const val DEFAULT_INDEX_MCP_PORT = 29170
-
-    const val DEFAULT_DEBUGGER_MCP_PORT = 29190
-
-    private const val MAX_PORT = 65_535
-
-    internal val VALID_PORTS = 1..MAX_PORT
-
-    val IDE_MCP_TRANSPORTS = McpTransport.entries.map { it.wire }
+    const val DEFAULT_IDE_RULES =
+        "code.read,code.search,code.navigate,code.edit,code.refactor,code.format,code.diagnostics,code.editor," +
+            "run.build,run.run,run.terminal,run.debug,vcs.read,vcs.write,vcs.forge," +
+            "ops.services,ops.project,ops.ide,ops.data," +
+            "common.show,common.query,common.prs,common.batch,common.agents,common.tools,common.fallback,common.report"
 
     fun isValidMcpConfig(text: String): Boolean =
         text.isBlank() || (runCatching { ClaudeJson.parseToJsonElement(text) }.getOrNull() is JsonObject)

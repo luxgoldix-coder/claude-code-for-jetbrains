@@ -20,11 +20,6 @@ class ClaudeEnumsTest {
     }
 
     @Test
-    fun `mcp transport wire values are stable`() {
-        assertEquals(listOf("sse", "streamable-http", "stdio"), McpTransport.entries.map { it.wire })
-    }
-
-    @Test
     fun `labelFor maps wire modes to human labels and passes through unknowns`() {
         assertEquals("Ask each time", PermissionMode.labelFor("default"))
         assertEquals("Accept edits", PermissionMode.labelFor("acceptEdits"))
@@ -38,7 +33,6 @@ class ClaudeEnumsTest {
     fun `from resolves wire strings and rejects unknowns`() {
         assertEquals(PermissionMode.BYPASS, PermissionMode.from("bypassPermissions"))
         assertEquals(EffortLevel.MAX, EffortLevel.from("max"))
-        assertEquals(McpTransport.STREAMABLE_HTTP, McpTransport.from("streamable-http"))
         assertNull(PermissionMode.from("nope"))
         assertNull(PermissionMode.from(null))
     }

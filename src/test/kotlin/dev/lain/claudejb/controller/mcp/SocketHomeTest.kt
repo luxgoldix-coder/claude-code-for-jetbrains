@@ -22,7 +22,7 @@ class SocketHomeTest {
         val home = SocketHome.create(listOf(tmp))
         assertEquals("rwx------", PosixFilePermissions.toString(Files.getPosixFilePermissions(home.dir)))
         assertTrue(home.dir.startsWith(tmp.resolve(SocketHome.PARENT)))
-        IdeServer.OWN.forEach { assertTrue(home.socket(it).toString().length <= SocketHome.MAX_SOCKET_PATH) }
+        IdeServer.entries.forEach { assertTrue(home.socket(it).toString().length <= SocketHome.MAX_SOCKET_PATH) }
         home.remove()
         assertFalse(Files.exists(home.dir))
     }

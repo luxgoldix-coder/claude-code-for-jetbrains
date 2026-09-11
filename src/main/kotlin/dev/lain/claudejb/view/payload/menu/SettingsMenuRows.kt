@@ -7,7 +7,6 @@ import dev.lain.claudejb.model.protocol.EffortLevel
 import dev.lain.claudejb.model.protocol.PermissionMode
 import dev.lain.claudejb.model.protocol.models.ModelInfo
 import dev.lain.claudejb.model.session.launch.GodMode
-import dev.lain.claudejb.model.session.launch.IdeServer
 import dev.lain.claudejb.model.session.transcript.ToolNaming
 import dev.lain.claudejb.model.settings.ClaudeSettings
 import dev.lain.claudejb.model.settings.LaunchDefaults
@@ -136,7 +135,6 @@ internal object SettingsMenuRows {
     }
 
     private fun JsonArrayBuilder.mcpRows(s: ClaudeSettings.State) {
-        entry("ideMcp", "MCP", IdeServer.JETBRAINS.label, s.ideMcpEnabled)
         entry("strictMcp", "MCP", "Only the MCP servers configured here", s.strictMcpConfig)
     }
 

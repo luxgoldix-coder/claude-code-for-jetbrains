@@ -227,9 +227,6 @@ class JcefSettingsMenuTest {
     fun `the plain switches write their own field and nothing else`() {
         val state = ClaudeSettings.State()
 
-        assertTrue(write(state, "ideMcp", true))
-        assertTrue(state.ideMcpEnabled)
-
         assertTrue(write(state, "strictMcp", true))
         assertTrue(state.strictMcpConfig)
 
@@ -238,38 +235,37 @@ class JcefSettingsMenuTest {
     }
 
     @Test
-    fun `God Mode is one switch that turns our servers, every plugin server and every rule on, and off again`() {
-        val state = ClaudeSettings.State().apply { ideMcpEnabled = true }
+    fun `God Mode is on out of the box, one switch turns our servers and every rule off and on again`() {
+        val state = ClaudeSettings.State()
         val rows = menu(state).filter { it.str("group") == "Claude God Mode" }
         val row = rows.single()
 
         assertEquals("godMode", row.str("key"))
         assertEquals("Claude becomes one with your IDE", row.str("label"))
-        assertFalse(row.bool("on"), "the JetBrains server alone is not God Mode")
+        assertTrue(row.bool("on"), "a fresh install is God Mode")
 
-        assertTrue(write(state, "godMode", true))
-        assertTrue(state.ideMcp.enabled && state.ideMcpEnabled && state.ideMcp.indexEnabled && state.ideMcp.debuggerEnabled)
-        assertEquals(IdeRule.entries.toSet(), IdeRule.parse(state.ideMcp.rules))
-        assertTrue(menu(state).single { it.str("key") == "godMode" }.bool("on"))
-
-        state.ideMcp.rules = IdeRule.csv(IdeRule.entries - IdeRule.INDEX_READ)
+        state.ideMcp.rules = IdeRule.csv(IdeRule.entries - IdeRule.CODE_READ)
         assertFalse(menu(state).single { it.str("key") == "godMode" }.bool("on"), "one rule off is not God Mode")
 
         assertTrue(write(state, "godMode", false))
-        assertFalse(state.ideMcp.enabled || state.ideMcpEnabled || state.ideMcp.indexEnabled || state.ideMcp.debuggerEnabled)
+        assertFalse(state.ideMcp.enabled)
         assertEquals("", state.ideMcp.rules)
+
+        assertTrue(write(state, "godMode", true))
+        assertTrue(state.ideMcp.enabled)
+        assertEquals(IdeRule.entries.toSet(), IdeRule.parse(state.ideMcp.rules))
+        assertTrue(menu(state).single { it.str("key") == "godMode" }.bool("on"))
     }
 
     @Test
-    fun `the MCP group offers the JetBrains server and the strict flag, and Index, Debugger and the rules live in Settings only`() {
+    fun `the MCP group offers only the strict flag, and the servers and the rules live in Settings`() {
         val state = ClaudeSettings.State()
         val rows = menu(state).filter { it.str("group") == "MCP" }
 
-        assertEquals(listOf("ideMcp", "strictMcp"), rows.map { it.str("key") })
-        assertEquals(IdeServer.JETBRAINS.label, rows.first().str("label"))
-        assertFalse(write(state, "indexMcp", true))
-        assertFalse(write(state, "debuggerMcp", true))
-        assertFalse(write(state, "iderule:index.read", true))
+        assertEquals(listOf("strictMcp"), rows.map { it.str("key") })
+        assertFalse(write(state, "ideMcp", true))
+        assertFalse(write(state, "iderule:code.read", true))
+        IdeServer.entries.forEach { assertFalse(write(state, it.key + "Mcp", true), it.key) }
     }
 
     @Test

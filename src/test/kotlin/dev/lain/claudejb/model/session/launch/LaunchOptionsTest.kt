@@ -6,31 +6,19 @@ import org.junit.jupiter.api.Test
 
 class LaunchOptionsTest {
 
-    private val base = LaunchOptions(ideMcpEnabled = true, ideMcpPort = 64342, customMcpServers = """{"a":{}}""")
+    private val base = LaunchOptions(ideIntegration = true, customMcpServers = """{"a":{}}""")
 
     @Test
     fun `the MCP configuration is read at launch, so any MCP field that changes differs`() {
-        assertTrue(base.relaunchDiffers(base.copy(ideMcpEnabled = false)))
-        assertTrue(base.relaunchDiffers(base.copy(ideMcpTransport = "streamable-http")))
-        assertTrue(base.relaunchDiffers(base.copy(ideMcpPort = 64343)))
         assertTrue(base.relaunchDiffers(base.copy(customMcpServers = """{"b":{}}""")))
         assertTrue(base.relaunchDiffers(base.copy(strictMcpConfig = true)))
     }
 
     @Test
-    fun `our own servers and their sockets ride the launch too, so they differ as well`() {
-        assertTrue(base.relaunchDiffers(base.copy(ideIntegration = true)))
+    fun `our own servers, their sockets and the rules ride the launch, so they differ as well`() {
+        assertTrue(base.relaunchDiffers(base.copy(ideIntegration = false)))
         assertTrue(base.relaunchDiffers(base.copy(ideSockets = mapOf(IdeServer.CODE to "/tmp/x/code.sock"))))
-    }
-
-    @Test
-    fun `the plugin servers, their ports and the rules ride the launch, but the inventory the binary reports does not`() {
-        assertTrue(base.relaunchDiffers(base.copy(indexMcpEnabled = true)))
-        assertTrue(base.relaunchDiffers(base.copy(indexMcpPort = 29171)))
-        assertTrue(base.relaunchDiffers(base.copy(debuggerMcpEnabled = true)))
-        assertTrue(base.relaunchDiffers(base.copy(debuggerMcpPort = 29191)))
-        assertTrue(base.relaunchDiffers(base.copy(ideRules = setOf(IdeRule.INDEX_READ))))
-        assertFalse(base.relaunchDiffers(base.copy(knownIdeTools = setOf("ide_read_file"))))
+        assertTrue(base.relaunchDiffers(base.copy(ideRules = setOf(IdeRule.CODE_READ))))
     }
 
     @Test

@@ -30,6 +30,7 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import java.nio.file.FileSystems
 import java.nio.file.Path
+import java.util.Collections
 
 internal class SearchTools(private val project: Project, private val io: CoroutineDispatcher = Dispatchers.IO) {
 
@@ -48,9 +49,12 @@ internal class SearchTools(private val project: Project, private val io: Corouti
             isCaseSensitive = args.boolean("case_sensitive", false)
             isProjectScope = true
             isWithSubdirectories = true
-            args.optionalString("path")?.let { directoryName = ReadTools.resolveDirectory(project, it).path }
+            args.optionalString("path")?.let {
+                directoryName = ReadTools.resolveDirectory(project, it).path
+                isProjectScope = false
+            }
         }
-        val hits = ArrayList<UsageInfo>()
+        val hits = Collections.synchronizedList(ArrayList<UsageInfo>())
         withContext(io) {
             try {
                 coroutineToIndicator { indicator ->
@@ -63,11 +67,12 @@ internal class SearchTools(private val project: Project, private val io: Corouti
                 throw ToolException("the IDE is still indexing; retry in a moment", e)
             }
         }
-        val rows = readAction { hits.map { describe(it) } }
+        val found = synchronized(hits) { hits.toList() }
+        val rows = readAction { found.map { describe(it) } }
         return ToolResult.toon(
             buildJsonObject {
                 put("query", query)
-                put("truncated", hits.size >= max)
+                put("truncated", found.size >= max)
                 put("matches", buildJsonArray { rows.forEach { add(it) } })
             },
         )

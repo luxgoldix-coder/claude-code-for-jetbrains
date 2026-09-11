@@ -19,24 +19,31 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import java.util.concurrent.atomic.AtomicReference
 
 internal class ProcessRun(private val project: Project) {
 
-    suspend fun run(settings: RunnerAndConfigurationSettings, tail: OutputTail, onHandler: (ProcessHandler) -> Unit = {}): Int {
+    private class Pending {
         val started = CompletableDeferred<Unit>()
         val exited = CompletableDeferred<Int>()
+        val external = AtomicReference<ExternalTaskOutput?>()
+    }
+
+    suspend fun run(settings: RunnerAndConfigurationSettings, tail: OutputTail, onHandler: (ProcessHandler) -> Unit = {}): Int {
+        val pending = Pending()
         val connection = project.messageBus.connect()
         try {
-            connection.subscribe(ExecutionManager.EXECUTION_TOPIC, listener(settings, tail, onHandler, started, exited))
+            connection.subscribe(ExecutionManager.EXECUTION_TOPIC, listener(settings, tail, onHandler, pending))
             withContext(Dispatchers.EDT) { launch(settings) }
-            withTimeoutOrNull(START_TIMEOUT_MILLIS) { started.await() }
+            withTimeoutOrNull(START_TIMEOUT_MILLIS) { pending.started.await() }
                 ?: throw ToolException(
                     "${settings.name} did not start within ${START_TIMEOUT_MILLIS / MILLIS} s: a before-launch task may have " +
                         "failed, or the IDE is asking a question about it",
                 )
-            return exited.await()
+            return pending.exited.await()
         } finally {
             connection.disconnect()
+            pending.external.get()?.detach()
         }
     }
 
@@ -53,31 +60,31 @@ internal class ProcessRun(private val project: Project) {
         settings: RunnerAndConfigurationSettings,
         tail: OutputTail,
         onHandler: (ProcessHandler) -> Unit,
-        started: CompletableDeferred<Unit>,
-        exited: CompletableDeferred<Int>,
+        pending: Pending,
     ): ExecutionListener = object : ExecutionListener {
 
         override fun processStarting(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler) {
             if (env.runnerAndConfigurationSettings !== settings) return
-            handler.addProcessListener(
-                object : ProcessListener {
-                    override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-                        if (ProcessOutputType.isStdout(outputType) || ProcessOutputType.isStderr(outputType)) tail.text(event.text)
-                    }
-                },
-            )
+            if (handler.javaClass.name == ExternalTaskOutput.HANDLER_CLASS) pending.external.set(ExternalTaskOutput.attach(handler, tail))
+            if (pending.external.get() == null) handler.addProcessListener(textListener(tail))
             onHandler(handler)
-            started.complete(Unit)
+            pending.started.complete(Unit)
         }
 
         override fun processTerminated(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler, exitCode: Int) {
-            if (env.runnerAndConfigurationSettings === settings) exited.complete(exitCode)
+            if (env.runnerAndConfigurationSettings === settings) pending.exited.complete(exitCode)
         }
 
         override fun processNotStarted(executorId: String, env: ExecutionEnvironment, cause: Throwable?) {
             if (env.runnerAndConfigurationSettings !== settings) return
             val reason = cause?.message?.let { ": $it" } ?: ""
-            started.completeExceptionally(ToolException("${settings.name} did not start$reason", cause))
+            pending.started.completeExceptionally(ToolException("${settings.name} did not start$reason", cause))
+        }
+    }
+
+    private fun textListener(tail: OutputTail): ProcessListener = object : ProcessListener {
+        override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
+            if (ProcessOutputType.isStdout(outputType) || ProcessOutputType.isStderr(outputType)) tail.text(event.text)
         }
     }
 

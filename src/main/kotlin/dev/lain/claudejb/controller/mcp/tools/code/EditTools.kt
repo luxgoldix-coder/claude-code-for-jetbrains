@@ -36,7 +36,12 @@ internal class EditTools(private val project: Project) {
     fun domain(): ToolDomain = ToolDomain(
         "edit",
         "Text edits through the IDE's document model: one undo entry each, saved to disk, shown as a diff",
-        listOf(Tool(REPLACE_TEXT, ::replaceText), Tool(INSERT_TEXT, ::insertText), Tool(CREATE_FILE, ::createFile)),
+        listOf(
+            Tool(REPLACE_TEXT, ::replaceText),
+            Tool(INSERT_TEXT, ::insertText),
+            Tool(CREATE_FILE, ::createFile),
+            Tool(WRITE_FILE, ::writeFile),
+        ),
     )
 
     private suspend fun replaceText(args: ToolArgs): ToolResult {
@@ -71,13 +76,9 @@ internal class EditTools(private val project: Project) {
     private suspend fun createFile(args: ToolArgs): ToolResult {
         val path = args.string("path")
         val content = args.string("content")
-        val absolute = absent(path)
-        val file = try {
-            writeCommandAction(project, "Claude: create ${absolute.fileName}") { create(absolute, content) }
-        } catch (e: IOException) {
-            throw ToolException("cannot create $path: ${e.message}", e)
-        }
-        withContext(Dispatchers.EDT) { FileEditorManager.getInstance(project).openFile(file, false) }
+        val absolute = Locations.absolute(project, path)
+        if (exists(absolute)) throw ToolException("$path already exists; use write_file, replace_text or insert_text to change it")
+        create(path, absolute, content)
         return ToolResult.toon(
             buildJsonObject {
                 put("path", path)
@@ -86,16 +87,34 @@ internal class EditTools(private val project: Project) {
         )
     }
 
-    private fun absent(path: String): Path {
+    private suspend fun writeFile(args: ToolArgs): ToolResult {
+        val path = args.string("path")
+        val content = args.string("content")
         val absolute = Locations.absolute(project, path)
-        if (LocalFileSystem.getInstance().refreshAndFindFileByNioFile(absolute) != null) {
-            throw ToolException("$path already exists; use replace_text or insert_text to change it")
-        }
-        if (absolute.parent == null) throw ToolException("$path has no parent directory")
-        return absolute
+        val existed = exists(absolute)
+        if (existed) edit(path, "write") { TextEdit.whole(it, content) } else create(path, absolute, content)
+        return ToolResult.toon(
+            buildJsonObject {
+                put("path", path)
+                put("created", !existed)
+                put("lines", content.lines().size)
+            },
+        )
     }
 
-    private fun create(absolute: Path, content: String): VirtualFile =
+    private fun exists(absolute: Path): Boolean = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(absolute) != null
+
+    private suspend fun create(path: String, absolute: Path, content: String) {
+        if (absolute.parent == null) throw ToolException("$path has no parent directory")
+        val file = try {
+            writeCommandAction(project, "Claude: create ${absolute.fileName}") { createOnDisk(absolute, content) }
+        } catch (e: IOException) {
+            throw ToolException("cannot create $path: ${e.message}", e)
+        }
+        withContext(Dispatchers.EDT) { FileEditorManager.getInstance(project).openFile(file, false) }
+    }
+
+    private fun createOnDisk(absolute: Path, content: String): VirtualFile =
         VfsUtil.createDirectories(absolute.parent.toString()).findOrCreateFile(absolute.fileName.toString()).also { it.writeText(content) }
 
     private suspend fun edit(path: String, verb: String, change: (String) -> TextEdit.Outcome): TextEdit.Outcome {
@@ -163,6 +182,17 @@ internal class EditTools(private val project: Project) {
             listOf(
                 Param("path", "Path of the new file, absolute or relative to the project root"),
                 Param("content", "Full content of the new file"),
+            ),
+            mutates = true,
+        )
+
+        val WRITE_FILE = ToolSpec(
+            "write_file",
+            "Writes a whole file: replaces the content of an existing file as one undo entry shown as a Before/After " +
+                "diff, or creates it when absent. Use it for full rewrites; replace_text for targeted changes.",
+            listOf(
+                Param("path", PATH),
+                Param("content", "Full content the file ends up with"),
             ),
             mutates = true,
         )

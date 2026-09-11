@@ -2,31 +2,28 @@ package dev.lain.claudejb.model.session.launch
 
 object IdeMcpPrompt {
 
-    fun text(servers: Set<IdeServer>, rules: Set<IdeRule> = emptySet(), knownTools: Set<String> = emptySet()): String {
-        val parts = listOfNotNull(serversParagraph(servers), ruleLines(rules, servers, knownTools))
+    fun text(servers: Set<IdeServer>, rules: Set<IdeRule> = emptySet()): String {
+        val parts = listOfNotNull(serversParagraph(servers), ruleLines(rules, servers))
         if (parts.isEmpty()) return ""
         return (listOf(OPEN) + parts + CLOSE).joinToString("\n")
     }
 
-    fun rulesBlock(rules: Set<IdeRule>, servers: Set<IdeServer>, knownTools: Set<String>): String =
-        ruleLines(rules, servers, knownTools)?.let { listOf(OPEN, it, CLOSE).joinToString("\n") } ?: ""
+    fun rulesBlock(rules: Set<IdeRule>, servers: Set<IdeServer>): String =
+        ruleLines(rules, servers)?.let { listOf(OPEN, it, CLOSE).joinToString("\n") } ?: ""
 
     private fun serversParagraph(servers: Set<IdeServer>): String? {
-        val own = IdeServer.OWN.filter { it in servers }
-        if (own.isEmpty()) return null
-        val listed = own.joinToString(", ") { it.key + " (" + PURPOSE.getValue(it) + ")" }
-        return SERVERS + listed + ". " + HOW + " " + ALWAYS
+        val on = IdeServer.entries.filter { it in servers }
+        if (on.isEmpty()) return null
+        val listed = on.joinToString(", ") { it.key + " (" + PURPOSE.getValue(it) + ")" }
+        return SERVERS + listed + ". " + HOW
     }
 
-    private fun ruleLines(rules: Set<IdeRule>, servers: Set<IdeServer>, knownTools: Set<String>): String? {
-        val plugins = servers.filterTo(LinkedHashSet()) { it.pluginId != null }
-        val active = IdeRule.active(rules, plugins).filter { rule ->
-            knownTools.isEmpty() || rule.tools.isEmpty() || rule.tools.any { it in knownTools }
-        }
+    private fun ruleLines(rules: Set<IdeRule>, servers: Set<IdeServer>): String? {
+        val active = IdeRule.active(rules, servers)
         if (active.isEmpty()) return null
         val lines = mutableListOf(HEADER)
         var n = 0
-        for (server in IdeServer.PLUGINS + null) {
+        for (server in IdeServer.entries + null) {
             val own = active.filter { it.server == server }
             if (own.isEmpty()) continue
             lines += SERVER_HEADERS.getValue(server)
@@ -44,9 +41,6 @@ object IdeMcpPrompt {
         "load a domain's tools only when a task needs them, and go through the IDE whenever it has the tool " +
         "instead of Read, Grep, Glob, Edit, Write or a shell."
 
-    private const val ALWAYS = "Every agent or subagent you spawn receives this block verbatim. A server that fails " +
-        "is named in one line before any fallback, never worked around silently."
-
     private val PURPOSE: Map<IdeServer, String> = mapOf(
         IdeServer.CODE to "read, search, navigate, diagnose, edit, refactor and format",
         IdeServer.RUN to "build, run configurations, tests, the terminal and the debugger",
@@ -54,48 +48,46 @@ object IdeMcpPrompt {
         IdeServer.OPS to "the Services panel, databases, HTTP, SSH, the project and the IDE itself",
     )
 
-    const val HEADER = "IDE rules the user enabled; they override your defaults. Where a rule names IDE tools, " +
-        "use them, not Read, Grep, Glob, Edit, Write or a shell. If a named tool is missing or errors, say so " +
-        "in one line, then fall back."
+    const val HEADER = "The user's IDE rules override your defaults: their tools go through run(tool, args), " +
+        "never Read, Grep, Glob, Edit, Write or a shell."
 
     private val SERVER_HEADERS: Map<IdeServer?, String> = mapOf(
-        IdeServer.JETBRAINS to "JetBrains server:",
-        IdeServer.INDEX to "Index server (ide_*), the IDE's resolved index:",
-        IdeServer.DEBUGGER to "Debugger server:",
+        IdeServer.CODE to "code server:",
+        IdeServer.RUN to "run server:",
+        IdeServer.VCS to "vcs server:",
+        IdeServer.OPS to "ops server:",
         null to "Always:",
     )
 
     private val RULE_TEXT: Map<IdeRule, String> = mapOf(
-        IdeRule.INDEX_READ to "Read with ide_read_file; ide_file_structure first on big files.",
-        IdeRule.INDEX_SEARCH to "Search with ide_search_text, ide_find_file, ide_find_class, ide_find_symbol.",
-        IdeRule.INDEX_NAVIGATE to "Resolve symbols with ide_find_definition, ide_find_references, ide_symbol_info, " +
-            "ide_call_hierarchy.",
-        IdeRule.INDEX_EDIT to "Edit with ide_replace_text_in_file, ide_edit_member, ide_insert_member, ide_create_file.",
-        IdeRule.INDEX_REFACTOR to "Rename, move, delete, change signatures with ide_refactor_rename, ide_move_file, " +
-            "ide_refactor_safe_delete, ide_change_signature.",
-        IdeRule.INDEX_FORMAT to "Format with ide_reformat_code and ide_optimize_imports.",
-        IdeRule.INDEX_BUILD to "Build and test with ide_build_project and ide_run_tests; poll the id they return.",
-        IdeRule.INDEX_DIAGNOSTICS to "Before calling work done: ide_diagnostics on every touched file, no new problems.",
-        IdeRule.INDEX_IDE to "Open what you edit with ide_open_file; on indexing errors, ide_index_status and wait.",
-        IdeRule.INDEX_PLUGINS to "Plugin builds: ide_install_plugin, then ide_restart.",
-        IdeRule.DEBUGGER_RUN to "Run builds, tests and tools with execute_run_configuration (mode run); no stdout " +
-            "comes back, so the configuration writes a log you read.",
-        IdeRule.DEBUGGER_DEBUG to "Debug with start_debug_session, set_breakpoint, wait_for_pause, get_debug_session_status, " +
-            "evaluate_expression, not prints; stop_debug_session when done.",
-        IdeRule.DEBUGGER_TESTS to "A failing test: start_debug_session on its configuration, set_breakpoint at the " +
-            "assertion; no guessing from the trace.",
-        IdeRule.DEBUGGER_CONFIGS to "No run configuration for a task: create one in .idea/runConfigurations " +
-            "(name Tool: <x>), run it by execute_run_configuration.",
-        IdeRule.JETBRAINS_PATCH to "Multi-file changes: one apply_patch.",
-        IdeRule.JETBRAINS_PROBLEMS to "get_file_problems and lint_files after editing.",
-        IdeRule.JETBRAINS_RUN to "build_project and execute_run_configuration replace shell builds; " +
-            "execute_terminal_command only when no server has the tool.",
-        IdeRule.JETBRAINS_VCS to "git_status and get_repositories before committing; the commit stays in Bash.",
-        IdeRule.JETBRAINS_LOGS to "Diagnose the running app with get_log_records, get_spans, get_services.",
-        IdeRule.JETBRAINS_DB to "Databases: list_database_connections, introspect_schema, execute_sql_query.",
-        IdeRule.JETBRAINS_XDEBUG to "Without a Debugger server, debug with xdebug_start_debugger_session and xdebug_*.",
-        IdeRule.COMMON_AGENTS to "Every agent or subagent you spawn receives this block verbatim.",
-        IdeRule.COMMON_TOOLS to "Own scripts live under ./.claudetools; /.claudetools/ goes in .gitignore first.",
+        IdeRule.CODE_READ to "read_file; file_outline first on big files; list_directory, not ls.",
+        IdeRule.CODE_SEARCH to "search_text and find_files to search; find_symbols for symbols; never grep.",
+        IdeRule.CODE_NAVIGATE to "definition, references, implementations, symbol_info, hierarchy for symbols.",
+        IdeRule.CODE_EDIT to "replace_text and insert_text to edit, create_file for new files, write_file for whole rewrites.",
+        IdeRule.CODE_REFACTOR to "rename, move_file, safe_delete to refactor; never by editing text.",
+        IdeRule.CODE_FORMAT to "reformat and optimize_imports after editing.",
+        IdeRule.CODE_DIAGNOSTICS to "Before done: problems on every touched file, project_problems for the whole; inspect on request.",
+        IdeRule.CODE_EDITOR to "open_file what you edit; on indexing errors, index_status and wait.",
+        IdeRule.RUN_BUILD to "build, run_tests and tests; never a shell or a script to build or test.",
+        IdeRule.RUN_RUN to "run_configuration for what the project already runs; a utility with none gets one in " +
+            ".idea/runConfigurations (Tool: <x>); processes to stop.",
+        IdeRule.RUN_TERMINAL to "A command goes through shell, never Bash: it runs in the Terminal the user sees.",
+        IdeRule.RUN_DEBUG to "session, breakpoint, step, frames, values, not prints; session(stop) when done.",
+        IdeRule.VCS_READ to "git_status, git_diff, git_log, git_branches before deciding anything about the tree.",
+        IdeRule.VCS_WRITE to "git_stage, git_commit, git_branch, git_remote to stage, commit, branch, sync.",
+        IdeRule.VCS_FORGE to "vcs_open and vcs_action for the Log, Commit and Pull Requests views; no gh, no glab.",
+        IdeRule.OPS_SERVICES to "services, service_actions, service_action for containers and clusters; never kubectl or docker.",
+        IdeRule.OPS_PROJECT to "project, modules, dependencies, dependency_add for structure; plugins for what is installed.",
+        IdeRule.OPS_IDE to "tool_window, settings_open, ide_action, notify move the IDE for the user.",
+        IdeRule.OPS_DATA to "db_connections, db_schema, db_query; http_files, http_run; ssh_hosts.",
+        IdeRule.COMMON_SHOW to "Asked to see or open something: do it in the IDE and say what you opened.",
+        IdeRule.COMMON_QUERY to "A question about the project or the IDE is answered from its tools, never from memory; " +
+            "say what you looked at and what can be done.",
+        IdeRule.COMMON_PRS to "Pull requests: list, ask which, open it in the IDE's view, review, report.",
+        IdeRule.COMMON_BATCH to "Independent calls go out together in one message; a tool that takes a list gets it whole.",
+        IdeRule.COMMON_AGENTS to "Every agent you spawn receives this block verbatim and works the same way, in batches.",
+        IdeRule.COMMON_TOOLS to "Scripts serve utilities, never builds or tests; they go under ./.claudetools, /.claudetools/ in " +
+            ".gitignore first.",
         IdeRule.COMMON_FALLBACK to "Name a failing server in one line before any fallback, never silently.",
         IdeRule.COMMON_REPORT to "A native tool used while its IDE replacement existed is a defect: name it.",
     )
