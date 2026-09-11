@@ -1,6 +1,7 @@
 package dev.lain.claudejb.model.permission
 
 import dev.lain.claudejb.model.permission.paths.CredentialPaths
+import dev.lain.claudejb.model.permission.paths.PathPresence
 import dev.lain.claudejb.model.permission.rules.CommandRules
 import dev.lain.claudejb.model.permission.scan.ToolInputScanner
 import dev.lain.claudejb.model.permission.vocab.SecurityCategory
@@ -21,6 +22,7 @@ object SensitiveGuard {
         val caseInsensitivePaths: Boolean = false,
         val projectRoot: String? = null,
         val pathResolver: ((String) -> String?)? = null,
+        val pathProbe: ((String) -> PathPresence?)? = null,
         val envValues: Map<String, String> = emptyMap(),
         val fileReader: ((String) -> String?)? = null,
         val permissiveRules: Set<SecurityRule> = emptySet(),

@@ -133,29 +133,46 @@ internal object CommandTokenizer {
         segments.forEachIndexed { index, segment ->
             emitRedirectTargets(segment, tokens)
             val acts = segments.drop(index + 1).any { it.isNotBlank() }
-            var declaring = true
             var verb: String? = null
+            var sub: String? = null
+            var previous: String? = null
             for (token in splitTokens(segment, LOCATION_SPLIT_CHARS)) {
                 val declared = ASSIGNMENT.matchEntire(token)
                 when {
+                    verb != null && ContainerMounts.isContainerTool(verb) && ContainerMounts.isMountKey(token) ->
+                        emitOperand(verb, sub, previous, token, tokens)
+
                     declared != null -> bind(declared, bindings, tokens)
 
                     token.lowercase() in ASSIGNMENT_PREFIX -> Unit
 
+                    verb == null -> {
+                        verb = token.lowercase().substringAfterLast('/')
+                        if ('*' !in token && '?' !in token) emitPathShaped(token, tokens)
+                    }
+
                     else -> {
-                        declaring = false
-                        if (verb == null) {
-                            verb = token.lowercase().substringAfterLast('/')
-                            if ('*' !in token && '?' !in token) emitPathShaped(token, tokens)
-                        } else if (operative(verb, acts)) {
-                            emitPathShaped(token, tokens)
-                        }
+                        if (sub == null && !token.startsWith("-")) sub = token.lowercase()
+                        if (operative(verb, acts)) emitOperand(verb, sub, previous, token, tokens)
                     }
                 }
+                previous = token
             }
         }
         return CommandPaths(tokens, bindings)
     }
+
+    private fun emitOperand(verb: String, sub: String?, previous: String?, token: String, tokens: MutableList<String>) {
+        val operand = when {
+            ContainerMounts.isContainerTool(verb) -> ContainerMounts.hostSide(previous, token) ?: return
+            isApiEndpoint(verb, sub, previous, token) -> return
+            else -> token
+        }
+        emitPathShaped(operand, tokens)
+    }
+
+    private fun isApiEndpoint(verb: String, sub: String?, previous: String?, token: String): Boolean =
+        verb == "gh" && sub == "api" && token.startsWith("/") && previous != "--input"
 
     private fun operative(verb: String?, acts: Boolean): Boolean = when (verb) {
         null -> true

@@ -7,12 +7,14 @@ import dev.lain.claudejb.model.permission.paths.DevToolScripts
 import dev.lain.claudejb.model.permission.paths.ExecutionSinks
 import dev.lain.claudejb.model.permission.paths.ForeignTerritory
 import dev.lain.claudejb.model.permission.paths.GuardPaths
+import dev.lain.claudejb.model.permission.paths.PathPresence
 import dev.lain.claudejb.model.permission.paths.SystemDevices
 import dev.lain.claudejb.model.permission.paths.TempDirs
 import dev.lain.claudejb.model.permission.rules.CommandRules
 import dev.lain.claudejb.model.permission.rules.EnvIndirection
 import dev.lain.claudejb.model.permission.rules.ScriptExecution
 import dev.lain.claudejb.model.permission.rules.ShellFileWrites
+import dev.lain.claudejb.model.permission.scan.ContainerMounts
 import dev.lain.claudejb.model.permission.scan.ToolInputScanner
 import dev.lain.claudejb.model.permission.vocab.MAX_ANALYSIS_DEPTH
 import dev.lain.claudejb.model.permission.vocab.SecurityRule
@@ -137,12 +139,23 @@ internal object GuardClassifier {
         }
 
         if (projRoot == null) return null
+        val certain = policy.pathProbe == null || commitsToDisk(input)
         return ToolInputScanner.locationCandidates(input, policy.home, policy.envValues)
             .mapNotNull { GuardPaths.absoluteForm(it, projRoot) }
             .filterNot { ScriptExecution.inSystemBinDir(it) || SystemDevices.isDeviceNode(it) }
-            .firstOrNull { !GuardPaths.under(it, projRoot, policy.caseInsensitivePaths) }
+            .firstOrNull { !GuardPaths.under(it, projRoot, policy.caseInsensitivePaths) && (certain || present(it, policy)) }
             ?.let { Hit(SecurityRule.OUTSIDE_PROJECT, "reaches outside the project: $it") }
     }
+
+    private fun commitsToDisk(input: JsonObject): Boolean =
+        stringField(input, CONTENT_KEY) != null ||
+            ShellFileWrites.shellFileWrite(input) != null ||
+            ToolInputScanner.commandCandidates(input).any { ContainerMounts.writesHost(it) }
+
+    private fun present(path: String, policy: Policy): Boolean =
+        path.indexOf(':', PATH_LIST_COLON_FROM) >= 0 || policy.pathProbe?.invoke(path) != PathPresence.MISSING
+
+    private const val PATH_LIST_COLON_FROM = 2
 
     private fun scriptFindings(input: JsonObject, policy: Policy, depth: Int): Hit? {
         val scripts = ScriptExecution.scriptsIn(input, policy)

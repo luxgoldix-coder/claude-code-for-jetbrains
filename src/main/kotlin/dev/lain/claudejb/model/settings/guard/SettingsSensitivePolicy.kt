@@ -3,6 +3,8 @@ package dev.lain.claudejb.model.settings.guard
 import com.intellij.openapi.util.SystemInfo
 import dev.lain.claudejb.model.permission.SensitiveGuard
 import dev.lain.claudejb.model.permission.paths.CredentialPaths
+import dev.lain.claudejb.model.permission.paths.GuardPaths
+import dev.lain.claudejb.model.permission.paths.PathPresence
 import dev.lain.claudejb.model.permission.vocab.SecurityRule
 import dev.lain.claudejb.model.settings.ClaudeSettings
 import dev.lain.claudejb.model.settings.env.RemoteMounts
@@ -46,6 +48,7 @@ fun ClaudeSettings.sensitivePolicy(projectRoot: String?): SensitiveGuard.Policy 
         caseInsensitivePaths = SystemInfo.isWindows || SystemInfo.isMac,
         projectRoot = projectRoot,
         pathResolver = { raw -> runCatching { java.io.File(raw).canonicalPath }.getOrNull() },
+        pathProbe = ::probePresence,
         envValues = launchEnvValues(env),
         fileReader = ::readForAnalysis,
         permissiveRules = permissiveRules(),
@@ -80,6 +83,15 @@ private fun readForAnalysis(path: String): String? = runCatching {
     if (!file.isFile || file.length() > MAX_ANALYSIS_BYTES) return@runCatching null
     file.readText()
 }.getOrNull()
+
+private fun probePresence(path: String): PathPresence? = GuardPaths.withTimeout(GuardPaths.RESOLVE_TIMEOUT_MS) {
+    val file = java.io.File(path)
+    when {
+        !file.exists() -> PathPresence.MISSING
+        file.isDirectory -> PathPresence.DIRECTORY
+        else -> PathPresence.FILE
+    }
+}
 
 private const val MAX_ANALYSIS_BYTES = 512L * 1024
 

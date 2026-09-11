@@ -175,8 +175,11 @@ object GuardPaths {
     private fun looksResolvable(token: String): Boolean =
         token.startsWith("~") || token.contains('/') || token.contains('\\')
 
-    private fun resolveWithTimeout(resolver: (String) -> String?, path: String, timeoutMs: Long): String? {
-        val future = runCatching { resolverExecutor.submit(Callable { resolver(path) }) }.getOrNull() ?: return null
+    private fun resolveWithTimeout(resolver: (String) -> String?, path: String, timeoutMs: Long): String? =
+        withTimeout(timeoutMs) { resolver(path) }
+
+    internal fun <T> withTimeout(timeoutMs: Long, block: () -> T?): T? {
+        val future = runCatching { resolverExecutor.submit(Callable { block() }) }.getOrNull() ?: return null
         return try {
             future.get(timeoutMs, TimeUnit.MILLISECONDS)
         } catch (_: TimeoutException) {
@@ -187,7 +190,7 @@ object GuardPaths {
         }
     }
 
-    private const val RESOLVE_TIMEOUT_MS = 200L
+    internal const val RESOLVE_TIMEOUT_MS = 200L
 
     private const val RESOLVE_BUDGET_MS = 500L
 
