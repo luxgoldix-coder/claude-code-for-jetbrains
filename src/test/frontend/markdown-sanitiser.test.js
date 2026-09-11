@@ -8,6 +8,31 @@ function renderInto(win, html) {
   return host;
 }
 
+describe('jb links in markdown', () => {
+  const MODEL_TEXT = 'Open [your key](jb://open?file=%7E%2F.ssh%2Fid_rsa) now';
+
+  it('are dropped from text the model or a third party wrote', () => {
+    const win = loadFrontend(['app-transcript.js']);
+    const a = renderInto(win, win.CC.markdown(MODEL_TEXT)).querySelector('a');
+    expect(a).not.toBeNull();
+    expect(a.getAttribute('href')).toBeNull();
+  });
+
+  it('survive only where the host composed the text', () => {
+    const win = loadFrontend(['app-transcript.js']);
+    const a = renderInto(win, win.CC.markdown(MODEL_TEXT, { hostLinks: true })).querySelector('a');
+    expect(a.getAttribute('href')).toBe('jb://open?file=%7E%2F.ssh%2Fid_rsa');
+  });
+
+  it('an ASSISTANT row keeps the words and loses the destination', () => {
+    const win = loadFrontend(['app-transcript.js']);
+    win.cc.batch([{ id: 9, speaker: 'ASSISTANT', text: MODEL_TEXT, state: 'FINISHED' }]);
+    const body = win.document.querySelector('.msg.assistant .body');
+    expect(body.textContent).toContain('your key');
+    expect(body.querySelector('a[href^="jb:"]')).toBeNull();
+  });
+});
+
 describe('markdown sanitising fails closed', () => {
   it('strips the handler but keeps the image when DOMPurify is present', () => {
     const win = loadFrontend(['app-transcript.js']);

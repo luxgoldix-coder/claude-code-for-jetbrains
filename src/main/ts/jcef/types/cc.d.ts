@@ -17,6 +17,10 @@ interface HighlightApi {
 
 type CcMethod = (payload?: unknown) => void;
 
+interface MarkdownOptions {
+  hostLinks?: boolean;
+}
+
 interface CcHost {
   [method: string]: CcMethod | undefined;
 }
@@ -1072,7 +1076,7 @@ interface CcShared {
   flashCopied(el: HTMLElement): void;
   selfCheck(): void;
   diagnostics(): void;
-  markdown(text: unknown): string;
+  markdown(text: unknown, opts?: MarkdownOptions): string;
   decorateOneCodeBlock(code: Element): void;
   languageForPath(path: unknown): string | null;
   diagramLabel(kind: string | null | undefined, depth: number, label: unknown): string;

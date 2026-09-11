@@ -48,10 +48,10 @@
     d.textContent = text == null ? '' : String(text);
     return d.innerHTML;
   }
-  function md(text: unknown): string {
+  function md(text: unknown, hostLinks: boolean): string {
     if (CC.markdown) {
       try {
-        return CC.markdown(text == null ? '' : text);
+        return CC.markdown(text == null ? '' : text, { hostLinks: hostLinks });
       } catch (e) {}
     }
     return esc(text);
@@ -84,7 +84,7 @@
     }
     const kind = rec.kind;
     if (kind === 'md') {
-      body.innerHTML = md(text);
+      body.innerHTML = md(text, rec.speaker === 'USER');
       body.__rawText = text == null ? '' : String(text);
     } else if (kind === 'pre') {
       body.textContent = text == null ? '' : String(text);

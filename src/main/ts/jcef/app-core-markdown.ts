@@ -3,7 +3,12 @@
 
   const CC = window.CC || (window.CC = {} as CcShared);
 
-  CC.markdown = function (text: unknown): string {
+  const WEB_LINKS =
+    /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp):|data:image\/|[^a-z]|[a-z+.-]+(?:[^a-z+.:-]|$))/i;
+  const HOST_LINKS =
+    /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|jb):|data:image\/|[^a-z]|[a-z+.-]+(?:[^a-z+.:-]|$))/i;
+
+  CC.markdown = function (text: unknown, opts?: MarkdownOptions): string {
     if (text === null || text === undefined) return '';
     const src = String(text);
     let raw: string;
@@ -22,8 +27,7 @@
         ? purify.sanitize(raw, {
             ADD_ATTR: ['target'],
             FORBID_ATTR: ['style'],
-            ALLOWED_URI_REGEXP:
-              /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|jb):|data:image\/|[^a-z]|[a-z+.-]+(?:[^a-z+.:-]|$))/i,
+            ALLOWED_URI_REGEXP: opts && opts.hostLinks ? HOST_LINKS : WEB_LINKS,
           })
         : CC.escape(src);
     } catch (e2) {
