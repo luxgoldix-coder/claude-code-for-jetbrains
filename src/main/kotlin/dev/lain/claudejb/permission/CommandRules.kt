@@ -188,6 +188,7 @@ object CommandRules {
             s = s.replace("''", "").replace("\"\"", "").replace("``", "")
         }
         if ('\\' in s) {
+            s = WINDOWS_PATH.replace(s) { it.value.replace('\\', '/') }
             s = s.replace(Regex("""\\([A-Za-z0-9._/~-])"""), "$1")
         }
         if ('\'' in s || '"' in s || '`' in s) {
@@ -200,6 +201,10 @@ object CommandRules {
         s = stripFusedExpansions(s)
         return s
     }
+
+    private val WINDOWS_PATH = Regex(
+        """(?:(?<![A-Za-z0-9])[A-Za-z]:|(?<![A-Za-z0-9])~|%[A-Za-z_][A-Za-z0-9_]*%)\\[^\s;&|"'<>]*""",
+    )
 
     private val FUSED_EXPANSION = Regex(
         """(?<=[A-Za-z0-9])(?:\x24\{[^{}]*\}|\x24[@*#?!-])""" +
