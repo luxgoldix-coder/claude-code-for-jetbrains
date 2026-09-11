@@ -1,5 +1,6 @@
 package dev.lain.claudejb.model.session.history
 
+import dev.lain.claudejb.model.mcp.OwnTools
 import dev.lain.claudejb.model.permission.scan.ToolInputScanner
 import dev.lain.claudejb.model.session.transcript.EntryDTO
 import dev.lain.claudejb.model.session.transcript.SyntheticUserText
@@ -23,6 +24,8 @@ object SessionTranscriptReader {
     }
 
     const val DEFAULT_RESTORE_CAP: Int = 200
+
+    private const val TOON = "toon"
 
     fun readEntries(sessionId: String, maxEntries: Int? = null, projectRoot: String? = null): List<EntryDTO> =
         SessionStore.readLines(sessionId)?.let { parseEntries(it, maxEntries, projectRoot) } ?: emptyList()
@@ -50,7 +53,19 @@ object SessionTranscriptReader {
                 }
             }
         }
-        return capTail(markInFlight(tagCommandOutputs(out)), maxEntries)
+        return capTail(markInFlight(decodeOwnOutputs(tagCommandOutputs(out))), maxEntries)
+    }
+
+    private fun decodeOwnOutputs(entries: List<EntryDTO>): List<EntryDTO> {
+        val ownCalls = entries.asSequence()
+            .filter { it.speaker == "TOOL" && OwnTools.isOwn(it.meta) }
+            .mapNotNull { it.toolUseId }
+            .toHashSet()
+        if (ownCalls.isEmpty()) return entries
+        return entries.map { e ->
+            if (e.speaker != "TOOL_OUTPUT" || e.meta != null || e.toolUseId !in ownCalls) return@map e
+            OwnTools.decodeResult(e.text)?.let { e.copy(text = it.toString(), meta = TOON) } ?: e
+        }
     }
 
     private fun markInFlight(entries: List<EntryDTO>): List<EntryDTO> {
@@ -183,24 +198,26 @@ object SessionTranscriptReader {
                         ?.takeIf { it.isNotBlank() }
                         ?.let { out += entry("THINKING", it, origin) }
 
-                "tool_use" -> {
-                    val name = block["name"]?.jsonPrimitive?.contentOrNull ?: continue
-                    val input = block["input"] as? JsonObject ?: JsonObject(emptyMap())
-                    val id = block["id"]?.jsonPrimitive?.contentOrNull
-                    out += EntryDTO(
-                        "TOOL",
-                        ToolNaming.formatToolUse(name, input, projectRoot),
-                        meta = name,
-                        toolUseId = id,
-                        parentToolUseId = origin.parent,
-                        atMillis = origin.atMillis,
-                        filePath = ToolNaming.toolFilePath(name, input, projectRoot),
-                        commandText = ToolInputScanner.commandText(input),
-                        messageText = ToolInputScanner.messageText(input),
-                    )
-                }
+                "tool_use" -> toolUse(block, origin, projectRoot)?.let { out += it }
             }
         }
+    }
+
+    private fun toolUse(block: JsonObject, origin: Origin, projectRoot: String?): EntryDTO? {
+        val name = block["name"]?.jsonPrimitive?.contentOrNull ?: return null
+        val input = block["input"] as? JsonObject ?: JsonObject(emptyMap())
+        val own = OwnTools.parse(name, input)
+        return EntryDTO(
+            "TOOL",
+            own?.let { OwnTools.label(it, input) } ?: ToolNaming.formatToolUse(name, input, projectRoot),
+            meta = name,
+            toolUseId = block["id"]?.jsonPrimitive?.contentOrNull,
+            parentToolUseId = origin.parent,
+            atMillis = origin.atMillis,
+            filePath = if (own != null) OwnTools.path(input) else ToolNaming.toolFilePath(name, input, projectRoot),
+            commandText = ToolInputScanner.commandText(input),
+            messageText = if (own != null) OwnTools.argsToon(input) else ToolInputScanner.messageText(input),
+        )
     }
 
     private fun JsonObject.text(): String? = this["text"]?.jsonPrimitive?.contentOrNull

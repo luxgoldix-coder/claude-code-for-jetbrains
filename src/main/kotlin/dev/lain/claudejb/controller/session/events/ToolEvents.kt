@@ -4,6 +4,7 @@ import dev.lain.claudejb.controller.mcp.ToolOutput
 import dev.lain.claudejb.controller.mcp.ToolOutputListener
 import dev.lain.claudejb.controller.session.ClaudeSession
 import dev.lain.claudejb.model.diff.DiffPresenter
+import dev.lain.claudejb.model.diff.EditSnapshot
 import dev.lain.claudejb.model.mcp.OwnTools
 import dev.lain.claudejb.model.permission.scan.ToolInputScanner
 import dev.lain.claudejb.model.protocol.ClaudeEvent
@@ -13,6 +14,7 @@ import dev.lain.claudejb.model.session.transcript.Speaker
 import dev.lain.claudejb.model.session.transcript.ToolNaming
 import dev.lain.claudejb.model.session.transcript.ToolState
 import dev.lain.claudejb.model.session.transcript.TranscriptEntry
+import kotlinx.serialization.json.JsonObject
 
 class ToolEvents(
     private val s: ClaudeSession,
@@ -21,6 +23,8 @@ class ToolEvents(
 ) {
 
     private val live = HashMap<String, Pair<TranscriptEntry, LiveLines>>()
+    private val early = HashMap<String, LiveLines>()
+    private val ownCalls = HashMap<String, OwnTools.Call>()
 
     init {
         s.project.messageBus.connect(s).subscribe(
@@ -30,10 +34,21 @@ class ToolEvents(
     }
 
     private fun onLiveLine(toolUseId: String, line: String) {
-        if (!s.transcript.knowsTool(toolUseId)) return
-        val (entry, ring) = live.getOrPut(toolUseId) { s.transcript.addToolOutput(toolUseId, "", meta = LIVE) to LiveLines() }
+        if (!s.transcript.knowsTool(toolUseId)) {
+            early.getOrPut(toolUseId) { LiveLines() }.add(line)
+            return
+        }
+        val (entry, ring) = live.getOrPut(toolUseId) {
+            s.transcript.addToolOutput(toolUseId, "", meta = LIVE) to (early.remove(toolUseId) ?: LiveLines())
+        }
         ring.add(line)
         s.transcript.replaceText(entry, ring.render())
+    }
+
+    private fun flushEarly(toolUseId: String) {
+        val ring = early.remove(toolUseId) ?: return
+        val entry = s.transcript.addToolOutput(toolUseId, ring.render(), meta = LIVE)
+        live[toolUseId] = entry to ring
     }
 
     fun onToolUse(event: ClaudeEvent.ToolUse) = edt {
@@ -45,25 +60,39 @@ class ToolEvents(
         }
         s.reconciler.onMessageBoundary()
         val own = OwnTools.parse(event.name, event.input)
+        val review = own?.let { OwnTools.reviewAs(it, event.input, s.project.basePath) }
         s.transcript.add(
             Speaker.TOOL,
-            own?.let(OwnTools::label) ?: ToolNaming.formatToolUse(event.name, event.input, s.project.basePath),
+            own?.let { OwnTools.label(it, event.input) } ?: ToolNaming.formatToolUse(event.name, event.input, s.project.basePath),
             meta = event.name,
             toolUseId = event.id,
             parentToolUseId = event.parentToolUseId,
             toolState = ToolState.LOADING,
-            filePath = ToolNaming.toolFilePath(event.name, event.input, s.project.basePath),
+            filePath = ownPath(own, event),
             commandText = ToolInputScanner.commandText(event.input),
-            messageText = if (own != null) OwnTools.argsToon(event.input) else ToolInputScanner.messageText(event.input),
+            messageText = ownMessage(own, review, event.input),
         )
+        if (own != null) ownCalls[event.id] = own
+        flushEarly(event.id)
+        if (review != null) s.diffs.captureForReview(review.toolName, review.input, event.id)
         if (event.name in DiffPresenter.REVIEWABLE_TOOLS) {
             s.diffs.captureForReview(event.name, event.input, event.id)
             s.prompts.bindTool(event.id)
         }
     }
 
+    private fun ownMessage(own: OwnTools.Call?, review: OwnTools.Review?, input: JsonObject): String? = when {
+        own == null -> ToolInputScanner.messageText(input)
+        review != null -> null
+        else -> OwnTools.argsToon(input)
+    }
+
+    private fun ownPath(own: OwnTools.Call?, event: ClaudeEvent.ToolUse): String? =
+        if (own != null) OwnTools.path(event.input) else ToolNaming.toolFilePath(event.name, event.input, s.project.basePath)
+
     fun onToolResult(event: ClaudeEvent.ToolResult) = edt {
         live.remove(event.toolUseId)
+        early.remove(event.toolUseId)
         if (s.runningAgents.nodes.values.none { it.meta.toolUseId == event.toolUseId }) {
             s.transcript.setToolState(event.toolUseId, if (event.isError) ToolState.ERROR else ToolState.FINISHED)
         }
@@ -78,27 +107,33 @@ class ToolEvents(
                 s.diffs.refreshProjectTree()
             }
         }
-        val diff = if (snap != null && snap.toolName in DiffPresenter.REVIEWABLE_TOOLS) {
-            DiffPresenter.proposedContent(snap.toolName, snap.input, snap.beforeText)
-                ?.let { DiffPresenter.unifiedDiff(snap.beforeText, it) }
-                ?.takeIf { it.isNotBlank() }
-        } else {
-            null
-        }
+        val own = ownCalls.remove(event.toolUseId)
+        val diff = snap?.let { proposed(it) }?.let { DiffPresenter.unifiedDiff(snap.beforeText, it) }?.takeIf { it.isNotBlank() }
         if (event.parentToolUseId != null) return@edt
         if (diff != null) {
             s.transcript.addToolOutput(event.toolUseId, diff, meta = "diff")
             return@edt
         }
-        recordOutput(event)
+        recordOutput(event, own)
     }
 
-    private fun recordOutput(event: ClaudeEvent.ToolResult) {
+    private fun proposed(snap: EditSnapshot): String? = when (snap.toolName) {
+        OwnTools.INSERT -> OwnTools.insertedText(snap.input, snap.beforeText)
+        in DiffPresenter.REVIEWABLE_TOOLS -> DiffPresenter.proposedContent(snap.toolName, snap.input, snap.beforeText)
+        else -> null
+    }
+
+    private fun recordOutput(event: ClaudeEvent.ToolResult, own: OwnTools.Call?) {
         val text = event.content.trim()
         if (text.isBlank()) return
-        val decoded = if (!event.isError && OwnTools.isOwn(s.transcript.toolNameOf(event.toolUseId))) OwnTools.decodeResult(text) else null
+        val decoded = if (!event.isError && own != null) OwnTools.decodeResult(text) else null
         if (decoded != null) {
-            s.transcript.addToolOutput(event.toolUseId, decoded.toString(), meta = TOON)
+            val read = own?.takeIf(OwnTools::isRead)?.let { OwnTools.readText(decoded) }
+            if (read != null) {
+                s.transcript.addToolOutput(event.toolUseId, read)
+            } else {
+                s.transcript.addToolOutput(event.toolUseId, decoded.toString(), meta = TOON)
+            }
             return
         }
         val tags = buildList {

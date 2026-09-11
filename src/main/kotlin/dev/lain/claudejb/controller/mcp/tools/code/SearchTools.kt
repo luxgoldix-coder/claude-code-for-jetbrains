@@ -68,7 +68,7 @@ internal class SearchTools(private val project: Project, private val io: Corouti
             }
         }
         val found = synchronized(hits) { hits.toList() }
-        val rows = readAction { found.map { describe(it) } }
+        val rows = readAction { found.map { describe(it) }.distinct() }
         return ToolResult.toon(
             buildJsonObject {
                 put("query", query)
@@ -82,11 +82,7 @@ internal class SearchTools(private val project: Project, private val io: Corouti
         val file = info.virtualFile
         val document = file?.let { FileDocumentManager.getInstance().getDocument(it) }
         put("file", file?.let(::relative) ?: "")
-        if (document != null) {
-            val line = document.getLineNumber(info.navigationOffset)
-            put("line", line + 1)
-            put("text", Locations.lineText(document, line))
-        }
+        if (document != null) put("line", document.getLineNumber(info.navigationOffset) + 1)
     }
 
     private suspend fun findFiles(args: ToolArgs): ToolResult {
@@ -162,7 +158,8 @@ internal class SearchTools(private val project: Project, private val io: Corouti
 
         val SEARCH_TEXT = ToolSpec(
             "search_text",
-            "Finds text or a regular expression across the project, one row per match with file, line and the matching line.",
+            "Finds text or a regular expression across the project: one row per matching line with file and line, no text; " +
+                "read_file the lines you need.",
             listOf(
                 Param("query", "Text or regular expression to find"),
                 Param("regex", "true to treat query as a regular expression (default false)", type = "boolean", required = false),

@@ -51,6 +51,23 @@ class SessionTranscriptReaderTest {
     }
 
     @Test
+    fun `a restored own tool call keeps its human title, its args and its decoded result, as the live card had them`() {
+        val lines = listOf(
+            """{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"toolu_own",""" +
+                """"name":"mcp__vcs__run","input":{"tool":"git_status","args":{"max":5}}}]}}""",
+            """{"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"toolu_own",""" +
+                """"content":"branch: main\ncount: 2\nchanges[2]{path,type}:\n  a.kt,MODIFICATION\n  b.kt,NEW"}]}}""",
+        )
+        val (call, result) = SessionTranscriptReader.parseEntries(lines)
+        assertEquals("vcs ▸ git_status", call.text)
+        assertEquals("mcp__vcs__run", call.meta)
+        assertEquals("max: 5", call.messageText)
+        assertEquals("toon", result.meta)
+        assertTrue(result.text.startsWith("{\"branch\":\"main\""), result.text)
+        assertTrue(result.text.contains("\"path\":\"a.kt\""), result.text)
+    }
+
+    @Test
     fun `a restored file tool keeps the project-relative path and its jump-to-code link`() {
         val root = "/home/u/proj"
         val lines = listOf(
