@@ -19,18 +19,18 @@ function shellBody() {
 
 const VENDOR = ['purify.min.js', 'marked.min.js', 'highlight.min.js'];
 
-function jcefHostSource() {
+function pageAssemblySource() {
   return fs.readFileSync(
-    path.resolve(__dirname, '../../../main/kotlin/dev/lain/claudejb/ui/jcef/JcefHost.kt'),
+    path.resolve(__dirname, '../../../main/kotlin/dev/lain/claudejb/ui/jcef/PageAssembly.kt'),
     'utf8'
   );
 }
 
 function declaredList(name, entry) {
-  const host = jcefHostSource();
-  const block = host.slice(host.indexOf(`val ${name} = listOf(`)).replace(/\/\/[^\n]*/g, '');
+  const source = pageAssemblySource();
+  const block = source.slice(source.indexOf(`val ${name} = listOf(`)).replace(/\/\/[^\n]*/g, '');
   const found = block.slice(0, block.indexOf(')')).match(entry);
-  if (!found) throw new Error(`helpers/load: could not read ${name} from JcefHost.kt`);
+  if (!found) throw new Error(`helpers/load: could not read ${name} from PageAssembly.kt`);
   return found.map((quoted) => quoted.replace(/"/g, ''));
 }
 

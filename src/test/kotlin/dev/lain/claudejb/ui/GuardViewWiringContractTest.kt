@@ -113,13 +113,13 @@ class GuardViewWiringContractTest {
 
     @Test
     fun `the module and the stylesheet are declared, or the page silently does not serve them`() {
-        val host = source("ui/jcef/JcefHost.kt").readText()
+        val assembly = source("ui/jcef/PageAssembly.kt").readText()
 
-        assertTrue(host.contains("\"app-session-guard.js\"")) {
-            "app-session-guard.js is not in JcefHost.appNames, so it is not served and cc.guard does not exist"
+        assertTrue(assembly.contains("\"app-session-guard.js\"")) {
+            "app-session-guard.js is not in PageAssembly.appNames, so it is not served and cc.guard does not exist"
         }
-        assertTrue(host.contains("\"guard.css\"")) {
-            "guard.css is not in JcefHost.CSS_PARTS, so the view draws unstyled"
+        assertTrue(assembly.contains("\"guard.css\"")) {
+            "guard.css is not in PageAssembly.CSS_PARTS, so the view draws unstyled"
         }
         assertTrue(File(jcefRoot(), "app-session-guard.js").isFile)
         assertTrue(File(jcefRoot(), "css/guard.css").isFile)
