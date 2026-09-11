@@ -8,7 +8,7 @@ import java.util.concurrent.TimeoutException
 object GuardPaths {
 
     fun normalize(path: String, home: String?, env: Map<String, String> = emptyMap()): String {
-        val expanded = expandEnv(path.trim(), home, env)
+        val expanded = LONG_PATH_PREFIX.replace(expandEnv(path.trim(), home, env), "")
         val unc = startsWithDoubleSeparator(expanded)
         val collapsed = expanded.replace('\\', '/').replace(MULTI_SEPARATOR, "/")
         val result = if (unc) "/$collapsed" else collapsed
@@ -16,6 +16,8 @@ object GuardPaths {
     }
 
     private val MULTI_SEPARATOR = Regex("/{2,}")
+
+    private val LONG_PATH_PREFIX = Regex("""^[\\/]{2}\?(?:[\\/](?![Uu][Nn][Cc][\\/])|(?=[A-Za-z]:))""")
 
     private val BARE_HOME = Regex("""\x24HOME(?![A-Za-z0-9_])""")
 
