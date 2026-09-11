@@ -18,7 +18,10 @@ class SessionControlClientTest {
         var cancelled = 0
         override fun schedule(delaySeconds: Long, task: () -> Unit): SessionControlClient.Cancellable {
             tasks += task
-            return SessionControlClient.Cancellable { cancelled++ }
+            return SessionControlClient.Cancellable {
+                cancelled++
+                tasks.remove(task)
+            }
         }
         fun fireAll() = tasks.toList().forEach { it() }
     }
@@ -114,6 +117,29 @@ class SessionControlClientTest {
 
         client.onControlResult(ClaudeEvent.ControlResult("req_1", success = true, payload = buildJsonObject {}, error = null))
         assertEquals(1, calls)
+    }
+
+    @Test
+    fun `a request the binary reports as started is long-running, so its watchdog is dropped and the late answer lands`() {
+        val sent = mutableListOf<String>()
+        val scheduler = FakeScheduler()
+        val client = client(sent, scheduler, listOf("req_1").iterator())
+
+        var captured: String? = "unset"
+        client.query(
+            buildRequest = { "line" },
+            onResult = { v: String? -> captured = v },
+            decode = { payload -> payload?.str("response") },
+        )
+
+        client.onProgress("req_1")
+        assertEquals(1, scheduler.cancelled)
+        scheduler.fireAll()
+        assertEquals("unset", captured)
+
+        val payload = buildJsonObject { put("response", "forty-two") }
+        client.onControlResult(ClaudeEvent.ControlResult("req_1", success = true, payload = payload, error = null))
+        assertEquals("forty-two", captured)
     }
 
     @Test

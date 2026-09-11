@@ -20,7 +20,7 @@ notice at the top says how many earlier rows were dropped, and the session file 
 all of them.
 
 **Small things that now do what they say.** The model, effort and thinking pills survive a new
-chat; Fork Session gets its own session id; closing a chat mid sign-in leaves no process behind; `Shift+Tab`
+chat; Fork Session gets its own session id; `/btw` gets its answer instead of a thirty-second shrug; closing a chat mid sign-in leaves no process behind; `Shift+Tab`
 leaves the prompt; `Escape` closes what you opened even with the find bar up.
 
 **Under the hood.** The session orchestrator, the chat bridge, the page host and the guard are split

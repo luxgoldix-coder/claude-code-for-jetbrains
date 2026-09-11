@@ -40,6 +40,9 @@ traced, and a handful of bugs found on the way are fixed.
 - **The model, effort and thinking pills did not survive a new chat**, unlike the mode pill next to
   them: they changed the running session and never the stored setting.
 - **Fork Session resumed the original session's id**, so both chats wrote into one transcript.
+- **`/btw` never got its answer.** A side question is a full model call; the host gave every control
+  request thirty seconds, declared the question unanswered and dropped the reply when it arrived. A
+  request the binary reports as started now waits for its answer.
 - **Closing a chat while its sign-in was still open left a `claude` process running** with no tab
   to stop it.
 - **The Workloads view leaked a pair of mouse listeners on every redraw.**

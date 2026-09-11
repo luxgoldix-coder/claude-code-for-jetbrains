@@ -72,6 +72,12 @@ class SessionControlClient(
 
     fun onControlResult(event: ClaudeEvent.ControlResult) = settle(event.requestId, event)
 
+    fun onProgress(requestId: String) {
+        val entry = pending[requestId] ?: return
+        entry.watchdog.cancel()
+        log.debug { "control request $requestId is long-running; its watchdog is off" }
+    }
+
     fun failAll(reason: String) {
         pending.keys.toList().forEach { id ->
             settle(id, ClaudeEvent.ControlResult(requestId = "", success = false, payload = null, error = reason))

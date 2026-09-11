@@ -70,11 +70,15 @@ class SignalEvents(
 
     private fun onControlRequestProgress(event: ClaudeEvent.ControlRequestProgress) {
         val i = event.info
-        if (i.status == "api_retry") {
-            val of = (i.maxRetries ?: 0).takeIf { it > 0 }?.let { "/$it" } ?: ""
-            s.systemNotice("Retrying (attempt ${i.attempt ?: 1}$of)…")
-        } else {
-            log.debug { "control_request_progress: ${i.status} for ${i.requestId}" }
+        when (i.status) {
+            "api_retry" -> {
+                val of = (i.maxRetries ?: 0).takeIf { it > 0 }?.let { "/$it" } ?: ""
+                s.systemNotice("Retrying (attempt ${i.attempt ?: 1}$of)…")
+            }
+
+            "started" -> s.controlClient.onProgress(i.requestId)
+
+            else -> log.debug { "control_request_progress: ${i.status} for ${i.requestId}" }
         }
     }
 }
