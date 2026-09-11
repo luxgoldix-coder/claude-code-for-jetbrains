@@ -17,8 +17,6 @@ object Tunneling {
             "microsocks|3proxy|redsocks|rathole|wg-quick"
 
     private val CASE_SENSITIVE: List<Regex> = listOf(
-        // ssh -R / -D / -L / -w / -W / -J are tunnels or pivots; -l (lowercase) is a login name,
-        // so this vector must be case-sensitive
         Regex("""$AT""" + """ssh\b[^|;&]*\s-[a-zA-Z]*[RDLwWJ]\b"""),
     )
 

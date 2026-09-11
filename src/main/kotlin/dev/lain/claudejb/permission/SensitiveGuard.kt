@@ -48,10 +48,6 @@ object SensitiveGuard {
         return Decision(verdictFor(hit, policy), reasonFor(hit, policy), hit.rule, hit.text)
     }
 
-    /** The guard expands variables so it can judge what a path really points at, which means a secret's VALUE can
-     *  end up inside the text describing the hit. That text is handed back to the model as the refusal, and stored
-     *  in the transcript and the alert log — so the control against exfiltration would perform it, one refusal per
-     *  variable. Strip it at the single exit, so no rule, present or future, can leak through this door. */
     private fun withoutSecrets(decision: Decision, policy: Policy): Decision =
         if (policy.envValues.isEmpty()) {
             decision

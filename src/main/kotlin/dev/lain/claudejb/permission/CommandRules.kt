@@ -83,10 +83,6 @@ object CommandRules {
 
     private fun re(p: String) = Regex(p, RegexOption.IGNORE_CASE)
 
-    /** Command position, shared by every family that anchors a verb. A command runs at the start of the
-     *  input, after a separator, after a control keyword, inside a subshell `(` or group `{`, and after any
-     *  run of leading `NAME=value` assignments or no-op wrappers (`env`, `nohup`, …). Kept in one place so the
-     *  families cannot drift apart, and so closing an evasion here closes it for all of them at once. */
     const val AT_COMMAND: String =
         """(?:^|[;&|\n]\s*|(?<!\x24)[({]\s*|\bthen\s+|\bdo\s+|\bxargs\s+""" +
             """|\b(?:docker|podman|nerdctl|kubectl|oc|crictl)\s+(?:exec|run)\b(?:\s+(?:-\S+|[^\s;&|]+))*?\s+(?:--\s+)?)""" +

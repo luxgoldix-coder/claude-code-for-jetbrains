@@ -339,8 +339,6 @@ class SensitiveGuardTest :
         assertEquals(Verdict.DENY, v(bash("python3 -c 'print(sum(v)//len(v))'")))
     }
 
-    // [SensitiveGuardUncShapeTest]: it is a subject of its own, and this class is already at detekt's size
-
     @Test
     fun `Bash carries command text`() {
         assertEquals("ls -la", ToolInputScanner.commandText(bash("ls -la")))

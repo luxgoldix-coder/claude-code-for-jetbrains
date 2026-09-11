@@ -4,9 +4,6 @@ import kotlinx.serialization.json.JsonObject
 
 object EnvIndirection {
 
-    /** A variable reference left standing after expansion, in any spelling the guard understands. The dollar is
-     *  `\x24` for the reason [GuardPaths]' own pattern spells it that way — see there; a literal one cannot be
-     *  written in a raw string without either the compiler or ktlint objecting. */
     private val RESIDUAL_REF = Regex(
         """\x24\{[A-Za-z_][A-Za-z0-9_]*\}|\x24env:[A-Za-z_][A-Za-z0-9_]*|\x24[A-Za-z_][A-Za-z0-9_]*""" +
             """|%[A-Za-z_][A-Za-z0-9_]*%""",

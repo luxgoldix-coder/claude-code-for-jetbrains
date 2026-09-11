@@ -54,16 +54,6 @@ object ForeignTerritory {
     private fun underForeignMnt(path: String): Boolean =
         path.startsWith("/mnt/") && !path.startsWith("/mnt/c/") && path != "/mnt/c"
 
-    /**
-     * `\\server\share` / `//server/share` — remote by construction, on any OS: a doubled separator followed by
-     * **a name a network could actually resolve** — a DNS/NetBIOS name, an IPv4 literal or an IPv6 literal.
-     *
-     * The shape requirement IS the rule. Without it the predicate was "a doubled separator plus anything with no
-     * whitespace", which is satisfied by strings no network can reach: `//nolint:unused`, `//go:build`, and the
-     * `//2` and `//2]` that Python integer division leaves behind once a command is tokenised on shell
-     * separators. Every one of those was NETWORK_MOUNT — the hardest verdict in the set, DENY for every caller
-     * with no override — on an ordinary source edit or a one-liner.
-     */
     fun isUnc(path: String): Boolean {
         val p = path.replace('\\', '/')
         if (!p.startsWith("//") || p.length <= 2 || p[2] == '/') return false

@@ -11,8 +11,7 @@ object GuardPaths {
         val expanded = LONG_PATH_PREFIX.replace(expandEnv(path.trim(), home, env), "")
         val unc = startsWithDoubleSeparator(expanded)
         val collapsed = expanded.replace('\\', '/').replace(MULTI_SEPARATOR, "/")
-        val result = if (unc) "/$collapsed" else collapsed
-        return if (result.length > 1) result else result
+        return if (unc) "/$collapsed" else collapsed
     }
 
     private val MULTI_SEPARATOR = Regex("/{2,}")
@@ -68,16 +67,6 @@ object GuardPaths {
     private fun lookup(env: Map<String, String>, name: String): String? =
         env[name] ?: env.entries.firstOrNull { it.key.equals(name, ignoreCase = true) }?.value
 
-    /**
-     * A variable reference in any of the four spellings the guard understands.
-     *
-     * **The dollar is spelled `\x24`, and it has to be spelled as something.** A literal one cannot appear in this
-     * file at all — not in the pattern and not in this sentence. Backslash-dollar inside a raw string is a
-     * backslash followed by a TEMPLATE, so the pattern does not compile (there is no variable called `env`); a
-     * dollar in a character class does compile, but ktlint's own parser then reports `Identifier expected` and
-     * refuses the file, prose included; and the escaped-template spelling reads as noise in the middle of a
-     * pattern. `\x24` is the regex engine's own way to write the character, so every tool in the chain agrees.
-     */
     private val ENV_REF = Regex(
         """\x24\{([A-Za-z_][A-Za-z0-9_]*)\}""" +
             """|\x24env:([A-Za-z_][A-Za-z0-9_]*)""" +
@@ -86,10 +75,6 @@ object GuardPaths {
         RegexOption.IGNORE_CASE,
     )
 
-    /** The folded absolute spelling of a candidate, anchoring a relative one at the project root the way the
-     *  shell anchors it at the working directory — so `../../../etc/passwd` is judged as `/etc/passwd`, not
-     *  waved past for lacking a leading slash. Null when there is nothing to anchor against or the token still
-     *  carries an unexpanded `~`/`$`/`%` prefix. */
     internal fun absoluteForm(path: String, projectRoot: String?): String? = when {
         isAbsolute(path) -> fold(path)
         path.isEmpty() || path[0] in UNEXPANDED_PREFIXES -> null
@@ -97,11 +82,6 @@ object GuardPaths {
         else -> fold("$projectRoot/$path")
     }
 
-    /** Containment is decided case-sensitively where the filesystem is, and case-insensitively where it is not.
-     *  Windows and the default macOS volume fold case, so `C:/Proj` and `c:/proj` are one directory and must both
-     *  read as inside. Linux does not, so `/home/me/PROJ` is a different directory from `/home/me/proj` — folding
-     *  case there let a sibling of the project count as part of it, which exempted it from the rules that only
-     *  apply outside. */
     private val SHORT_NAME = Regex("""(?<=[A-Za-z0-9])~\d+(?=/|$)""")
 
     internal fun under(path: String, root: String, caseInsensitive: Boolean = false): Boolean {

@@ -97,10 +97,6 @@ class PermissionBroker(
         return true
     }
 
-    /** An *Always allow* answered one card about one call. A tool input can carry more than one command — an MCP
-     *  server names its own inputs, and several keys read as commands — so approving what the card showed must not
-     *  approve whatever else travelled with it. Every command in the input has to be approved, which is the rule
-     *  the whitelist already applies; anything unrecognised falls through to a card rather than being waved past. */
     private fun approvedEntirely(rule: SecurityRule, input: JsonObject): Boolean {
         val issued = ToolInputScanner.commandCandidates(input)
         return issued.isNotEmpty() && issued.all { isGuardCommandApproved(rule, it) }
