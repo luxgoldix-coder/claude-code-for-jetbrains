@@ -73,7 +73,6 @@ class ScriptAnalysisTest {
         assertEquals(Verdict.DENY, v("source ./setup.sh"))
         assertTrue(reason.contains(CREDENTIAL_SURFACE), reason)
         assertTrue(reason.contains(s.fileName.toString()), reason)
-        assertEquals(Verdict.DENY, v("source ./setup.sh"))
     }
 
     @Test

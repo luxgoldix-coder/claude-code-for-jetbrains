@@ -155,7 +155,6 @@ class SensitiveGuardTest :
         val padded = "/home/me/.ssh" + "/.".repeat(300) + "/id_rsa"
         assertTrue(padded.length > 512, "the fixture must actually exceed the cap, it is ${padded.length} long")
         assertEquals(Verdict.DENY, v(read(padded)))
-        assertEquals(Verdict.DENY, v(read(padded)))
     }
 
     @Test
@@ -211,7 +210,6 @@ class SensitiveGuardTest :
             "cd /tmp && nmap -sV 10.0.0.0/24", "echo hi; nmap -sV 10.0.0.0/24", "echo hi | nmap -sV 10.0.0.0/24",
             "sqlmap -u https://t", "hashcat -m 0 h.txt", "hydra -l root -P list ssh://h",
         ).forEach { assertEquals(Verdict.DENY, v(bash(it)), it) }
-        assertEquals(Verdict.DENY, v(bash("nmap -sV 10.0.0.0/24")))
     }
 
     @Test
@@ -219,7 +217,6 @@ class SensitiveGuardTest :
         assertEquals(Verdict.DENY, v(buildJsonObject { put("stdin", "gpg --export-secret-keys") }))
         assertEquals(Verdict.DENY, v(buildJsonObject { put("cmdline", "gpg --export-secret-keys") }))
         assertEquals(Verdict.DENY, v(buildJsonObject { put("entrypoint", "gpg --export-secret-keys") }))
-        assertEquals(Verdict.DENY, v(buildJsonObject { put("stdin", "gpg --export-secret-keys") }))
     }
 
     @Test
@@ -364,12 +361,6 @@ class SensitiveGuardTest :
     }
 
     @Test
-    fun `a foreign path and a credential are both denied, with no caller able to change that`() {
-        assertEquals(Verdict.DENY, v(read("/home/me/.ssh/id_rsa")))
-        assertEquals(Verdict.DENY, v(read("/home/bob/notes.txt")))
-    }
-
-    @Test
     fun `the default policy enforces every rule there is`() {
         val defaults = SensitiveGuard.Policy()
         assertEquals(emptySet<SecurityRule>(), defaults.permissiveRules)
@@ -445,7 +436,6 @@ class SensitiveGuardTest :
         assertEquals(Verdict.DENY, v(read("/tmp/stage.sh")))
         assertEquals(Verdict.DENY, v(read("/tmp/claude-1000/proj/sess/tasks/t1.output")))
         assertEquals(Verdict.DENY, v(read("/var/tmp/held-across-reboots")))
-        assertEquals(Verdict.DENY, v(read("/tmp/stage.sh")))
     }
 
     @Test
@@ -543,7 +533,6 @@ class SensitiveGuardTest :
     fun `an absolute path outside the project is denied`() {
         assertEquals(Verdict.DENY, v(read("/opt/other/lib.so")))
         assertEquals(Verdict.DENY, v(read("/srv/shared/notes.txt")))
-        assertEquals(Verdict.DENY, v(read("/opt/other/lib.so")))
     }
 
     @Test
@@ -568,8 +557,8 @@ class SensitiveGuardTest :
 
     @Test
     fun `a hit already caught by a stronger rule keeps that rule's wording, not outside-project's`() {
-        assertEquals(Verdict.DENY, v(read("/home/bob/notes.txt")))
-        assertEquals(Verdict.DENY, v(read("/home/me/.ssh/id_rsa")))
+        assertEquals(SecurityRule.OTHER_USER_HOME, rule(read("/home/bob/notes.txt")))
+        assertEquals(SecurityRule.CREDENTIALS, rule(read("/home/me/.ssh/id_rsa")))
     }
 }
 

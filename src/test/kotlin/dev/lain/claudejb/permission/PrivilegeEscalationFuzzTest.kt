@@ -33,7 +33,6 @@ class PrivilegeEscalationFuzzTest : GuardProbe(GuardFixture.basePolicy().copy(gu
             val input = payload(commandKeys.random(rng), command)
 
             assertEquals(Verdict.DENY, v(input), command)
-            assertEquals(Verdict.DENY, v(input), command)
         }
     }
 

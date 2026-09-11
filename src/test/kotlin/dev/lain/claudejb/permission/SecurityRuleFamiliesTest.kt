@@ -194,7 +194,6 @@ class SecurityRuleFamiliesTest : GuardProbe() {
         val withEnv = policy.copy(envValues = mapOf("CREDS" to "/home/me/.ssh/id_rsa"))
         assertEquals(Verdict.DENY, v(bash("cat \$CREDS"), withEnv))
         assertTrue(why(bash("cat \$CREDS"), withEnv).contains(CREDENTIAL_SURFACE))
-        assertEquals(Verdict.DENY, v(bash("cat \$CREDS"), withEnv))
     }
 
     @Test

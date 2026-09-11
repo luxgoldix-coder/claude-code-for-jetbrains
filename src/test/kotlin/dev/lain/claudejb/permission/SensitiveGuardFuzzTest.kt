@@ -126,8 +126,7 @@ class SensitiveGuardFuzzTest :
                 val path = if (concrete.startsWith("/")) concrete else "/srv/${rng.noise(15)}/$concrete"
                 val input = rng.wrapPayload(rng.randomLocationKey(), path)
                 cases++
-                assertEquals(Verdict.DENY, v(input), "glob '$glob' -> '$path' in $input (trusted)")
-                assertEquals(Verdict.DENY, v(input), "glob '$glob' -> '$path' in $input (untrusted)")
+                assertEquals(Verdict.DENY, v(input), "glob '$glob' -> '$path' in $input")
             }
         }
         assertTrue(cases >= CredentialPaths.SENSITIVE_GLOBS.size * GLOB_REPEATS, "fuzz did not cover every glob")
@@ -200,10 +199,8 @@ class SensitiveGuardFuzzTest :
             val tool = OFFENSIVE_TOOLS.random(rng)
             val cmd = rng.commandStartVariant(tool)
             val key = COMMAND_KEYS.random(rng)
-            val trusted = rng.wrapPayload(key, cmd)
-            val untrusted = trusted
-            assertEquals(Verdict.DENY, v(trusted), "key=$key cmd='$cmd' json=$trusted")
-            assertEquals(Verdict.DENY, v(untrusted), "key=$key cmd='$cmd'")
+            val input = rng.wrapPayload(key, cmd)
+            assertEquals(Verdict.DENY, v(input), "key=$key cmd='$cmd' json=$input")
         }
     }
 
@@ -364,8 +361,7 @@ class SensitiveGuardFuzzTest :
         repeat(600) {
             val path = FOREIGN_GENERATORS.random(rng)(rng)
             val input = rng.wrapPayload(rng.randomLocationKey(), path)
-            assertEquals(Verdict.DENY, v(input), "trusted: $path in $input")
-            assertEquals(Verdict.DENY, v(input), "untrusted: $path")
+            assertEquals(Verdict.DENY, v(input), "$path in $input")
         }
     }
 
@@ -393,7 +389,6 @@ class SensitiveGuardFuzzTest :
             val cmd = "${rng.noise(20)} ls $path ${rng.noise(20)}".trim()
             val input = rng.wrapPayload(COMMAND_KEYS.random(rng), cmd)
             assertEquals(Verdict.DENY, v(input), path)
-            assertEquals(Verdict.DENY, v(input), path)
         }
     }
 
@@ -409,7 +404,6 @@ class SensitiveGuardFuzzTest :
         repeat(600) {
             val path = rng.outsideProjectPath()
             val input = rng.wrapPayload(rng.randomLocationKey(), path)
-            assertEquals(Verdict.DENY, v(input), path)
             assertEquals(Verdict.DENY, v(input), path)
         }
     }
@@ -435,7 +429,6 @@ class SensitiveGuardFuzzTest :
             } else {
                 rng.wrapPayload(COMMAND_KEYS.random(rng), "dd if=$path bs=1M count=1")
             }
-            assertEquals(Verdict.DENY, v(input), path)
             assertEquals(Verdict.DENY, v(input), path)
         }
     }
