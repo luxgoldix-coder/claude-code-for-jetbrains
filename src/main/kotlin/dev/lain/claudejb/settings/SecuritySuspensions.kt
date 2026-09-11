@@ -39,6 +39,22 @@ object SecuritySuspensions {
         rulesFor(scope) += rule
     }
 
+    fun suspend(scope: String, state: ClaudeSettings.State, rule: SecurityRule, duration: Duration, now: Long) {
+        when (duration) {
+            Duration.FOREVER ->
+                state.disabledSecurityRules =
+                    SecurityRule.canonicalCsv((csvItems(state.disabledSecurityRules) + rule.name).distinct())
+
+            Duration.UNTIL_IDE_CLOSES -> suspendUntilIdeCloses(scope, rule)
+
+            else ->
+                state.securityRuleSuspensions =
+                    withSuspension(state.securityRuleSuspensions, rule, duration.millis ?: 0, now)
+        }
+    }
+
+    private fun csvItems(csv: String): List<String> = csv.split(',').map { it.trim() }.filter { it.isNotEmpty() }
+
     fun guardOff(scope: String, state: ClaudeSettings.State, duration: Duration, now: Long) = when (duration) {
         Duration.FOREVER -> state.guardMode = GuardMode.ALLOW_ALL.wire
 

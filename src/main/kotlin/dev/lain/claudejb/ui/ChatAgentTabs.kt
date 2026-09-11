@@ -8,6 +8,7 @@ import dev.lain.claudejb.session.PluginAgentIndex
 import dev.lain.claudejb.settings.ClaudeSettings
 import dev.lain.claudejb.ui.jcef.JcefBridge
 import dev.lain.claudejb.ui.jcef.JcefTabsData
+import dev.lain.claudejb.ui.jcef.Msg
 
 internal class ChatAgentTabs(private val panel: JcefChatPanel) {
 
@@ -89,7 +90,7 @@ internal class ChatAgentTabs(private val panel: JcefChatPanel) {
         reveal(target)
     }
 
-    fun revealFromHost(m: JcefBridge.Msg.RevealAgent) {
+    fun revealFromHost(m: Msg.RevealAgent) {
         resolveAgentId(m)?.let { revealAgent(it) } ?: panel.transcript.showTranscript(null)
     }
 
@@ -111,7 +112,7 @@ internal class ChatAgentTabs(private val panel: JcefChatPanel) {
         render()
     }
 
-    private fun resolveAgentId(m: JcefBridge.Msg.RevealAgent): String? {
+    private fun resolveAgentId(m: Msg.RevealAgent): String? {
         m.agentId.takeIf { it.isNotBlank() }?.let { return it }
         val tool = m.toolUseId.takeIf { it.isNotBlank() } ?: return null
         return session.runningAgents.nodes.values.firstOrNull { it.meta.toolUseId == tool }?.agentId

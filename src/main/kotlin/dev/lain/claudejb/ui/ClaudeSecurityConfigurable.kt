@@ -45,8 +45,8 @@ class ClaudeSecurityConfigurable(private val project: Project) : Configurable {
         sections.forEach { it.apply(s) }
         settings.save()
         shown = s
-        JcefChatPanel.pushStateToAll()
-        JcefChatPanel.pushSettingsMenuToAll()
+        LivePanels.pushState()
+        LivePanels.pushSettingsMenu()
     }
 
     override fun reset() {

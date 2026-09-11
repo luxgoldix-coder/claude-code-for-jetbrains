@@ -57,8 +57,8 @@ internal object CleanSettings {
     }
 
     private fun repaint() {
-        JcefChatPanel.pushStateToAll()
-        JcefChatPanel.pushSettingsMenuToAll()
+        LivePanels.pushState()
+        LivePanels.pushSettingsMenu()
     }
 
     private fun confirm(project: Project, title: String, body: String) = MessageDialogBuilder

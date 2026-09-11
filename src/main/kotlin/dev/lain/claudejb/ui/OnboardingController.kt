@@ -17,6 +17,7 @@ import dev.lain.claudejb.settings.ClaudeSettings
 import dev.lain.claudejb.settings.Provider
 import dev.lain.claudejb.settings.SecretStore
 import dev.lain.claudejb.ui.jcef.JcefBridge
+import dev.lain.claudejb.ui.jcef.Msg
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import javax.swing.Timer
@@ -45,43 +46,40 @@ internal class OnboardingController(
 
     fun dispose() = bootWatcher.stop()
 
-    fun handle(m: JcefBridge.Msg.SessionControl): Boolean {
+    fun handle(m: Msg.Onboarding) {
         when (m) {
-            is JcefBridge.Msg.InstallClaude -> runInstaller(m.method)
+            is Msg.InstallClaude -> runInstaller(m.method)
 
-            is JcefBridge.Msg.SetBinaryPath -> validateAndUseBinaryPath(m.path)
+            is Msg.SetBinaryPath -> validateAndUseBinaryPath(m.path)
 
-            JcefBridge.Msg.RecheckBinary -> recheckBinary(announceFailure = true)
+            Msg.RecheckBinary -> recheckBinary(announceFailure = true)
 
-            JcefBridge.Msg.LoginSubscription -> {
+            Msg.LoginSubscription -> {
                 pushAuthState("waiting")
                 session.login.start(LoginCoordinator.Mode.SUBSCRIPTION)
             }
 
-            JcefBridge.Msg.LoginConsole -> {
+            Msg.LoginConsole -> {
                 pushAuthState("waiting")
                 session.login.start(LoginCoordinator.Mode.CONSOLE)
             }
 
-            is JcefBridge.Msg.UseApiKey -> useApiKey(m.key)
+            is Msg.UseApiKey -> useApiKey(m.key)
 
-            is JcefBridge.Msg.SubmitLoginCode -> {
+            is Msg.SubmitLoginCode -> {
                 pushAuthState("verifying")
                 session.login.submitCode(m.code)
             }
 
-            JcefBridge.Msg.CancelLogin -> {
+            Msg.CancelLogin -> {
                 session.login.cancelLogin()
                 pushAuthState("idle")
             }
 
-            JcefBridge.Msg.DismissAuth -> session.lifecycle.dismissLoginCard()
+            Msg.DismissAuth -> session.lifecycle.dismissLoginCard()
 
-            JcefBridge.Msg.Logout -> logout()
-
-            else -> return false
+            Msg.Logout -> logout()
         }
-        return true
     }
 
     private fun runInstaller(methodId: String) {

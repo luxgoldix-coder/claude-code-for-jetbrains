@@ -149,6 +149,15 @@ class JcefHost(
         }
     }
 
+    fun execBuilt(method: String, build: () -> String?) {
+        ApplicationManager.getApplication().executeOnPooledThread {
+            val payload = runCatching(build)
+                .onFailure { log.warn("Claude Code: $method could not be answered", it) }
+                .getOrNull() ?: return@executeOnPooledThread
+            if (!disposed) exec("$method && $method($payload)")
+        }
+    }
+
     fun whenWebReady(timeoutMs: Long = WEB_READY_TIMEOUT_MS, block: () -> Unit) {
         runOnEdt {
             if (webReady || browser == null) {

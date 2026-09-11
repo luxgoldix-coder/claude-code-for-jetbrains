@@ -12,6 +12,7 @@ import dev.lain.claudejb.git.GitHistoryService
 import dev.lain.claudejb.session.ClaudeSession
 import dev.lain.claudejb.session.SessionListener
 import dev.lain.claudejb.settings.ClaudeSettings
+import dev.lain.claudejb.ui.jcef.JcefBridge
 import dev.lain.claudejb.ui.jcef.JcefCardPayload
 import dev.lain.claudejb.ui.jcef.JcefHost
 import dev.lain.claudejb.ui.jcef.JcefSessionData
@@ -67,7 +68,7 @@ class JcefChatPanel(internal val project: Project, val session: ClaudeSession) :
         agentTabs.render()
         session.agentScanner.scan()
 
-        livePanels.add(this)
+        LivePanels.add(this)
         session.transcript.addListener(transcript)
         session.addListener(this)
         session.login.attachUi(onboarding)
@@ -136,6 +137,9 @@ class JcefChatPanel(internal val project: Project, val session: ClaudeSession) :
         pendingUntilReady.clear()
         queued.forEach { it() }
     }
+
+    internal fun cardSession(scope: String): ClaudeSession =
+        if (scope == JcefBridge.SCOPE_GIT) gitChat.session() else session
 
     internal fun pushTheme() {
         val reduceMotion = ClaudeSettings.getInstance(project).reduceMotion
@@ -207,7 +211,7 @@ class JcefChatPanel(internal val project: Project, val session: ClaudeSession) :
     fun addAttachment(attachment: Attachment) = tray.add(attachment)
 
     override fun dispose() {
-        livePanels.remove(this)
+        LivePanels.remove(this)
         session.transcript.removeListener(transcript)
         session.removeListener(this)
         session.login.detachUi(onboarding)
@@ -217,26 +221,9 @@ class JcefChatPanel(internal val project: Project, val session: ClaudeSession) :
         gitChat.dispose()
     }
 
-    internal companion object {
-        private val LOG = com.intellij.openapi.diagnostic.Logger.getInstance(JcefChatPanel::class.java)
+    private companion object {
+        val LOG = com.intellij.openapi.diagnostic.Logger.getInstance(JcefChatPanel::class.java)
 
-        private const val TRACE_MAX = 2000
-
-        private val livePanels = java.util.concurrent.CopyOnWriteArrayList<JcefChatPanel>()
-        fun broadcastTheme() {
-            livePanels.forEach { it.pushTheme() }
-        }
-
-        fun pushSessionToAll() {
-            livePanels.forEach { it.pushSession() }
-        }
-
-        fun pushSettingsMenuToAll() {
-            livePanels.forEach { it.pushSettingsMenu() }
-        }
-
-        fun pushStateToAll() {
-            livePanels.forEach { it.pushMetaState() }
-        }
+        const val TRACE_MAX = 2000
     }
 }

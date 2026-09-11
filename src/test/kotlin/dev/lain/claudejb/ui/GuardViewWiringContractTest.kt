@@ -76,13 +76,13 @@ class GuardViewWiringContractTest {
     @Test
     fun `both guard messages are parsed and both are dispatched`() {
         val bridge = source("ui/jcef/JcefBridge.kt").readText()
-        val router = source("ui/ChatBridgeRouter.kt").readText()
+        val handler = source("ui/BridgeGuard.kt").readText()
 
         listOf("\"guardLog\"", "\"guardExplain\"").forEach {
             assertTrue(bridge.contains(it)) { "JcefBridge does not parse $it" }
         }
-        assertTrue(router.contains("Msg.GuardLog")) { "nothing answers a refresh from the guard view" }
-        assertTrue(router.contains("guard.explain(")) { "the question button reaches nothing" }
+        assertTrue(handler.contains("Msg.GuardLog")) { "nothing answers a refresh from the guard view" }
+        assertTrue(handler.contains("guard.explain(")) { "the question button reaches nothing" }
     }
 
     @Test
@@ -126,10 +126,10 @@ class GuardViewWiringContractTest {
     }
 
     private fun readyBranch(): List<String> {
-        val lines = source("ui/ChatBridgeRouter.kt").readLines()
-        val start = lines.indexOfFirst { it.contains("JcefBridge.Msg.Ready ->") }
-        assertTrue(start >= 0) { "ChatBridgeRouter no longer handles Msg.Ready" }
-        val length = lines.drop(start + 1).indexOfFirst { it == "        }" }
+        val lines = source("ui/BridgeLifecycle.kt").readLines()
+        val start = lines.indexOfFirst { it.contains("Msg.Ready ->") }
+        assertTrue(start >= 0) { "BridgeLifecycle no longer handles Msg.Ready" }
+        val length = lines.drop(start + 1).indexOfFirst { it == "            }" }
         assertTrue(length >= 0) { "could not find the end of the Msg.Ready branch" }
         return lines.subList(start, start + 1 + length)
     }

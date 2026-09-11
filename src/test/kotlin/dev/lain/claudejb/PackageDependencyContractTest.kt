@@ -98,7 +98,7 @@ class PackageDependencyContractTest {
 
         val PLATFORM_FREE = setOf("protocol", "permission")
 
-        val PLATFORM_FREE_FILES = setOf("JcefBridge.kt")
+        val PLATFORM_FREE_FILES = setOf("JcefBridge.kt", "Msg.kt")
 
         val PLATFORM_IMPORTS = listOf("com.intellij", "org.cef", "java.awt", "javax.swing")
     }

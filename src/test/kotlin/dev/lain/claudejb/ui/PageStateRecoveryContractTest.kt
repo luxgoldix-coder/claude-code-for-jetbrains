@@ -48,10 +48,10 @@ class PageStateRecoveryContractTest {
 
     @Test
     fun `the Ready message re-pushes the tab bar, like everything else the page owes`() {
-        val lines = source("ui/ChatBridgeRouter.kt").readLines()
-        val start = lines.indexOfFirst { it.contains("JcefBridge.Msg.Ready ->") }
-        assertTrue(start >= 0) { "ChatBridgeRouter no longer handles Msg.Ready" }
-        val length = lines.drop(start + 1).indexOfFirst { it == "        }" }
+        val lines = source("ui/BridgeLifecycle.kt").readLines()
+        val start = lines.indexOfFirst { it.contains("Msg.Ready ->") }
+        assertTrue(start >= 0) { "BridgeLifecycle no longer handles Msg.Ready" }
+        val length = lines.drop(start + 1).indexOfFirst { it == "            }" }
         assertTrue(length >= 0) { "could not find the end of the Msg.Ready branch" }
         val branch = lines.subList(start, start + 1 + length)
 

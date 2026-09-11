@@ -1,6 +1,4 @@
-package dev.lain.claudejb.ui
-
-import dev.lain.claudejb.vuln.VulnFinding
+package dev.lain.claudejb.vuln
 
 internal object VulnPromptedActions {
 

@@ -54,17 +54,6 @@ internal object JcefSettingsMenu {
         return applyChoice(choice, state, models) ?: applyList(scope, state, prefix, value, on) ?: false
     }
 
-    fun applyToSession(session: ClaudeSession, key: String, on: Boolean) {
-        if (!on) return
-        val value = key.substringAfter(':', missingDelimiterValue = "")
-        when (key.substringBefore(':', missingDelimiterValue = "")) {
-            MODEL -> session.settings.changeModel(value)
-            EFFORT -> session.settings.changeEffort(value)
-            MODE -> session.settings.changePermissionMode(value)
-            else -> {}
-        }
-    }
-
     fun isRemoteControl(key: String): Boolean = key == REMOTE_CONTROL
 
     fun alwaysAllowTool(key: String): String? {
@@ -303,9 +292,9 @@ internal object JcefSettingsMenu {
 
     private const val APPROVAL = "approval"
     private const val GUARD_MODE = "guardmode"
-    private const val MODEL = "model"
-    private const val EFFORT = "effort"
-    private const val MODE = "mode"
+    internal const val MODEL = "model"
+    internal const val EFFORT = "effort"
+    internal const val MODE = "mode"
     private const val RULE = "rule"
     private const val SOURCE = "source"
     private const val ALLOW = "allow"

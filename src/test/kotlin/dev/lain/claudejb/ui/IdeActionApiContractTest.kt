@@ -10,6 +10,7 @@ import dev.lain.claudejb.session.AgentStatus
 import dev.lain.claudejb.ui.jcef.JcefBridge
 import dev.lain.claudejb.ui.jcef.JcefGitData
 import dev.lain.claudejb.ui.jcef.JcefStatus
+import dev.lain.claudejb.ui.jcef.Msg
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -109,10 +110,10 @@ class IdeActionApiContractTest {
 
     @Test
     fun `the Git view's message parses to an id and carries nothing else`() {
-        assertEquals(JcefBridge.Msg.GitAction("commit"), JcefBridge.parse("""{"type":"gitAction","id":"commit"}"""))
-        assertEquals(JcefBridge.Msg.GitAction(""), JcefBridge.parse("""{"type":"gitAction"}"""))
+        assertEquals(Msg.GitAction("commit"), JcefBridge.parse("""{"type":"gitAction","id":"commit"}"""))
+        assertEquals(Msg.GitAction(""), JcefBridge.parse("""{"type":"gitAction"}"""))
         assertEquals(
-            JcefBridge.Msg.GitAction("init"),
+            Msg.GitAction("init"),
             JcefBridge.parse("""{"type":"gitAction","id":"init","argv":["rm","-rf","/"]}"""),
         )
     }

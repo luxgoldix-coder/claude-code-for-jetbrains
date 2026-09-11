@@ -1,8 +1,5 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.vuln
 
-import dev.lain.claudejb.vuln.ComponentOrigin
-import dev.lain.claudejb.vuln.VulnComponent
-import dev.lain.claudejb.vuln.VulnFinding
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
