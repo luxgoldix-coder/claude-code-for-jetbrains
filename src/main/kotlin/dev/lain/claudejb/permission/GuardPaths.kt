@@ -102,9 +102,11 @@ object GuardPaths {
      *  read as inside. Linux does not, so `/home/me/PROJ` is a different directory from `/home/me/proj` — folding
      *  case there let a sibling of the project count as part of it, which exempted it from the rules that only
      *  apply outside. */
+    private val SHORT_NAME = Regex("""(?<=[A-Za-z0-9])~\d+(?=/|$)""")
+
     internal fun under(path: String, root: String, caseInsensitive: Boolean = false): Boolean {
         val r = root.trimEnd('/')
-        if (r.isEmpty()) return false
+        if (r.isEmpty() || SHORT_NAME.containsMatchIn(path)) return false
         val fold = caseInsensitive || isDriveRooted(r)
         return path.equals(r, ignoreCase = fold) || path.startsWith("$r/", ignoreCase = fold)
     }
@@ -153,7 +155,8 @@ object GuardPaths {
 
     private fun climb(segments: MutableList<String>, prefix: String) {
         when {
-            segments.isNotEmpty() && segments.last() != ".." -> segments.removeAt(segments.lastIndex)
+            segments.isNotEmpty() && segments.last() != ".." && !SHORT_NAME.containsMatchIn(segments.last()) ->
+                segments.removeAt(segments.lastIndex)
             prefix.isEmpty() -> segments.add("..")
             else -> Unit
         }
