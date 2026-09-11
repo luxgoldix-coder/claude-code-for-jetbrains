@@ -17,6 +17,8 @@
     generic:
       '<path d="M6.25 2.75h3.5v1.5a1.25 1.25 0 1 0 2.5 0v-1.5h.75v3.5h1.5a1.25 1.25 0 1 1 0 2.5h-1.5v3.5H9.5v-1.5a1.25 1.25 0 1 0-2.5 0v1.5H3.5v-3.5H2a1.25 1.25 0 1 1 0-2.5h1.5v-3.5h2.75z"/>',
   };
+  const OWN_RUN = /^mcp__[a-z]+__run$/;
+
   function toolIconKey(meta: unknown): string {
     const m = meta == null ? '' : String(meta);
     if (m === 'Bash') return 'bash';
@@ -88,7 +90,7 @@
     node.appendChild(out);
     node.appendChild(children);
     if (entry && entry.message) {
-      renderMessageBlock(msg, entry.message);
+      renderMessageBlock(msg, entry.message, OWN_RUN.test(String(entry.meta || '')) ? 'args' : 'message');
       node.classList.add('msg-tool');
     }
     node.__nameNode = name;
@@ -173,8 +175,8 @@
     carriedBlock(cmdNode, commandText, 'command-src', 'shell');
   };
 
-  function renderMessageBlock(msgNode: HTMLElement, messageText: unknown): void {
-    carriedBlock(msgNode, messageText, 'message-src', 'message');
+  function renderMessageBlock(msgNode: HTMLElement, messageText: unknown, label: string): void {
+    carriedBlock(msgNode, messageText, 'message-src', label);
   }
 
   TX.jbHref = function (relPath: unknown, line?: unknown): string {

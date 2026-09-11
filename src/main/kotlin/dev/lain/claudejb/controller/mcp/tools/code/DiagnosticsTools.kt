@@ -53,8 +53,8 @@ internal class DiagnosticsTools(private val project: Project, private val daemon
                                     put("line", h.line)
                                     put("column", h.column)
                                     put("severity", h.severity)
+                                    put("inspection", h.inspection ?: "")
                                     put("message", h.message)
-                                    h.inspection?.let { put("inspection", it) }
                                 },
                             )
                         }
@@ -91,12 +91,11 @@ internal class DiagnosticsTools(private val project: Project, private val daemon
     }
 
     private fun row(problem: Problem): JsonObject = buildJsonObject {
-        if (problem is FileProblem) {
-            put("file", Locations.relative(project, problem.file))
-            if (problem.line >= 0) put("line", problem.line + 1)
-            if (problem.column >= 0) put("column", problem.column + 1)
-        }
-        problem.group?.let { put("group", it) }
+        val inFile = problem as? FileProblem
+        put("file", inFile?.let { Locations.relative(project, it.file) } ?: "")
+        put("line", inFile?.line?.takeIf { it >= 0 }?.plus(1) ?: 0)
+        put("column", inFile?.column?.takeIf { it >= 0 }?.plus(1) ?: 0)
+        put("group", problem.group ?: "")
         put("message", problem.text)
     }
 

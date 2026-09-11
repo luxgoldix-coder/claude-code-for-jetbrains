@@ -2,6 +2,7 @@ package dev.lain.claudejb.controller.session.events
 
 import dev.lain.claudejb.controller.session.ClaudeSession
 import dev.lain.claudejb.model.diff.DiffPresenter
+import dev.lain.claudejb.model.mcp.OwnTools
 import dev.lain.claudejb.model.permission.scan.ToolInputScanner
 import dev.lain.claudejb.model.protocol.ClaudeEvent
 import dev.lain.claudejb.model.session.agents.AgentStatus
@@ -23,16 +24,17 @@ class ToolEvents(
             return@edt
         }
         s.reconciler.onMessageBoundary()
+        val own = OwnTools.parse(event.name, event.input)
         s.transcript.add(
             Speaker.TOOL,
-            ToolNaming.formatToolUse(event.name, event.input, s.project.basePath),
+            own?.let(OwnTools::label) ?: ToolNaming.formatToolUse(event.name, event.input, s.project.basePath),
             meta = event.name,
             toolUseId = event.id,
             parentToolUseId = event.parentToolUseId,
             toolState = ToolState.LOADING,
             filePath = ToolNaming.toolFilePath(event.name, event.input, s.project.basePath),
             commandText = ToolInputScanner.commandText(event.input),
-            messageText = ToolInputScanner.messageText(event.input),
+            messageText = if (own != null) OwnTools.argsToon(event.input) else ToolInputScanner.messageText(event.input),
         )
         if (event.name in DiffPresenter.REVIEWABLE_TOOLS) {
             s.diffs.captureForReview(event.name, event.input, event.id)
@@ -64,21 +66,29 @@ class ToolEvents(
         }
         if (event.parentToolUseId != null) return@edt
         if (diff != null) {
-            s.transcript.addToolOutput(event.toolUseId, diff, parentToolUseId = event.parentToolUseId, meta = "diff")
+            s.transcript.addToolOutput(event.toolUseId, diff, meta = "diff")
             return@edt
         }
+        recordOutput(event)
+    }
+
+    private fun recordOutput(event: ClaudeEvent.ToolResult) {
         val text = event.content.trim()
-        if (text.isBlank()) return@edt
+        if (text.isBlank()) return
+        val decoded = if (!event.isError && OwnTools.isOwn(s.transcript.toolNameOf(event.toolUseId))) OwnTools.decodeResult(text) else null
+        if (decoded != null) {
+            s.transcript.addToolOutput(event.toolUseId, decoded.toString(), meta = TOON)
+            return
+        }
         val tags = buildList {
             if (s.transcript.isCommandCall(event.toolUseId)) add("command")
             if (event.isError) add("error")
         }
-        s.transcript.addToolOutput(
-            event.toolUseId,
-            text,
-            parentToolUseId = event.parentToolUseId,
-            meta = tags.joinToString(" ").ifBlank { null },
-        )
+        s.transcript.addToolOutput(event.toolUseId, text, meta = tags.joinToString(" ").ifBlank { null })
+    }
+
+    private companion object {
+        const val TOON = "toon"
     }
 
     fun labelAgentCards() {

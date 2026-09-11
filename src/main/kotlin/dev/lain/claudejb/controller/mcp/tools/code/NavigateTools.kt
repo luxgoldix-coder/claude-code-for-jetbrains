@@ -68,7 +68,7 @@ internal class NavigateTools(private val project: Project) {
                 }
                 if (items.size >= max) break
             }
-            items.map(::symbolRow)
+            items.filter { it is PsiElement && Locations.located(it) }.map(::symbolRow)
         }
         return table("query", query, "symbols", rows, rows.size >= max)
     }
@@ -117,8 +117,8 @@ internal class NavigateTools(private val project: Project) {
     private fun symbolRow(item: NavigationItem): JsonObject = buildJsonObject {
         put("name", item.name ?: "")
         put("kind", kind(item))
-        (item as? PsiElement)?.let { place(project, it) }
-        item.presentation?.locationString?.let { put("in", it) }
+        place(project, item as PsiElement, withText = false)
+        put("in", item.presentation?.locationString ?: "")
     }
 
     private fun kind(value: Any): String = value.javaClass.simpleName.removePrefix("Psi").removePrefix("Kt").removeSuffix("Impl")

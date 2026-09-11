@@ -71,16 +71,25 @@ internal object Locations {
 
     fun describe(project: Project, element: PsiElement): JsonObject = buildJsonObject { place(project, element) }
 
-    fun JsonObjectBuilder.place(project: Project, element: PsiElement) {
-        val target = element.navigationElement ?: element
-        val file = target.containingFile ?: return
-        val virtual = file.virtualFile ?: return
-        put("file", relative(project, virtual))
-        val document = FileDocumentManager.getInstance().getDocument(virtual) ?: return
+    fun JsonObjectBuilder.place(project: Project, element: PsiElement, withText: Boolean = true) {
+        val spot = spot(project, element)
+        put("file", spot?.file ?: "")
+        put("line", spot?.line ?: 0)
+        put("column", spot?.column ?: 0)
+        if (withText) put("text", spot?.text ?: "")
+    }
+
+    fun located(element: PsiElement): Boolean = element.navigationElement.containingFile?.virtualFile != null
+
+    private class Spot(val file: String, val line: Int, val column: Int, val text: String)
+
+    private fun spot(project: Project, element: PsiElement): Spot? {
+        val target = element.navigationElement
+        val virtual = target.containingFile?.virtualFile ?: return null
+        val file = relative(project, virtual)
+        val document = FileDocumentManager.getInstance().getDocument(virtual) ?: return Spot(file, 0, 0, "")
         val offset = target.textOffset.coerceIn(0, document.textLength)
         val line = document.getLineNumber(offset)
-        put("line", line + 1)
-        put("column", offset - document.getLineStartOffset(line) + 1)
-        put("text", lineText(document, line))
+        return Spot(file, line + 1, offset - document.getLineStartOffset(line) + 1, lineText(document, line))
     }
 }

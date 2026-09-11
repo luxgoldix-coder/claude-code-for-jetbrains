@@ -1,0 +1,80 @@
+const { loadFrontend } = require('../helpers/load');
+
+function row(id, order, speaker, text, extra = {}) {
+  return { id, order, speaker, text, state: 'FINISHED', elapsed: 0, ...extra };
+}
+
+function withOwnCall(win, output) {
+  win.cc.batch([
+    row(1, 0, 'TOOL', 'code ▸ find_symbols', { meta: 'mcp__code__run', toolUseId: 't1', message: 'query: Mcp' }),
+    row(2, 1, 'TOOL_OUTPUT', output, { meta: 'toon', toolUseId: 't1' }),
+  ]);
+  return win.document.querySelector('.tool');
+}
+
+describe('a result from one of our own servers is drawn from its data, not pasted as text', () => {
+  it('uniform rows become a table whose file column opens the editor at the line', () => {
+    const win = loadFrontend(['app-transcript.js']);
+    const card = withOwnCall(
+      win,
+      JSON.stringify({
+        query: 'Mcp',
+        truncated: false,
+        symbols: [
+          { name: 'McpServer', kind: 'Class', file: 'src/A.kt', line: 11, column: 7, in: 'model.mcp' },
+          { name: 'McpServerTest', kind: 'Class', file: 'src/B.kt', line: 20, column: 7, in: '' },
+        ],
+      })
+    );
+
+    const table = card.querySelector('.tool-out .toon table.toon-table');
+    expect(table).not.toBeNull();
+    expect([...table.querySelectorAll('th')].map((th) => th.textContent)).toEqual(['name', 'kind', 'file', 'in']);
+    const link = table.querySelector('tbody tr td.toon-file a.jb-link');
+    expect(link.textContent).toBe('src/A.kt:11');
+    expect(link.getAttribute('href')).toBe('jb://open?file=src%2FA.kt&line=11');
+    expect(card.querySelector('.tool-out pre')).toBeNull();
+  });
+
+  it('the scalars around the table stay readable as fields, and a flag reads as a mark', () => {
+    const win = loadFrontend(['app-transcript.js']);
+    const card = withOwnCall(win, JSON.stringify({ path: 'src/A.kt', count: 2, truncated: true, problems: [] }));
+
+    const keys = [...card.querySelectorAll('.toon-fields .toon-key')].map((k) => k.textContent);
+    expect(keys).toEqual(['path', 'count', 'truncated', 'problems']);
+    expect(card.querySelector('.toon-truncated').textContent).toBe('✓');
+  });
+
+  it('rows with different shapes fall back to a list of field blocks', () => {
+    const win = loadFrontend(['app-transcript.js']);
+    const card = withOwnCall(win, JSON.stringify({ items: [{ name: 'a', line: 1 }, { name: 'b' }] }));
+
+    expect(card.querySelector('table')).toBeNull();
+    expect(card.querySelectorAll('.toon-list > li .toon-fields').length).toBe(2);
+  });
+
+  it('what is not JSON is shown as it came', () => {
+    const win = loadFrontend(['app-transcript.js']);
+    const card = withOwnCall(win, 'error: nothing here');
+
+    expect(card.querySelector('.tool-out .toon pre').textContent).toBe('error: nothing here');
+  });
+
+  it('the call itself is on the card while it runs: the tool label and its arguments', () => {
+    const win = loadFrontend(['app-transcript.js']);
+    win.cc.batch([
+      row(1, 0, 'TOOL', 'code ▸ find_symbols', {
+        meta: 'mcp__code__run',
+        toolUseId: 't1',
+        message: 'query: Mcp',
+        state: 'RUNNING',
+      }),
+    ]);
+    const card = win.document.querySelector('.tool');
+
+    expect(card.querySelector('.name').textContent).toBe('code ▸ find_symbols');
+    expect(card.querySelector('.tool-msg .message-src code').textContent).toBe('query: Mcp');
+    card.querySelector('.tool-head').dispatchEvent(new win.Event('click', { bubbles: true }));
+    expect(card.classList.contains('open')).toBe(true);
+  });
+});

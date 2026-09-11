@@ -48,6 +48,15 @@
     }
     const pid = 'to-' + entry.id;
     let block = out.querySelector<HTMLElement>('[data-out-id="' + pid + '"]');
+    if (entry.meta === 'toon') {
+      if (!block) {
+        block = el('div', { class: 'toon' });
+        block.setAttribute('data-out-id', pid);
+        out.appendChild(block);
+      }
+      TX.renderToon(block, entry.text == null ? '' : String(entry.text));
+      return true;
+    }
     if (!block) {
       block = el('pre', {});
       block.setAttribute('data-out-id', pid);
