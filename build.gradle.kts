@@ -687,6 +687,7 @@ kover {
                     "dev.lain.claudejb.controller.mcp.IdeMcpService*",
                     "dev.lain.claudejb.controller.mcp.IdeToolCatalog*",
                     "dev.lain.claudejb.controller.mcp.tools.*",
+                    "dev.lain.claudejb.controller.db.*",
                 )
             }
         }

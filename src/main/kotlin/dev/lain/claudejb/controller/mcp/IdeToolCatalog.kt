@@ -13,7 +13,10 @@ import dev.lain.claudejb.controller.mcp.tools.code.OutlineTools
 import dev.lain.claudejb.controller.mcp.tools.code.ReadTools
 import dev.lain.claudejb.controller.mcp.tools.code.RefactorTools
 import dev.lain.claudejb.controller.mcp.tools.code.SearchTools
+import dev.lain.claudejb.controller.mcp.tools.ops.DbTools
+import dev.lain.claudejb.controller.mcp.tools.ops.HttpTools
 import dev.lain.claudejb.controller.mcp.tools.ops.ServiceTools
+import dev.lain.claudejb.controller.mcp.tools.ops.SshTools
 import dev.lain.claudejb.controller.mcp.tools.run.BreakpointTools
 import dev.lain.claudejb.controller.mcp.tools.run.BuildTools
 import dev.lain.claudejb.controller.mcp.tools.run.DebugTools
@@ -59,6 +62,9 @@ internal object IdeToolCatalog {
         ),
         IdeServer.OPS to listOf(
             { p, s -> ServiceTools(p, s).domain() },
+            { p, _ -> DbTools(p).domain() },
+            { p, s -> HttpTools(p, s).takeIf { it.available() }?.domain() },
+            { p, _ -> SshTools(p).takeIf { it.available() }?.domain() },
         ),
     )
 

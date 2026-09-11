@@ -96,6 +96,7 @@ class PackageDependencyContractTest {
         const val C_VULN = "controller/vuln"
         const val C_CONTEXT = "controller/context"
         const val C_GIT = "controller/git"
+        const val C_DB = "controller/db"
         const val C_SESSION = "controller/session"
         const val VIEW = "view"
         const val V_DIFF = "view/diff"
@@ -109,7 +110,8 @@ class PackageDependencyContractTest {
             UTIL to setOf(),
             PROTOCOL to setOf(UTIL),
             MCP to setOf(UTIL),
-            C_MCP to MODEL + setOf(C_GIT, V_DIFF),
+            C_MCP to MODEL + setOf(C_GIT, C_DB, V_DIFF),
+            C_DB to MODEL,
             DIFF to setOf(PROTOCOL, UTIL),
             CONTEXT to setOf(DIFF, PROTOCOL, UTIL),
             GIT to setOf(DIFF, UTIL),
