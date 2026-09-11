@@ -4,8 +4,10 @@ import kotlinx.serialization.json.JsonObject
 
 object ShellFileWrites {
 
-    private val BLANKET_MUTATORS =
-        CommandRules.cmdStart("""tee|cp|mv|rsync|install|truncate|rm|mkdir|touch|ln|chmod|chown|shred""")
+    private val BLANKET_MUTATORS = CommandRules.cmdStart(
+        """tee|cp|mv|rsync|install|truncate|rm|mkdir|touch|ln|chmod|chown|shred""" +
+            """|copy|move|del|ren|rename|Set-Content|Add-Content|Out-File|New-Item""",
+    )
 
     private val SED_IN_PLACE = Regex(
         """(?:^|[;&|\n]\s*)(?:sudo\s+)?(?:\S*/)?sed\b[^;&|\n]*(-i\b|--in-place\b)""",
@@ -44,5 +46,7 @@ object ShellFileWrites {
         "dev/stdout",
         "dev/stderr",
         "dev/tty",
+        "\$null",
+        "nul",
     )
 }

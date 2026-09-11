@@ -17,6 +17,8 @@ object EnvIndirection {
     private val READ_STMT = Regex("""\bread\b([^;&|\n]*)""")
     private val LOCAL_ASSIGN = Regex("""(?:^|[\s;&|(])(?:set\s+)?"?([A-Za-z_][A-Za-z0-9_]*)=""")
 
+    private val POWERSHELL_LITERALS = setOf("null", "true", "false")
+
     internal class Verdict(val rule: SecurityRule, val text: String)
 
     private fun locallyBoundNames(commands: List<String>): Set<String> {
@@ -46,7 +48,7 @@ object EnvIndirection {
             val expanded = GuardPaths.expandEnv(raw, policy.home, policy.envValues)
             val unresolvedExternal = RESIDUAL_REF.findAll(expanded)
                 .mapNotNull { refName(it.value) }
-                .any { it !in bound }
+                .any { it !in bound && it.lowercase() !in POWERSHELL_LITERALS }
             if (unresolvedExternal) return Verdict(SecurityRule.UNRESOLVED_VARIABLE, raw)
         }
         return null
