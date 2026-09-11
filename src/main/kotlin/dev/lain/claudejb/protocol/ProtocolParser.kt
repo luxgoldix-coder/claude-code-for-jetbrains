@@ -1,25 +1,22 @@
 package dev.lain.claudejb.protocol
 
-import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.booleanOrNull
-import kotlinx.serialization.json.contentOrNull
 
 object ProtocolParser {
 
     private val TOP_LEVEL_DECODERS: Map<String, (JsonObject) -> List<ClaudeEvent>> = buildMap {
-        fun <T> typed(type: String, serializer: kotlinx.serialization.KSerializer<T>, wrap: (T) -> ClaudeEvent) {
-            put(type) { root -> decode(root, serializer, wrap, type, root) }
+        fun <T> typed(type: String, serializer: KSerializer<T>, wrap: (T) -> ClaudeEvent) {
+            put(type) { root -> decode(root, serializer, wrap, type) }
         }
         put("system", ::parseSystem)
-        put("assistant", ::parseAssistant)
-        put("user", ::parseUser)
-        put("stream_event", ::parseStreamEvent)
-        put("control_request", ::parseControlRequest)
-        put("control_response", ::parseControlResponse)
-        put("control_cancel_request", ::parseControlCancel)
-        put("rate_limit_event", ::parseRateLimit)
+        put("assistant", MessageParsers::parseAssistant)
+        put("user", MessageParsers::parseUser)
+        put("stream_event", MessageParsers::parseStreamEvent)
+        put("control_request", ControlParsers::parseControlRequest)
+        put("control_response", ControlParsers::parseControlResponse)
+        put("control_cancel_request", ControlParsers::parseControlCancel)
+        put("rate_limit_event", ControlParsers::parseRateLimit)
         put("keep_alive") { emptyList() }
         typed("result", ResultMessage.serializer(), ClaudeEvent::Result)
         typed("auth_status", AuthStatusInfo.serializer(), ClaudeEvent::AuthStatus)
@@ -41,8 +38,8 @@ object ProtocolParser {
     }
 
     private val SYSTEM_DECODERS: Map<String, (JsonObject) -> List<ClaudeEvent>> = buildMap {
-        fun <T> typed(subtype: String, serializer: kotlinx.serialization.KSerializer<T>, wrap: (T) -> ClaudeEvent) {
-            put(subtype) { root -> decode(root, serializer, wrap, "system", root) }
+        fun <T> typed(subtype: String, serializer: KSerializer<T>, wrap: (T) -> ClaudeEvent) {
+            put(subtype) { root -> decode(root, serializer, wrap, "system") }
         }
         typed("init", SystemInit.serializer(), ClaudeEvent::Init)
         typed("task_started", TaskStartedInfo.serializer(), ClaudeEvent::TaskStarted)
@@ -81,13 +78,12 @@ object ProtocolParser {
 
     private fun <T> decode(
         root: JsonObject,
-        serializer: kotlinx.serialization.KSerializer<T>,
+        serializer: KSerializer<T>,
         wrap: (T) -> ClaudeEvent,
         fallbackType: String,
-        fallbackRaw: JsonObject,
     ): List<ClaudeEvent> = runCatching {
         listOf(wrap(ClaudeJson.decodeFromJsonElement(serializer, root)))
-    }.getOrDefault(listOf(ClaudeEvent.Other(fallbackType, root.str("subtype"), fallbackRaw)))
+    }.getOrDefault(listOf(ClaudeEvent.Other(fallbackType, root.str("subtype"), root)))
 
     private fun parseStatus(root: JsonObject): List<ClaudeEvent> {
         root.str("compact_result")?.let { result ->
@@ -117,158 +113,4 @@ object ProtocolParser {
 
     private fun tokens(n: Int): String =
         if (n >= 1000) String.format(java.util.Locale.ROOT, "%.1fk", n / 1000.0) else n.toString()
-
-    private fun parseAssistant(root: JsonObject): List<ClaudeEvent> {
-        val parentToolUseId = root.str("parent_tool_use_id")
-        val inner = (root["message"] as? JsonObject)
-            ?.let { runCatching { ClaudeJson.decodeFromJsonElement(AssistantInner.serializer(), it) }.getOrNull() }
-            ?: return listOf(ClaudeEvent.Other("assistant", null, root))
-        val out = ArrayList<ClaudeEvent>(inner.content.size)
-        for (block in inner.content) {
-            when (block.str("type")) {
-                "text" -> block.str("text")?.takeIf { it.isNotEmpty() }
-                    ?.let { out += ClaudeEvent.AssistantText(it, parentToolUseId) }
-
-                "thinking" -> block.str("thinking")?.takeIf { it.isNotEmpty() }
-                    ?.let { out += ClaudeEvent.AssistantThinking(it, parentToolUseId) }
-
-                "tool_use" -> out += ClaudeEvent.ToolUse(
-                    id = block.str("id").orEmpty(),
-                    name = block.str("name").orEmpty(),
-                    input = (block["input"] as? JsonObject) ?: JsonObject(emptyMap()),
-                    parentToolUseId = parentToolUseId,
-                )
-            }
-        }
-        return out
-    }
-
-    private fun parseStreamEvent(root: JsonObject): List<ClaudeEvent> {
-        val event = root["event"] as? JsonObject ?: return emptyList()
-        val parentToolUseId = root.str("parent_tool_use_id")
-        return when (event.str("type")) {
-            "message_start" -> {
-                val u = (event["message"] as? JsonObject)?.get("usage") as? JsonObject
-                if (u != null) listOf(ClaudeEvent.MessageStart, liveUsageFrom(u)) else listOf(ClaudeEvent.MessageStart)
-            }
-
-            "message_delta" -> {
-                val u = event["usage"] as? JsonObject ?: return emptyList()
-                listOf(liveUsageFrom(u))
-            }
-
-            "content_block_delta" -> parseContentBlockDelta(event, parentToolUseId)
-
-            else -> emptyList()
-        }
-    }
-
-    private fun parseContentBlockDelta(event: JsonObject, parentToolUseId: String?): List<ClaudeEvent> {
-        val delta = event["delta"] as? JsonObject ?: return emptyList()
-        return when (delta.str("type")) {
-            "text_delta" -> delta.str("text")?.let { listOf(ClaudeEvent.TextDelta(it, parentToolUseId)) }.orEmpty()
-
-            "thinking_delta" -> delta.str("thinking")?.takeIf { it.isNotEmpty() }
-                ?.let { listOf(ClaudeEvent.ThinkingDelta(it, parentToolUseId)) }.orEmpty()
-
-            else -> emptyList()
-        }
-    }
-
-    private fun liveUsageFrom(u: JsonObject): ClaudeEvent.LiveUsage = ClaudeEvent.LiveUsage(
-        inputTokens = u.intField("input_tokens") ?: 0,
-        cacheCreationTokens = u.intField("cache_creation_input_tokens") ?: 0,
-        cacheReadTokens = u.intField("cache_read_input_tokens") ?: 0,
-        outputTokens = u.intField("output_tokens") ?: 0,
-    )
-
-    internal fun unwrapToolError(text: String): String {
-        val trimmed = text.trim()
-        if (!trimmed.startsWith(TOOL_ERROR_OPEN) || !trimmed.endsWith(TOOL_ERROR_CLOSE)) return text
-        return trimmed.removeSurrounding(TOOL_ERROR_OPEN, TOOL_ERROR_CLOSE).trim()
-    }
-
-    private const val TOOL_ERROR_OPEN = "<tool_use_error>"
-    private const val TOOL_ERROR_CLOSE = "</tool_use_error>"
-
-    private fun parseUser(root: JsonObject): List<ClaudeEvent> {
-        val message = root["message"] as? JsonObject ?: return emptyList()
-        val content = message["content"] as? JsonArray ?: return emptyList()
-        val parentToolUseId = root.str("parent_tool_use_id")
-        val blocks = content.filterIsInstance<JsonObject>().filter { it.str("type") == "tool_result" }
-        val output = blocks.singleOrNull()?.let { parseToolOutput(root["tool_use_result"] as? JsonObject) }
-        return blocks.mapNotNull { block ->
-            val toolUseId = block.str("tool_use_id") ?: return@mapNotNull null
-            val isError = (block["is_error"] as? JsonPrimitive)?.booleanOrNull ?: false
-            val text = when (val c = block["content"]) {
-                is JsonPrimitive -> c.contentOrNull.orEmpty()
-                is JsonArray -> c.filterIsInstance<JsonObject>().mapNotNull { it.str("text") }.joinToString("\n")
-                else -> ""
-            }
-            ClaudeEvent.ToolResult(toolUseId, unwrapToolError(text), isError, parentToolUseId, output)
-        }
-    }
-
-    internal fun parseToolOutput(obj: JsonObject?): ClaudeEvent.ToolOutputInfo? {
-        if (obj == null) return null
-        return ClaudeEvent.ToolOutputInfo(
-            backgroundTaskId = obj.str("backgroundTaskId"),
-            outputFile = obj.str("outputFile"),
-            stdout = obj.str("stdout"),
-            stderr = obj.str("stderr"),
-        ).takeUnless { it.isEmpty() }
-    }
-
-    private fun parseControlRequest(root: JsonObject): List<ClaudeEvent> {
-        val requestId = root.str("request_id") ?: return emptyList()
-        val request = root["request"] as? JsonObject ?: return emptyList()
-        return when (request.str("subtype")) {
-            "can_use_tool" -> runCatching {
-                listOf(ClaudeEvent.PermissionRequest(requestId, ClaudeJson.decodeFromJsonElement(CanUseToolRequest.serializer(), request)))
-            }.getOrDefault(listOf(ClaudeEvent.UnsupportedControlRequest(requestId, "can_use_tool")))
-
-            "hook_callback" -> listOf(ClaudeEvent.HookCallback(requestId, request))
-
-            "request_user_dialog" -> listOf(
-                ClaudeEvent.UserDialogRequest(
-                    requestId,
-                    request.str("dialog_kind"),
-                    (request["payload"] as? JsonObject) ?: JsonObject(emptyMap()),
-                    request.str("tool_use_id"),
-                ),
-            )
-
-            "elicitation" -> runCatching {
-                listOf(ClaudeEvent.Elicitation(requestId, ClaudeJson.decodeFromJsonElement(ElicitationRequest.serializer(), request)))
-            }.getOrDefault(listOf(ClaudeEvent.UnsupportedControlRequest(requestId, "elicitation")))
-
-            else -> listOf(ClaudeEvent.UnsupportedControlRequest(requestId, request.str("subtype")))
-        }
-    }
-
-    private fun parseRateLimit(root: JsonObject): List<ClaudeEvent> {
-        val info = root["rate_limit_info"] as? JsonObject ?: return emptyList()
-        return runCatching {
-            listOf(ClaudeEvent.RateLimit(ClaudeJson.decodeFromJsonElement(RateLimitInfo.serializer(), info)))
-        }.getOrDefault(emptyList())
-    }
-
-    private fun parseControlCancel(root: JsonObject): List<ClaudeEvent> {
-        val requestId = root.str("request_id") ?: return emptyList()
-        return listOf(ClaudeEvent.ControlCancel(requestId))
-    }
-
-    private fun parseControlResponse(root: JsonObject): List<ClaudeEvent> {
-        val response = root["response"] as? JsonObject ?: return emptyList()
-        val requestId = response.str("request_id") ?: return emptyList()
-        val success = response.str("subtype") == "success"
-        return listOf(
-            ClaudeEvent.ControlResult(
-                requestId = requestId,
-                success = success,
-                payload = response["response"] as? JsonObject,
-                error = response.str("error"),
-            ),
-        )
-    }
 }

@@ -1,6 +1,6 @@
 package dev.lain.claudejb.session
 
-import dev.lain.claudejb.protocol.ProtocolParser
+import dev.lain.claudejb.protocol.MessageParsers
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -58,7 +58,7 @@ object BackgroundTaskReplay {
         into: MutableMap<String, Replayed>,
     ) {
         val resultObj = (line["toolUseResult"] ?: line["tool_use_result"]) as? JsonObject ?: return
-        val output = ProtocolParser.parseToolOutput(resultObj) ?: return
+        val output = MessageParsers.parseToolOutput(resultObj) ?: return
         val taskId = output.backgroundTaskId ?: return
         val block = resultBlock(line) ?: return
         val toolUseId = block.str("tool_use_id") ?: return
