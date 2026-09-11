@@ -17,6 +17,7 @@ internal object PageAssembly {
         "app-core-report.js",
         "app-core-markdown.js",
         "app-core-diagram.js",
+        "app-core-diagram-view.js",
         "app-core-theme.js",
         "app-transcript.js",
         "app-transcript-rows.js",

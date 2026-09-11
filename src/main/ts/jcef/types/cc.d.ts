@@ -1,4 +1,5 @@
 interface MarkedApi {
+  (markdown: string, options?: object): string;
   parse(markdown: string, options?: object): string;
   use(...extensions: object[]): void;
 }
@@ -64,6 +65,30 @@ interface CcElements {
   a11yStatus: HTMLElement | null;
 }
 
+interface DiagramAction {
+  label: string;
+  onClick: () => void;
+}
+
+interface DiagramNode {
+  id?: string | number | null;
+  label?: unknown;
+  meta?: unknown;
+  action?: DiagramAction | null;
+  children?: (DiagramNode | null | undefined)[] | null;
+  kind?: string | null;
+  status?: string | null;
+  selected?: boolean;
+  title?: string | null;
+  name?: string | null;
+  onPick?: (ev: MouseEvent) => void;
+  running?: boolean;
+}
+
+interface PanView extends HTMLDivElement {
+  __fit?: () => void;
+}
+
 interface CcShared {
   send(obj: unknown): void;
   escape(s: unknown): string;
@@ -82,6 +107,18 @@ interface CcShared {
   flashCopied(el: HTMLElement): void;
   selfCheck(): void;
   diagnostics(): void;
+  markdown(text: unknown): string;
+  decorateOneCodeBlock(code: Element): void;
+  languageForPath(path: unknown): string | null;
+  diagramLabel(kind: string | null | undefined, depth: number, label: unknown): string;
+  diagramShown(kind: string | null | undefined, depth: number, label: unknown): string;
+  diagram(roots: unknown): HTMLElement | null;
+  panView(canvas: HTMLElement, label?: string | null, key?: string | null): PanView;
+  applyTheme(vars: unknown): void;
+  __themeVars?: Record<string, string>;
+  reducedMotion?: boolean;
+  isVibe(): boolean;
+  nyanSvg(): string;
   [name: string]: unknown;
 }
 
@@ -95,4 +132,7 @@ interface Window {
   cc: CcHost;
   CC: CcShared;
   __ccSend?: (json: string) => void;
+  marked?: MarkedApi;
+  DOMPurify?: DomPurifyApi;
+  hljs?: HighlightApi;
 }
