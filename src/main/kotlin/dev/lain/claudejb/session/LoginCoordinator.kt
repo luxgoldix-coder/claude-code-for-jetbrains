@@ -1,5 +1,6 @@
 package dev.lain.claudejb.session
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import dev.lain.claudejb.process.ClaudeBinaryLocator
@@ -102,7 +103,7 @@ class LoginCoordinator(
         }
         val cardUi = ui
         if (cardUi != null) {
-            beginPty(binary, mode, cardUi) { edt { if (!openTerminal(binary, mode)) manualFallback(binary, mode) } }
+            beginPty(binary, mode, cardUi) { if (!openTerminal(binary, mode)) manualFallback(binary, mode) }
             return
         }
         edt {
@@ -116,14 +117,26 @@ class LoginCoordinator(
     }
 
     private fun beginPty(binary: File, mode: Mode, loginUi: LoginUi, onStarted: () -> Unit = {}, fallback: () -> Unit) {
+        if (signingIn) return
         signingIn = true
         val next = LoginAttempt(project, edt, binary, mode, loginUi, host)
-        if (next.start()) {
-            attempt = next
-            onStarted()
-        } else {
-            signingIn = false
-            fallback()
+        ApplicationManager.getApplication().executeOnPooledThread {
+            val started = next.start()
+            edt {
+                when {
+                    !signingIn -> next.cancel()
+
+                    started -> {
+                        attempt = next
+                        onStarted()
+                    }
+
+                    else -> {
+                        signingIn = false
+                        fallback()
+                    }
+                }
+            }
         }
     }
 

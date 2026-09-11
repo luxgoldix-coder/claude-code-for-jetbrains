@@ -10,13 +10,13 @@ class EdtAuthContractTest {
 
     @Test
     fun `start asks the question that cannot block`() {
-        val body = bodyOf(CLAUDE_SESSION, "fun start(")
+        val body = bodyOf(SESSION_LIFECYCLE, "fun start(")
 
         assertTrue(body.any { HELD in it }) {
-            "ClaudeSession.start runs on the EDT, so it must ask AuthGate.$HELD. It no longer does."
+            "SessionLifecycle.start runs on the EDT, so it must ask AuthGate.$HELD. It no longer does."
         }
         assertFalse(body.any { BLOCKING in it }) {
-            "ClaudeSession.start runs on the EDT and calls AuthGate.$BLOCKING, which resolves an unknown " +
+            "SessionLifecycle.start runs on the EDT and calls AuthGate.$BLOCKING, which resolves an unknown " +
                 "answer by spawning `claude auth status` and waiting for it. That is the UI freeze this " +
                 "split exists to remove; ask $HELD and treat UNKNOWN as 'neither launch nor prompt'."
         }
@@ -62,7 +62,7 @@ class EdtAuthContractTest {
 
     @Test
     fun `losing the binary reaches the EDT in one hop`() {
-        val body = bodyOf(CLAUDE_SESSION, "fun refreshBootState(")
+        val body = bodyOf(SESSION_LIFECYCLE, "fun refreshBootState(")
         val head = body.takeWhile { NULL_BINARY_RETURN !in it }
 
         assertTrue(head.size < body.size) {
@@ -73,6 +73,36 @@ class EdtAuthContractTest {
             "Stopping the vanished binary's session and publishing `binaryMissing` must happen in ONE `$EDT_HOP` " +
                 "block. Split across two, the first one pushes `binaryMissing: true` while the process is " +
                 "still up and the page draws the install card over a chat that is still answering."
+        }
+    }
+
+    @Test
+    fun `pressing Sign in sources the shell and spawns the PTY off the EDT`() {
+        assertFalse(LOGIN_COORDINATOR.readText().contains(LAUNCH_ENV)) {
+            "LoginCoordinator names `$LAUNCH_ENV`. Sign in is a button on the EDT; sourcing the user's shell " +
+                "script there is a freeze of up to 15 s. The env belongs in LoginAttempt.start, on the pool."
+        }
+        val body = bodyOf(LOGIN_COORDINATOR, "fun beginPty(")
+        val pooled = body.indexOfFirst { POOLED in it }
+        val spawn = body.indexOfFirst { ".start()" in it }
+
+        assertTrue(spawn >= 0) { "LoginCoordinator.beginPty no longer starts the attempt; point this gate at the new shape." }
+        assertTrue(pooled in 0 until spawn) {
+            "LoginCoordinator.beginPty starts the PTY attempt before hopping to `$POOLED`. That start resolves " +
+                "the env and spawns `claude auth login` under a PTY — both on the EDT."
+        }
+    }
+
+    @Test
+    fun `verifying a finished sign-in sources the shell off the EDT`() {
+        val body = bodyOf(SIGN_IN_COMPLETION, "fun complete(")
+        val pooled = body.indexOfFirst { POOLED in it }
+        val env = body.indexOfFirst { LAUNCH_ENV in it }
+
+        assertTrue(env >= 0) { "SignInCompletion.complete no longer builds the env; point this gate at the new shape." }
+        assertTrue(pooled in 0 until env) {
+            "SignInCompletion.complete resolves `$LAUNCH_ENV` before `$POOLED`. It is called from the PTY's " +
+                "result on the EDT, so the shell script runs there."
         }
     }
 
@@ -94,6 +124,7 @@ class EdtAuthContractTest {
 
         const val LAUNCH_ENV = "resolveEnv()"
         const val SCRIPT_GUARD = "sourceScript"
+        const val POOLED = "executeOnPooledThread"
 
         const val NULL_BINARY_RETURN = "if (binary == null) return"
         const val EDT_HOP = "edt {"
@@ -101,8 +132,10 @@ class EdtAuthContractTest {
         const val INDENT = "    "
         const val CLOSING_BRACE = "    }"
 
-        val CLAUDE_SESSION = source("SessionLifecycle.kt")
+        val SESSION_LIFECYCLE = source("SessionLifecycle.kt")
         val AUTH_GATE = source("AuthGate.kt")
+        val LOGIN_COORDINATOR = source("LoginCoordinator.kt")
+        val SIGN_IN_COMPLETION = source("SignInCompletion.kt")
 
         fun source(name: String): File {
             val path = "src/main/kotlin/dev/lain/claudejb/session/$name"

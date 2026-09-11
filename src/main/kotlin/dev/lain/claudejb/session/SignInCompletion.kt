@@ -21,8 +21,8 @@ class SignInCompletion(
     private val log = thisLogger()
 
     fun complete(binary: File, done: (Boolean, String) -> Unit) {
-        val env = ClaudeSettings.getInstance(project).resolveEnv()
         ApplicationManager.getApplication().executeOnPooledThread {
+            val env = ClaudeSettings.getInstance(project).resolveEnv()
             val verified = AuthCli.status(binary, env)?.loggedIn == true
             val vaulted = if (verified) {
                 AccountProfile.capture()
