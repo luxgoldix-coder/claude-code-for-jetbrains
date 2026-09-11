@@ -14,6 +14,8 @@
   L.debug = false;
   L.ring = { max: 0, dropped: 0 };
   L.listEl = null;
+  L.entriesEl = null;
+  L.emptyEl = null;
 
   let open = false;
   let timer: ReturnType<typeof setInterval> | null = null;

@@ -87,6 +87,18 @@ describe('the Log view', () => {
     expect(lines()[0]).toBe(first);
   });
 
+  it('a poll keeps the Lines card and its list in place, so the scroll position survives', () => {
+    openView('log');
+    win.cc.log(PAYLOAD([LINE(0), LINE(1)]));
+    const cardBefore = panel().querySelector('[data-card="log-entries"]');
+    const listBefore = panel().querySelector('.log-entries');
+    win.cc.log(PAYLOAD([LINE(2)], { reset: false }));
+    win.cc.log(PAYLOAD([], { reset: false }));
+    expect(panel().querySelector('[data-card="log-entries"]')).toBe(cardBefore);
+    expect(panel().querySelector('.log-entries')).toBe(listBefore);
+    expect(listBefore.parentNode).toBe(cardBefore.querySelector('.log-entries').parentNode);
+  });
+
   it('a reset empties the list before drawing, because the reader missed lines', () => {
     openView('log');
     win.cc.log(PAYLOAD([LINE(0), LINE(1)]));

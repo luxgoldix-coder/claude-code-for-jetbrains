@@ -6,6 +6,8 @@
   const L = (D.log = D.log || ({} as LogNs));
   const h = D.h;
 
+  const TAIL_SLACK_PX = 4;
+
   L.list = function (): HTMLElement {
     if (!L.listEl) {
       L.listEl = h('div', {
@@ -32,9 +34,12 @@
 
   L.append = function (lines: LogLine[]): void {
     const list = L.list();
+    if (!lines.length) return;
+    const atTail = list.scrollTop + list.clientHeight >= list.scrollHeight - TAIL_SLACK_PX;
     lines.forEach(function (line) {
       list.appendChild(L.lineNode(line));
     });
+    if (atTail) list.scrollTop = list.scrollHeight;
   };
 
   L.reset = function (): void {

@@ -266,6 +266,8 @@ interface LogPayload {
 }
 
 interface LogNs {
+  entriesEl: HTMLElement | null;
+  emptyEl: HTMLElement | null;
   lines: LogLine[];
   lastSeq: number;
   level: string;

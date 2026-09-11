@@ -105,9 +105,12 @@
   }
 
   function entriesCard(): HTMLElement | null {
-    const body: (HTMLElement | null)[] = [L.list()];
-    if (!L.lines.length) body.push(h('div', { class: 'log-empty', text: 'Nothing has been logged yet.' }));
-    return card('Lines', body, true, 'log-entries');
+    if (!L.entriesEl) {
+      L.emptyEl = h('div', { class: 'log-empty', text: 'Nothing has been logged yet.' });
+      L.entriesEl = card('Lines', [L.list(), L.emptyEl], true, 'log-entries');
+    }
+    if (L.emptyEl) L.emptyEl.hidden = L.lines.length > 0;
+    return L.entriesEl;
   }
 
   D.buildLogCards = function (): (HTMLElement | null)[] {
