@@ -118,11 +118,11 @@ class GuardViewWiringContractTest {
         assertTrue(assembly.contains("\"app-session-guard.js\"")) {
             "app-session-guard.js is not in PageAssembly.appNames, so it is not served and cc.guard does not exist"
         }
-        assertTrue(assembly.contains("\"guard.css\"")) {
-            "guard.css is not in PageAssembly.CSS_PARTS, so the view draws unstyled"
+        assertTrue(assembly.contains("\"guard-log.css\"")) {
+            "guard-log.css is not in PageAssembly.CSS_PARTS, so the view draws unstyled"
         }
         assertTrue(File(tsRoot(), "app-session-guard.ts").isFile)
-        assertTrue(File(jcefRoot(), "css/guard.css").isFile)
+        assertTrue(File(jcefRoot(), "css/guard-log.css").isFile)
     }
 
     private fun readyBranch(): List<String> {

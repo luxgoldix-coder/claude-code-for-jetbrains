@@ -5,17 +5,7 @@ const CEILING = 250;
 const TS_ROOT = path.resolve(__dirname, '../../main/ts/jcef');
 const CSS_ROOT = path.resolve(__dirname, '../../main/resources/jcef/css');
 
-const OVERSIZE = new Set([
-  'composer.css',
-  'transcript.css',
-  'dashboard.css',
-  'git.css',
-  'permissions.css',
-  'tabs.css',
-  'vuln.css',
-  'boot.css',
-  'guard.css',
-]);
+const OVERSIZE = new Set([]);
 
 function lineCount(file) {
   return (fs.readFileSync(file, 'utf8').match(/\n/g) || []).length;
