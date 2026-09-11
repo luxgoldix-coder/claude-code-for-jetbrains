@@ -39,8 +39,6 @@ traced, and a handful of bugs found on the way are fixed.
   message name the host did not parse.
 - **The model, effort and thinking pills did not survive a new chat**, unlike the mode pill next to
   them: they changed the running session and never the stored setting.
-- **A prompt typed while a turn was running was sent at once**, so the queue it was meant to wait in
-  never held anything. It now waits, shows as a chip you can remove, and goes out when the turn ends.
 - **Fork Session resumed the original session's id**, so both chats wrote into one transcript.
 - **Closing a chat while its sign-in was still open left a `claude` process running** with no tab
   to stop it.

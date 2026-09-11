@@ -47,16 +47,17 @@ class PromptQueue(
     }
 
     fun pump() {
-        if (!canSend() || queue.isEmpty()) return
-        val next = queue.first()
-        val msgUuid = UUID.randomUUID().toString()
-        if (!write(ControlProtocol.userMessageWithImages(next.text, next.images, uuid = msgUuid))) return
-        queue.removeFirst()
-        transcript.add(Speaker.USER, next.displayText)
-        currentUserMessageId = msgUuid
-        onSent()
-        dropSuggestion()
-        fireState()
+        while (canSend() && queue.isNotEmpty()) {
+            val next = queue.first()
+            val msgUuid = UUID.randomUUID().toString()
+            if (!write(ControlProtocol.userMessageWithImages(next.text, next.images, uuid = msgUuid))) return
+            queue.removeFirst()
+            transcript.add(Speaker.USER, next.displayText)
+            currentUserMessageId = msgUuid
+            onSent()
+            dropSuggestion()
+            fireState()
+        }
     }
 
     fun dropSuggestion() {

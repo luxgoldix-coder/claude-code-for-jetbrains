@@ -117,7 +117,7 @@ class ClaudeSession(
         transcript = transcript,
         edt = ::edt,
         write = ::write,
-        canSend = { lifecycle.ready && isRunning() && !turn.active },
+        canSend = { lifecycle.ready && isRunning() },
         onSent = {
             turn.active = true
             poll.startQuotaPolling()

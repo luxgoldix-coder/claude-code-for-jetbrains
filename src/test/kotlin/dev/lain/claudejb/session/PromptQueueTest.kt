@@ -8,7 +8,7 @@ class PromptQueueTest {
 
     private val transcript = TranscriptModel()
     private val written = mutableListOf<String>()
-    private var turnActive = false
+    private var ready = true
     private var writeSucceeds = true
     private var stateFired = 0
 
@@ -19,41 +19,39 @@ class PromptQueueTest {
             written.add(line)
             writeSucceeds
         },
-        canSend = { !turnActive },
-        onSent = { turnActive = true },
+        canSend = { ready },
+        onSent = {},
         fireState = { stateFired++ },
     )
 
-    private fun turnEnds() {
-        turnActive = false
+    private fun sessionReady() {
+        ready = true
         queue.pump()
     }
 
     @Test
-    fun `a prompt typed during a turn waits in the queue until the turn ends`() {
+    fun `a prompt typed during a turn goes out at once, the way the CLI delivers it`() {
         queue.enqueue("first", emptyList(), "first")
         queue.enqueue("second", emptyList(), "second")
 
-        assertEquals(1, written.size)
-        assertEquals(listOf("second"), queue.queued())
-        assertEquals(listOf("first"), transcript.entries.map { it.text })
-
-        turnEnds()
         assertEquals(2, written.size)
         assertEquals(emptyList<String>(), queue.queued())
         assertEquals(listOf("first", "second"), transcript.entries.map { it.text })
     }
 
     @Test
-    fun `a queued prompt can be removed before it goes out`() {
+    fun `a prompt typed before the session is ready waits, and can be removed before it goes out`() {
+        ready = false
         queue.enqueue("first", emptyList(), "first")
         queue.enqueue("second", emptyList(), "second")
         queue.enqueue("third", emptyList(), "third")
-        queue.remove(0)
-        assertEquals(listOf("third"), queue.queued())
+        assertEquals(0, written.size)
+        queue.remove(1)
+        assertEquals(listOf("first", "third"), queue.queued())
 
-        turnEnds()
+        sessionReady()
         assertEquals(listOf("first", "third"), transcript.entries.map { it.text })
+        assertEquals(emptyList<String>(), queue.queued())
     }
 
     @Test
