@@ -117,6 +117,16 @@
     }
   }
 
+  function ownsEscape(e: KeyboardEvent): boolean {
+    if (!findBar || findBar.hidden) return false;
+    const target = e.target as Node | null;
+    if (findBar.contains(target)) return true;
+    const composer = CC.els && CC.els.composer;
+    const palette = CC.els && CC.els.palette;
+    const paletteOpen = !!(palette && !palette.hasAttribute('hidden'));
+    return !!(composer && composer.contains(target)) && !paletteOpen;
+  }
+
   document.addEventListener(
     'keydown',
     function (e: KeyboardEvent) {
@@ -129,12 +139,7 @@
       } else if (isO && (e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey) {
         e.preventDefault();
         if (cc.toggleReasoning) cc.toggleReasoning();
-      } else if (
-        (key === 'Escape' || e.keyCode === 27) &&
-        findBar &&
-        !findBar.hidden &&
-        findBar.contains(document.activeElement)
-      ) {
+      } else if ((key === 'Escape' || e.keyCode === 27) && ownsEscape(e)) {
         e.preventDefault();
         e.stopPropagation();
         if (e.stopImmediatePropagation) e.stopImmediatePropagation();
