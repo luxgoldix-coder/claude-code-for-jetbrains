@@ -18,29 +18,11 @@
     return d && typeof d.lastSession === 'function' ? d.lastSession() : null;
   }
 
-  (function watchSessionPayload() {
-    const cc = (window.cc = window.cc || {});
-    const present = typeof cc.session === 'function' ? cc.session : null;
-    let inner: CcMethod | null =
-      present && (present as { ccSessionTap?: boolean }).ccSessionTap ? null : present;
-    function wrapper(payload?: unknown): void {
-      if (inner) inner.call(cc, payload);
+  if (typeof CC.on === 'function') {
+    CC.on('session', function () {
       renderMini();
-    }
-    (wrapper as { ccSessionTap?: boolean }).ccSessionTap = true;
-    try {
-      Object.defineProperty(cc, 'session', {
-        configurable: true,
-        enumerable: true,
-        get: function () {
-          return wrapper;
-        },
-        set: function (fn: unknown) {
-          inner = typeof fn === 'function' ? (fn as CcMethod) : null;
-        },
-      });
-    } catch (e) {}
-  })();
+    });
+  }
 
   function ensureMini(): { root: HTMLElement; grid: HTMLElement } | null {
     if (mini) return mini;

@@ -118,6 +118,7 @@
     S.lastSession = payload && typeof payload === 'object' ? (payload as SessionPayload) : null;
     ensureBuilt();
     D.renderIfShown();
+    if (typeof CC.emit === 'function') CC.emit('session', S.lastSession);
   };
 
   cc.mcp = function (payload?: unknown): void {
