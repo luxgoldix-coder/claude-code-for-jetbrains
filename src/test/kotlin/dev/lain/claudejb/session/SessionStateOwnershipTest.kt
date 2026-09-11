@@ -7,15 +7,9 @@ import java.io.File
 
 class SessionStateOwnershipTest {
 
-    private val owned = listOf(
-        "model", "effort", "permissionMode", "thinkingTokens",
-        "allowedTools", "disallowedTools", "settingSources", "includePartialMessages",
-        "ideMcpEnabled", "ideMcpTransport", "ideMcpPort", "customMcpServers",
-        "maxTurns", "maxBudgetUsd", "fallbackModel", "addDirs", "betas", "strictMcpConfig",
-        "cachedEnv",
-    )
+    private val owned = listOf("launch")
 
-    private val writers = setOf("ClaudeSession.kt", "SessionLiveSettings.kt")
+    private val writers = setOf("ClaudeSession.kt", "SessionLiveSettings.kt", "SessionPersistence.kt", "ConversationEvents.kt")
 
     private fun productionSources(): List<File> {
         val root = File("src/main/kotlin")
@@ -25,7 +19,7 @@ class SessionStateOwnershipTest {
 
     @Test
     fun `only the session and its live settings write a session's options`() {
-        val assignment = Regex("""\bsession\.(${owned.joinToString("|")})\s*=(?!=)""")
+        val assignment = Regex("""\b(?:session|s)\.(${owned.joinToString("|")})\s*=(?!=)""")
         val offenders = productionSources()
             .filter { it.name !in writers }
             .flatMap { file ->
