@@ -24,9 +24,7 @@ class LaunchOptionsTest {
     }
 
     @Test
-    fun `the tool filters and the other flags only reach the binary as arguments, so they differ`() {
-        assertTrue(base.relaunchDiffers(base.copy(allowedTools = "Bash,Read")))
-        assertTrue(base.relaunchDiffers(base.copy(disallowedTools = "WebFetch")))
+    fun `the flags that only reach the binary as arguments differ`() {
         assertTrue(base.relaunchDiffers(base.copy(settingSources = "user")))
         assertTrue(base.relaunchDiffers(base.copy(includePartialMessages = false)))
         assertTrue(base.relaunchDiffers(base.copy(maxTurns = 3, maxBudgetUsd = 1.0, fallbackModel = "haiku")))
@@ -34,8 +32,9 @@ class LaunchOptionsTest {
     }
 
     @Test
-    fun `a change the binary takes live, and the session identity, are not a relaunch`() {
+    fun `a change the binary takes live, one the plugin's broker takes live, and the session identity are not a relaunch`() {
         assertFalse(base.relaunchDiffers(base.copy(model = "opus", permissionMode = "plan", effort = "high", thinkingTokens = 8)))
+        assertFalse(base.relaunchDiffers(base.copy(allowedTools = "Bash,Read", disallowedTools = "WebFetch")))
         assertFalse(base.relaunchDiffers(base.copy(sessionId = "s-1", fork = true)))
         assertFalse(base.relaunchDiffers(base))
     }

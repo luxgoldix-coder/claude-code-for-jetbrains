@@ -13,9 +13,12 @@ import dev.lain.claudejb.model.permission.broker.PendingPermission
 import dev.lain.claudejb.model.permission.broker.PermissionBroker
 import dev.lain.claudejb.model.permission.scan.ToolInputScanner
 import dev.lain.claudejb.model.permission.vocab.SecurityRule
+import dev.lain.claudejb.model.protocol.control.ControlProtocol
+import dev.lain.claudejb.model.protocol.models.CanUseToolRequest
 import dev.lain.claudejb.model.session.transcript.EntryDTO
 import dev.lain.claudejb.model.session.transcript.Speaker
 import dev.lain.claudejb.model.settings.ClaudeSettings
+import dev.lain.claudejb.model.settings.ToolFilters
 import dev.lain.claudejb.model.settings.guard.GuardAlert
 import dev.lain.claudejb.model.settings.guard.GuardAlertLog
 import dev.lain.claudejb.model.settings.guard.GuardCommandApprovals
@@ -48,13 +51,27 @@ class SessionGuard(
         present = ::present,
         onAutoReviewed = session.diffs::autoOpenDiff,
         projectRoot = project.basePath,
-        isRemembered = { toolName, _ -> ClaudeSettings.getInstance(project).isToolAlwaysAllowed(toolName) },
+        isRemembered = { toolName, _ -> alwaysAllowed(toolName) },
         forceAsk = { session.gitIntegration },
         sensitiveDecision = { input -> ClaudeSettings.getInstance(project).sensitiveDecision(input, project.basePath) },
         isGuardCommandApproved = { rule, command -> approvals.isApproved(rule, command) },
         onSensitiveDenied = ::onDenied,
         onSensitiveBypassed = ::onBypassed,
     )
+
+    fun onPermission(requestId: String, request: CanUseToolRequest) {
+        if (ToolFilters.isDisallowed(ClaudeSettings.getInstance(project).state, request.toolName)) {
+            write(ControlProtocol.permissionDeny(requestId, "${request.toolName} is a disallowed tool in this project's settings."))
+            edt { session.transcript.add(Speaker.SYSTEM, "Refused ${request.toolName}: it is on the disallowed tools list.") }
+            return
+        }
+        broker.handle(requestId, request)
+    }
+
+    private fun alwaysAllowed(toolName: String): Boolean {
+        val settings = ClaudeSettings.getInstance(project)
+        return settings.isToolAlwaysAllowed(toolName) || ToolFilters.isAllowed(settings.state, toolName)
+    }
 
     private fun onDenied(denial: GuardDenial) = edt {
         val landing = landingOf(denial.toolUseId)

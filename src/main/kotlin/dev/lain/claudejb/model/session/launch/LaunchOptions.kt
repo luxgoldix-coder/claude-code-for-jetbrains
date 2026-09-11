@@ -30,8 +30,16 @@ data class LaunchOptions(
 
     fun relaunchDiffers(other: LaunchOptions): Boolean = argvOnly() != other.argvOnly()
 
-    private fun argvOnly(): LaunchOptions =
-        copy(model = null, effort = null, permissionMode = "", thinkingTokens = null, sessionId = null, fork = false)
+    private fun argvOnly(): LaunchOptions = copy(
+        model = null,
+        effort = null,
+        permissionMode = "",
+        thinkingTokens = null,
+        allowedTools = "",
+        disallowedTools = "",
+        sessionId = null,
+        fork = false,
+    )
 
     companion object {
 

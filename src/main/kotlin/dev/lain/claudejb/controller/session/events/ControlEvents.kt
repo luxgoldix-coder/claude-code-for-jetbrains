@@ -19,7 +19,7 @@ class ControlEvents(
 
     fun onControl(event: ClaudeEvent.Control) {
         when (event) {
-            is ClaudeEvent.PermissionRequest -> s.guard.broker.handle(event.requestId, event.request)
+            is ClaudeEvent.PermissionRequest -> s.guard.onPermission(event.requestId, event.request)
 
             is ClaudeEvent.HookCallback -> onHookCallback(event.requestId, event.request)
 
