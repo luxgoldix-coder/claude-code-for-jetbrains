@@ -156,7 +156,7 @@ class ScriptAnalysisTest {
     }
 
     @Test
-    fun `nesting deeper than the bound is a hard block for every caller`() {
+    fun `nesting deeper than the bound is a hard block`() {
         (0..6).forEach { i -> script("s$i.sh", "#!/bin/sh\nsource ./s${i + 1}.sh\n") }
         assertEquals(Verdict.DENY, v("./s0.sh"))
         assertEquals(Verdict.DENY, v("./s0.sh"))
@@ -170,7 +170,7 @@ class ScriptAnalysisTest {
     }
 
     @Test
-    fun `a script that does not exist yet is opaque, so it is a card`() {
+    fun `a script that does not exist yet is opaque, so it is denied`() {
         assertEquals(Verdict.DENY, v("./not-written-yet.sh"))
         assertTrue(why("./not-written-yet.sh").contains("could not read"))
     }

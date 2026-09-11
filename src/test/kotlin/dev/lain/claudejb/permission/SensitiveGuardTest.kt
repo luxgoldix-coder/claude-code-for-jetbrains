@@ -94,7 +94,7 @@ class SensitiveGuardTest :
     }
 
     @Test
-    fun `my own home and my own project are never foreign — but my home outside the project now asks`() {
+    fun `my own home outside the project is still denied, and my own project never is`() {
         assertEquals(Verdict.DENY, v(read("/home/me/notes.md")))
         assertEquals(Verdict.ALLOW, v(read("/home/me/proj/src/Foo.kt")))
     }
@@ -116,7 +116,7 @@ class SensitiveGuardTest :
     }
 
     @Test
-    fun `a credential path quoted in replaced text still asks, the same as reading it`() {
+    fun `a credential path quoted in replaced text is denied, the same as reading it`() {
         val input = edit("/home/me/proj/docs/SETUP.md", "/home/me/.ssh/id_rsa", "~/.ssh/id_ed25519")
         assertEquals(Verdict.DENY, v(input))
     }
@@ -205,7 +205,7 @@ class SensitiveGuardTest :
     }
 
     @Test
-    fun `the same offensive tool actually run still ASKs or DENIES, anchored or not`() {
+    fun `the same offensive tool actually run is denied, anchored or not`() {
         listOf(
             "nmap -sV 10.0.0.0/24", "sudo nmap -sV 10.0.0.0/24", "/usr/bin/nmap -sV 10.0.0.0/24",
             "cd /tmp && nmap -sV 10.0.0.0/24", "echo hi; nmap -sV 10.0.0.0/24", "echo hi | nmap -sV 10.0.0.0/24",
@@ -318,7 +318,7 @@ class SensitiveGuardTest :
     }
 
     @Test
-    fun `editing a spaced comment line asks — it is now an outside-project candidate, not foreign`() {
+    fun `editing a spaced comment line is denied as an outside-project candidate, not as foreign`() {
         val input = edit(
             "/home/me/proj/src/App.kt",
             "// jump-to-code links (jb://open)",
@@ -337,7 +337,7 @@ class SensitiveGuardTest :
     }
 
     @Test
-    fun `integer division is allowed unless its fragment spells a valid host`() {
+    fun `an integer-division fragment that path-shapes outside the project is denied`() {
         assertEquals(Verdict.DENY, v(bash("python3 -c \"print(xs[len(xs)//2])\"")))
         assertEquals(Verdict.DENY, v(bash("python3 -c 'print(sum(v)//len(v))'")))
     }
@@ -414,7 +414,7 @@ class SensitiveGuardTest :
     }
 
     @Test
-    fun `disabling the foreign-WSL-mounts rule downgrades DENY to ASK for EVERY caller`() {
+    fun `disabling the foreign-WSL-mounts rule downgrades DENY to ASK, never to ALLOW`() {
         val wsl = policy.copy(wslHost = true, projectRoot = "/mnt/c/dev/proj")
         assertEquals(Verdict.DENY, v(read("/mnt/d/other/file"), wsl))
         val relaxed = wsl.copy(permissiveRules = setOf(SecurityRule.WSL_MOUNT))
@@ -441,7 +441,7 @@ class SensitiveGuardTest :
     }
 
     @Test
-    fun `an action on the temp directory asks the agent and denies a third party`() {
+    fun `an action on the temp directory is denied`() {
         assertEquals(Verdict.DENY, v(read("/tmp/stage.sh")))
         assertEquals(Verdict.DENY, v(read("/tmp/claude-1000/proj/sess/tasks/t1.output")))
         assertEquals(Verdict.DENY, v(read("/var/tmp/held-across-reboots")))
@@ -540,7 +540,7 @@ class SensitiveGuardTest :
     }
 
     @Test
-    fun `an absolute path outside the project asks the agent and denies a third party`() {
+    fun `an absolute path outside the project is denied`() {
         assertEquals(Verdict.DENY, v(read("/opt/other/lib.so")))
         assertEquals(Verdict.DENY, v(read("/srv/shared/notes.txt")))
         assertEquals(Verdict.DENY, v(read("/opt/other/lib.so")))

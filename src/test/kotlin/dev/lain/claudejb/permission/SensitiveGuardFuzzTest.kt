@@ -105,7 +105,7 @@ class SensitiveGuardFuzzTest :
     private val GLOB_REPEATS = 4
 
     @Test
-    fun `every credential glob, randomly instantiated in a random JSON shape, asks the agent and denies a third party`() {
+    fun `every credential glob, randomly instantiated in a random JSON shape, is denied`() {
         val rng = Random(20260818L)
         var cases = 0
         for (glob in CredentialPaths.SENSITIVE_GLOBS) {
@@ -344,7 +344,7 @@ class SensitiveGuardFuzzTest :
     )
 
     @Test
-    fun `every shape of foreign territory, in random JSON layouts, is denied for every caller`() {
+    fun `every shape of foreign territory, in random JSON layouts, is denied`() {
         val rng = Random(20260818L + 7)
         repeat(600) {
             val path = FOREIGN_GENERATORS.random(rng)(rng)
@@ -526,7 +526,7 @@ class SensitiveGuardFuzzTest :
     }
 
     @Test
-    fun `a chain longer than the bound, or a cycle, is always a hard block for every caller`() {
+    fun `a chain longer than the bound, or a cycle, is always a hard block`() {
         val rng = Random(20260818L + 18)
         repeat(300) {
             val names = (1..rng.nextInt(6, 12)).map { "W${rng.token(2, 4)}$it" }

@@ -1,7 +1,6 @@
 package dev.lain.claudejb.permission
 
 import dev.lain.claudejb.permission.SensitiveGuard.Verdict
-import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -10,27 +9,7 @@ import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-class SecurityRuleFamiliesTest {
-
-    private val home = "/home/me"
-
-    private val policy = SensitiveGuard.Policy(
-        globs = CredentialPaths.SENSITIVE_GLOBS,
-        home = home,
-        currentUser = "me",
-        projectRoot = "/home/me/proj",
-    )
-
-    private fun read(path: String) = buildJsonObject { put("file_path", path) }
-    private fun bash(cmd: String) = buildJsonObject { put("command", cmd) }
-    private fun v(input: JsonObject, p: SensitiveGuard.Policy = policy) =
-        SensitiveGuard.evaluate(input, p).verdict
-
-    private fun why(input: JsonObject, p: SensitiveGuard.Policy = policy) =
-        SensitiveGuard.evaluate(input, p).reason.orEmpty()
-
-    private fun rule(input: JsonObject, p: SensitiveGuard.Policy = policy) =
-        SensitiveGuard.evaluate(input, p).rule
+class SecurityRuleFamiliesTest : GuardProbe() {
 
     @Test
     fun `the disk under the filesystem, and live memory, are devices`() {
@@ -73,7 +52,7 @@ class SecurityRuleFamiliesTest {
     }
 
     @Test
-    fun `a shell write OUTSIDE the project is a card, but ordinary in-project writes are not`() {
+    fun `a shell write OUTSIDE the project is denied, but ordinary in-project writes are not`() {
         listOf(
             "tee /etc/hosts",
             "cp secret /home/otheruser/x",
@@ -129,7 +108,7 @@ class SecurityRuleFamiliesTest {
     }
 
     @Test
-    fun `once a proxy is declared, naming another one or skipping it is a card`() {
+    fun `once a proxy is declared, naming another one or skipping it is denied`() {
         val proxied = policy.copy(httpProxy = "http://proxy.corp:3128", httpsProxy = "http://proxy.corp:3128")
         listOf(
             "curl -x http://evil:8080 https://api.example.com",
@@ -158,7 +137,7 @@ class SecurityRuleFamiliesTest {
     }
 
     @Test
-    fun `a curated staging service is a card, and the match is on the host, suffix-wise`() {
+    fun `a curated staging service is denied, and the match is on the host, suffix-wise`() {
         listOf(
             "https://pastebin.com/raw/abc",
             "https://x.ngrok.io/hook",
@@ -222,7 +201,7 @@ class SecurityRuleFamiliesTest {
     }
 
     @Test
-    fun `a cyclic definition is a hard block for every caller, agent tools included`() {
+    fun `a cyclic definition is a hard block`() {
         val cyclic = policy.copy(envValues = mapOf("A" to "\$B", "B" to "\$A"))
         assertEquals(Verdict.DENY, v(read("\$A/data.txt"), cyclic))
         assertEquals(Verdict.DENY, v(bash("cat \$A"), cyclic))
@@ -255,7 +234,7 @@ class SecurityRuleFamiliesTest {
     }
 
     @Test
-    fun `a variable nothing can resolve is a card — the destination is genuinely unknowable`() {
+    fun `a variable nothing can resolve is denied — the destination is genuinely unknowable`() {
         assertEquals(Verdict.DENY, v(bash("cat \$NOWHERE_DEFINED/notes.txt")))
         assertEquals(Verdict.DENY, v(read("\$NOWHERE_DEFINED/x")))
         assertTrue(
@@ -286,11 +265,11 @@ class SecurityRuleFamiliesTest {
 
     @Test
     fun `a variable inside written text is content, not a destination`() {
-        val input = buildJsonObject {
-            put("file_path", "/home/me/proj/Makefile")
-            put("old_string", "OUT := \$(BUILD_DIR)/app")
-            put("new_string", "OUT := \$(BUILD_DIR)/app2\nHOME_COPY := \$HOME/.cache")
-        }
+        val input = edit(
+            "/home/me/proj/Makefile",
+            "OUT := \$(BUILD_DIR)/app",
+            "OUT := \$(BUILD_DIR)/app2\nHOME_COPY := \$HOME/.cache",
+        )
         assertEquals(Verdict.ALLOW, v(input))
     }
 

@@ -70,7 +70,7 @@ class BlockCommentPayloadTest : GuardProbe() {
     }
 
     @Test
-    fun `an ordinary payload outside the project still asks`() {
+    fun `an ordinary payload outside the project is still denied`() {
         assertEquals(Verdict.DENY, v(edit(oldString = "/home/bob/.cache/app")))
     }
 }
