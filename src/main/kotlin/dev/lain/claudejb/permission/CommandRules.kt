@@ -191,6 +191,9 @@ object CommandRules {
             s = WINDOWS_PATH.replace(s) { it.value.replace('\\', '/') }
             s = s.replace(Regex("""\\([A-Za-z0-9._/~-])"""), "$1")
         }
+        if ('^' in s) {
+            s = s.replace(Regex("""\^(.)"""), "$1")
+        }
         if ('\'' in s || '"' in s || '`' in s) {
             s = s.replace(Regex("""["'`]"""), "")
         }
