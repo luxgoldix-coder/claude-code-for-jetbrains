@@ -2,7 +2,6 @@ package dev.lain.claudejb.ui.jcef
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.components.JBLabel
@@ -12,6 +11,10 @@ import com.intellij.ui.jcef.JBCefBrowserBase
 import com.intellij.ui.jcef.JBCefJSQuery
 import com.intellij.util.Alarm
 import dev.lain.claudejb.util.edtNow
+import dev.lain.claudejb.util.logger
+import org.cef.CefSettings
+import org.cef.browser.CefBrowser
+import org.cef.handler.CefDisplayHandlerAdapter
 import java.util.LinkedList
 import javax.swing.JComponent
 import javax.swing.border.EmptyBorder
@@ -84,6 +87,7 @@ class JcefHost(
                 ),
                 b.cefBrowser,
             )
+            b.jbCefClient.addDisplayHandler(ConsoleRelay(), b.cefBrowser)
 
             val d = PageDelivery(
                 browser = b,
@@ -199,6 +203,27 @@ class JcefHost(
         val guarded = "try{" + js + "}catch(e){try{window.__ccSend&&window.__ccSend(JSON.stringify(" +
             "{type:'diag',report:'uncaught exec: '+((e&&e.stack)||e)}))}catch(_){}}"
         b.cefBrowser.executeJavaScript(guarded, url, 0)
+    }
+
+    private class ConsoleRelay : CefDisplayHandlerAdapter() {
+        override fun onConsoleMessage(
+            browser: CefBrowser?,
+            level: CefSettings.LogSeverity?,
+            message: String?,
+            source: String?,
+            line: Int,
+        ): Boolean {
+            val text = "chat page console [${level?.name?.removePrefix("LOGSEVERITY_")?.lowercase()}] $message ($source:$line)"
+            when (level) {
+                CefSettings.LogSeverity.LOGSEVERITY_ERROR,
+                CefSettings.LogSeverity.LOGSEVERITY_FATAL,
+                CefSettings.LogSeverity.LOGSEVERITY_WARNING,
+                -> log.warn(text)
+
+                else -> log.debug { text }
+            }
+            return false
+        }
     }
 
     private companion object {
