@@ -12,6 +12,7 @@ internal class ChatBridgeRouter(panel: JcefChatPanel) {
     private val attachments = BridgeAttachments(panel)
     private val controls = BridgeSessionControl(panel)
     private val lifecycle = BridgeLifecycle(panel)
+    private val log = BridgeLog(panel)
 
     fun dispatch(json: String) {
         when (val m = JcefBridge.parse(json)) {
@@ -22,6 +23,7 @@ internal class ChatBridgeRouter(panel: JcefChatPanel) {
             is Msg.Attachments -> attachments.handle(m)
             is Msg.SessionControl -> controls.handle(m)
             is Msg.Lifecycle -> lifecycle.handle(m)
+            is Msg.Log -> log.handle(m)
         }
     }
 }

@@ -43,8 +43,16 @@ object JcefBridge {
             ?: parseRequestCards(type, f)
             ?: parseDiffs(type, f)
             ?: parseAttachments(type, f)
+            ?: parseLog(type, f)
             ?: parseSessionControls(type, f)
             ?: Msg.Unknown(type)
+    }
+
+    private fun parseLog(type: String, f: Fields): Msg? = when (type) {
+        "logLines" -> Msg.LogLines(f.long("since", -1L))
+        "logDebug" -> Msg.LogDebug(f.bool("on"))
+        "logCopy" -> Msg.LogCopy(f.text("level"))
+        else -> null
     }
 
     private fun parseComposer(type: String, f: Fields): Msg? = when (type) {

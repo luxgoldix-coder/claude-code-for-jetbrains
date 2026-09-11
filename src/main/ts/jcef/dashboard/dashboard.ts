@@ -54,6 +54,7 @@
       S.gitBtn,
       D.viewButton('Guard', 'guard'),
       S.vulnBtn,
+      D.viewButton('Log', 'log'),
       S.toggleBtn,
       S.planBtn
     );
@@ -75,7 +76,7 @@
       CC.coverTranscript('dashboard', false);
       S.currentView = D.defaultView();
     }
-    D.syncGuardVisibility();
+    D.syncViewVisibility();
     D.markActiveButton();
   }
   D.applyVisibility = applyVisibility;

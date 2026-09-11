@@ -61,6 +61,8 @@ class JcefChatPanel(internal val project: Project, val session: ClaudeSession) :
 
     internal val guard = GuardFeed(this)
 
+    internal val logFeed = LogFeed(this)
+
     internal val security = SecurityViews(this)
 
     init {

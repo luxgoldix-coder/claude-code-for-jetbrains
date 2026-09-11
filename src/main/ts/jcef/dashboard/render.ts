@@ -41,7 +41,7 @@
     const panel = S.panel;
     const inner = S.inner;
     if (!panel || !inner) return;
-    D.syncGuardVisibility();
+    D.syncViewVisibility();
     if (D.gitChatOpen()) {
       applyGitSub();
       return;
@@ -65,12 +65,19 @@
     applyGitSub();
   };
 
-  D.syncGuardVisibility = function (): void {
-    if (typeof D.guardVisible === 'function') D.guardVisible(S.shown && S.currentView === 'guard');
+  D.syncViewVisibility = function (): void {
+    Object.keys(D.VIEWS).forEach(function (key) {
+      const view = D.VIEWS[key];
+      if (typeof view.visible === 'function') view.visible(S.shown && S.currentView === key);
+    });
   };
 
   D.repaintGuard = function (): void {
     if (S.built && S.shown && S.currentView === 'guard') D.render();
+  };
+
+  D.repaintLog = function (): void {
+    if (S.built && S.shown && S.currentView === 'log') D.render();
   };
 
   function applyGitSub(): void {

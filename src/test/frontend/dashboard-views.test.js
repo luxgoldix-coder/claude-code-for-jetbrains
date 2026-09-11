@@ -333,7 +333,7 @@ describe('dashboard views', () => {
       Array.from(win.document.querySelectorAll('.dash-toggles button'))
         .filter((b) => !b.hidden)
         .map((b) => b.textContent);
-    expect(visibleLabels()).toEqual(['Chat', 'Workloads', 'Guard', 'Session']);
+    expect(visibleLabels()).toEqual(['Chat', 'Workloads', 'Guard', 'Log', 'Session']);
 
     chat().dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
     expect(panel().hasAttribute('hidden')).toBe(true);

@@ -58,6 +58,19 @@
       cards: function () {
         return typeof D.buildGuardCards === 'function' ? D.buildGuardCards() : [];
       },
+      visible: function (shown) {
+        if (typeof D.guardVisible === 'function') D.guardVisible(shown);
+      },
+    },
+    log: {
+      title: 'Log',
+      empty: 'Nothing has been logged yet.',
+      cards: function () {
+        return typeof D.buildLogCards === 'function' ? D.buildLogCards() : [];
+      },
+      visible: function (shown) {
+        if (typeof D.logVisible === 'function') D.logVisible(shown);
+      },
     },
     git: {
       title: 'Git',

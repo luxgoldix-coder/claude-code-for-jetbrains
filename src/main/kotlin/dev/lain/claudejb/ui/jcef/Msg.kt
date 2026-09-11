@@ -26,6 +26,8 @@ sealed interface Msg {
 
     sealed interface Lifecycle : Msg
 
+    sealed interface Log : Msg
+
     data class Send(val text: String, val scope: String = "") : Prompting
     data class Interrupt(val scope: String = "") : Prompting
     data class RemoveQueued(val index: Int) : Prompting
@@ -34,6 +36,10 @@ sealed interface Msg {
     object Ready : Lifecycle
     data class Diagnostics(val report: String) : Lifecycle
     data class Unknown(val type: String) : Lifecycle
+
+    data class LogLines(val since: Long) : Log
+    data class LogDebug(val on: Boolean) : Log
+    data class LogCopy(val level: String) : Log
 
     data class ChangeModel(val value: String?) : Settings
     data class ChangeMode(val wire: String) : Settings

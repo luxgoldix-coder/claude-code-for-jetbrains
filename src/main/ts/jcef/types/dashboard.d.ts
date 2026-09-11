@@ -250,10 +250,48 @@ interface VulnNs {
   findingsCard(v: VulnPayload): HTMLElement | null;
 }
 
+interface LogLine {
+  seq?: unknown;
+  at?: unknown;
+  level?: unknown;
+  category?: unknown;
+  text?: unknown;
+}
+
+interface LogPayload {
+  debug?: boolean;
+  reset?: boolean;
+  ring?: { max?: unknown; dropped?: unknown } | null;
+  lines?: (LogLine | null)[];
+}
+
+interface LogNs {
+  lines: LogLine[];
+  lastSeq: number;
+  level: string;
+  debug: boolean;
+  ring: { max: number; dropped: number };
+  listEl: HTMLElement | null;
+  text(value: unknown, fallback: string): string;
+  num(value: unknown): number;
+  request(): void;
+  shows(line: LogLine): boolean;
+  absorb(payload: LogPayload): void;
+  setVisible(visible: boolean): void;
+  when(at: unknown): string;
+  repaint(): void;
+  list(): HTMLElement;
+  lineNode(line: LogLine): HTMLElement;
+  append(lines: LogLine[]): void;
+  reset(): void;
+  applyFilter(): void;
+}
+
 interface DashView {
   title: string;
   empty: string;
   cards(s: SessionPayload): (HTMLElement | null)[];
+  visible?(shown: boolean): void;
 }
 
 interface DashPanelState {
@@ -309,6 +347,10 @@ interface DashNs {
   guardTab(): string;
   guardVisible(visible: boolean): void;
   repaintGuard(): void;
+  log: LogNs;
+  buildLogCards(): (HTMLElement | null)[];
+  logVisible(visible: boolean): void;
+  repaintLog(): void;
   vuln: VulnNs;
   buildVulnCards(v: unknown): (HTMLElement | null)[];
   state: DashPanelState;
@@ -319,7 +361,7 @@ interface DashNs {
   setGitSubView(view: string): void;
   lastSession(): SessionPayload | null;
   reconcile(container: HTMLElement, cards: HTMLElement[]): void;
-  syncGuardVisibility(): void;
+  syncViewVisibility(): void;
   render(): void;
   renderIfShown(): void;
   repaint(): void;
