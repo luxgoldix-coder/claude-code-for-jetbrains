@@ -568,6 +568,50 @@ describe('transcript — trimmed-rows notice (cc.trimRows)', () => {
     expect(win.document.querySelectorAll('#conversation .msg').length).toBe(3);
     expect(win.document.querySelector('.trim-notice')).not.toBeNull();
   });
+
+  it('shifts the surviving orders down by the rows dropped, so the host indices still line up', () => {
+    const win = loadFrontend(['app-transcript.js']);
+    win.cc.batch(three());
+    win.cc.trimRows({ ids: [101, 102], total: 2 });
+    win.cc.batch([row(104, 1, 'ASSISTANT', 'fourth'), row(105, 2, 'USER', 'fifth')]);
+    win.cc.batch([row(103, 0, 'USER', 'third — edited')]);
+
+    const bodies = [...win.document.querySelectorAll('#conversation .msg .body')];
+    expect(bodies.map((b) => b.textContent.trim())).toEqual(['third — edited', 'fourth', 'fifth']);
+  });
+
+  it('a trim of ids the page never had still shifts, because the host list did', () => {
+    const win = loadFrontend(['app-transcript.js']);
+    win.cc.batch([row(102, 2, 'ASSISTANT', 'second'), row(103, 3, 'USER', 'third')]);
+    win.cc.trimRows({ ids: [100, 101], total: 2 });
+    win.cc.batch([row(104, 2, 'USER', 'fourth')]);
+
+    const bodies = [...win.document.querySelectorAll('#conversation .msg .body')];
+    expect(bodies.map((b) => b.textContent.trim())).toEqual(['second', 'third', 'fourth']);
+  });
+});
+
+describe('transcript — a resync does not repaint what did not change', () => {
+  it('leaves the rendered body alone when the same text arrives again', () => {
+    const win = loadFrontend(['app-transcript.js']);
+    win.cc.batch([row(1, 0, 'ASSISTANT', 'same **text**')]);
+    const body = win.document.querySelector('.msg.assistant .body');
+    body.setAttribute('data-probe', 'kept');
+    const strong = body.querySelector('strong');
+
+    win.cc.batch([row(1, 0, 'ASSISTANT', 'same **text**')]);
+
+    expect(body.querySelector('strong')).toBe(strong);
+    expect(body.getAttribute('data-probe')).toBe('kept');
+  });
+
+  it('repaints when the text did change', () => {
+    const win = loadFrontend(['app-transcript.js']);
+    win.cc.batch([row(1, 0, 'ASSISTANT', 'before', { state: 'RUNNING' })]);
+    win.cc.batch([row(1, 0, 'ASSISTANT', 'after')]);
+
+    expect(win.document.querySelector('.msg.assistant .body').textContent.trim()).toBe('after');
+  });
 });
 
 describe('transcript — the auto-follow names its scroll behaviour', () => {

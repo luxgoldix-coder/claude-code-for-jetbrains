@@ -26,6 +26,17 @@
     rows.delete(id);
   }
 
+  function shiftOrders(removed: number): void {
+    if (removed <= 0) {
+      return;
+    }
+    rows.forEach(function (rec) {
+      if (rec.el && rec.el.__order != null) {
+        rec.el.__order -= removed;
+      }
+    });
+  }
+
   function trimNoticeText(total: number): string {
     return (
       total +
@@ -68,6 +79,7 @@
     for (let i = 0; i < ids.length; i++) {
       dropRow(ids[i]);
     }
+    shiftOrders(ids.length);
     const total = typeof payload.total === 'number' ? payload.total : 0;
     renderTrimNotice(total);
   };

@@ -29,6 +29,7 @@ internal object PageAssembly {
         "views/chat/find-bar.js",
         "views/chat/scroll.js",
         "controllers/chat/trim.js",
+        "controllers/chat/row.js",
         "controllers/chat/transcript.js",
         "models/composer/state.js",
         "views/composer/bar/overflow-fit.js",

@@ -50,6 +50,8 @@ interface RowRec {
   text?: string | null;
   meta?: string | null;
   state?: string | null;
+  bodyKey?: string;
+  settled?: boolean;
 }
 
 interface LinkHit {
