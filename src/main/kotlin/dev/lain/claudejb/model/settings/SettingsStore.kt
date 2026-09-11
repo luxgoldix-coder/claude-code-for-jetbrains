@@ -168,6 +168,7 @@ internal object SettingsStore {
                 ClaudeSettings.State()
             }
             .also { LegacySecurityToggles.adopt(it) }
+            .also { IdeRulesAdoption.adopt(it) }
             .also { adoptSignedOut(o) }
 
     private fun adoptSignedOut(o: JsonObject) {
