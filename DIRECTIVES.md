@@ -1,95 +1,96 @@
-# Directrices del proyecto
+# Project directives
 
-Las decisiones de Lain que gobiernan cómo se trabaja en este repositorio. `CLAUDE.md` tiene las
-prohibiciones absolutas; esto tiene el resto, y se lee al empezar.
+The standing decisions that govern how this plugin is built. `CLAUDE.md` holds the absolute
+prohibitions; this holds everything else, and it is read before starting work.
 
-**Qué va aquí**: una directriz vigente, con su mecanismo, redactada como lo que es cierto ahora. **Qué no
-va aquí**: la crónica de cómo se llegó a ella, incidentes, fechas de lo que pasó. Eso no se escribe en
-ningún documento del repo.
+**What belongs here**: a directive that is in force, with the mechanism behind it, written as what is
+true now. **What does not**: how it came to be decided, incidents, dates of what happened.
 
 ---
 
-## Alcance y producto
+## Scope and product
 
-**Claude maneja el IDE, y trabaja con el IDE en vez de con sus propias tools.** Todo lo que se pida hacer
-en el IDE se hace en el IDE, proactivamente, para que el dev/DevOps tenga su entorno siempre al día.
+**Claude drives the IDE, and works through the IDE rather than through its own tools.** Anything asked
+for in the IDE is done in the IDE, proactively, so the developer's environment stays current.
 
-**Sólo hablamos con el IDE.** No se envuelve `gh`, `glab`, `docker`, `kubectl`, `aws`, `terraform`, `ssh`
-ni el CLI `ijhttp`. Si el IDE ya lo hace, se le pide al IDE; si el IDE no lo hace, no lo hacemos. El panel
-de Services es el centro de la parte DevOps, no una colección de envoltorios de línea de comandos.
+**We only talk to the IDE.** No wrapping `gh`, `glab`, `docker`, `kubectl`, `aws`, `terraform`, `ssh`
+or the `ijhttp` CLI. If the IDE already does it, we ask the IDE; if the IDE does not, we do not do it.
+The Services tool window is the centre of the DevOps story, not a collection of command-line wrappers.
 
-**Sin multiidioma.** No se publica texto que Lain no pueda revisar, y menos en avisos de seguridad.
+**No localisation.** Nothing ships as text the maintainer cannot review, least of all a security notice.
 
-## Al día, en el filo, y sin deuda
+## Current, on the edge, and free of debt
 
-El código y las librerías van **al día**. No se arrastra deuda técnica ni código que acaba siendo bulto
-para sostener a quien no renueva una licencia de pago: para eso están IntelliJ IDEA Community y PyCharm
-Community.
+The code and its libraries stay current. No technical debt is carried, and no code is kept as dead
+weight to serve people avoiding a paid licence: IntelliJ IDEA Community and PyCharm Community exist for
+that, and the plugin serves them.
 
-- **Cuando aparece un deprecado, se migra en ese momento.** Si el sustituto exige una build más nueva,
-  **se sube el `sinceBuild`** y se deja de soportar la anterior.
-- **Nunca se escriben las dos formas.** Ninguna rama por versión, ninguna función vieja «por si acaso».
-  Lo que deja de usarse se borra en el mismo commit.
-- Lo único que se degrada es la **ausencia de un plugin** (Docker, `com.intellij.database`,
-  `com.jetbrains.restClient`), nunca la ausencia de una versión de plataforma.
-- **Ni APIs deprecadas ni internas.** El único warning tolerable es `@ApiStatus.Experimental`.
-  `@ApiStatus.Internal` no lo es: ni siquiera promete estabilizarse.
+- **When something is deprecated, it is migrated then.** If the replacement needs a newer build,
+  **`sinceBuild` goes up** and the older one stops being supported.
+- **Both forms are never written.** No branch per version, no old function kept "just in case". What
+  stops being used is deleted in the same commit.
+- The only thing that degrades is a **missing plugin** (Docker, `com.intellij.database`,
+  `com.jetbrains.restClient`), never a missing platform version.
+- **No deprecated and no internal APIs.** The only tolerable warning is `@ApiStatus.Experimental`.
+  `@ApiStatus.Internal` is not: it does not even promise to stabilise.
 
-## Coste de tokens
+## Token cost
 
-Lo que se añada tiene que **hacer más gastando menos**. Es criterio de aceptación, no aspiración: una
-funcionalidad que suba el gasto no entra, por buena que sea.
+What gets added has to **do more while spending less**. It is an acceptance criterion, not an
+aspiration: a feature that raises the cost does not ship, however good it is.
 
-El ahorro recurrente está en **la forma de la respuesta**, no sólo en el tamaño del catálogo. Cada tool
-devuelve la respuesta más pequeña que zanja la pregunta, nunca un volcado; todo lo enumerable lleva
-`limit` con tope duro; el IDE resuelve en lugar de reenviarnos material para que lo resuelva el modelo; y
-ningún resultado obliga a una segunda llamada para ser útil.
+The recurring saving is in **the shape of the answer**, not only in the size of the catalogue. Every
+tool returns the smallest answer that settles the question, never a dump; anything that can enumerate
+carries a hard `limit`; the IDE resolves instead of forwarding raw material for the model to resolve;
+and no result requires a second call to be useful.
 
-## Arquitectura del MCP propio
+## The MCP architecture
 
-1. **Servidores propios por stdio sobre sockets Unix. Sin puertos.**
-2. **Cuatro servidores por dominio**: `code`, `run`, `vcs`, `ops`. JSON-RPC sin broker.
-3. **Nada se carga por adelantado**: tres meta-tools por servidor, y **máximo cuatro tools por dominio**.
-   Un dominio que no cabe en cuatro está mal partido y se divide.
-4. **TOON al 100%** en todo lo que escribimos. En JSON sólo lo que no es nuestro: el sobre JSON-RPC y el
+The order of work and what is done lives in [`docs/MCP_ROADMAP.md`](docs/MCP_ROADMAP.md).
+
+1. **Our own servers over stdio on Unix sockets. No ports.**
+2. **Four servers by domain**: `code`, `run`, `vcs`, `ops`. JSON-RPC, no broker.
+3. **Nothing loads up front**: three meta-tools per server, and **at most four tools per domain**. A
+   domain that does not fit in four is badly split and gets divided.
+4. **TOON for everything we author.** Only what is not ours stays JSON: the JSON-RPC envelope and
    `inputSchema`.
-5. **El guard se evalúa dentro del servidor MCP**, en el despachador, porque abrir los sockets saca al
-   binario de Claude Code del camino.
-6. **Agente-agnóstico**: cualquier cliente MCP puede conectarse.
-7. **Nada se queda clavado esperando**: cola por servidor, acuse inmediato, respuestas fuera de orden por
-   `id`, timeout y cancelación en toda tool, y tope de profundidad de cola.
-8. **Corrutinas sólo en el código nuevo del MCP** (`model/mcp/`, `controller/mcp/`). El resto del plugin
-   conserva `AppExecutorUtil`, `ReadAction.compute`, `WriteCommandAction` y el `edt {}` único.
+5. **The guard is evaluated inside the MCP server**, at the dispatcher, because opening the sockets
+   takes the Claude Code binary out of the path.
+6. **Agent-agnostic**: any MCP client can connect.
+7. **Nothing blocks waiting**: a queue per server, immediate acknowledgement, out-of-order replies
+   correlated by `id`, a timeout and cancellation on every tool, and a bounded queue depth.
+8. **Coroutines only in the new MCP code** (`model/mcp/`, `controller/mcp/`). The rest of the plugin
+   keeps `AppExecutorUtil`, `ReadAction.compute`, `WriteCommandAction` and the single `edt {}`.
 
-### Autenticación de los servidores
+### Server authentication
 
-El token **se autogenera en el código**; nadie lo escribe ni lo configura. **Todo servicio stdio lo
-reclama, sin excepciones**: no hay servidor exento ni modo sin auth para desarrollo. Se entrega en el
-`init` de cada servidor, que lo guarda **sólo en memoria**. El cliente del plugin lo recoge. **Se regenera
-en cada arranque y rota cada 30 minutos**, con una ventana corta de solape para no matar peticiones en
-vuelo.
+The token **is generated by the code**; nobody types or configures it. **Every stdio service demands
+it, without exception**: there is no exempt server and no auth-free mode for development. It is handed
+over at each server's `init`, which keeps it **in memory only**. The plugin's client picks it up. It is
+**regenerated on every start and rotated every 30 minutes**, with a short overlap window so in-flight
+requests are not killed.
 
-Se entrega al helper por la **primera línea de stdin**, nunca por variable de entorno: `/proc/<pid>/environ`
-lo lee cualquier proceso del mismo usuario.
+It reaches the helper on the **first line of stdin**, never through an environment variable:
+`/proc/<pid>/environ` is readable by any process running as the same user.
 
-## Código
+## Code
 
-- **Cero comentarios.** El porqué va al nombre, al test o al mensaje de commit. Ver `CLAUDE.md`.
-- **Techo de 250 líneas por fichero**, en Kotlin, TypeScript y CSS.
-- **Nada de Swing en la UI**: todo lo visible va en JCEF.
-- **Cada dependencia externa se nombra en un único fichero pasarela** (`GitGateway`, `TerminalLauncher`,
-  `DbGateway`), con la comprobación de disponibilidad como primera línea.
-- **Añadir una tool es añadir una fila a una tabla**, jamás editar un `when` central.
-- **No se moldean los tests al código.** Un gate rojo se arregla en el código; cambiar la métrica o el
-  umbral está prohibido.
-- **Sin criptografía propia.** Sólo primitivas contrastadas.
+- **No comments.** The reasoning goes into a name, a test, or the commit message. See `CLAUDE.md`.
+- **A 250-line ceiling per file**, in Kotlin, TypeScript and CSS alike.
+- **No Swing in the UI**: everything visible is JCEF.
+- **Each external dependency is named in a single gateway file** (`GitGateway`, `TerminalLauncher`,
+  `DbGateway`), with the availability check as its first line.
+- **Adding a tool is adding a row to a table**, never editing a central `when`.
+- **Tests are not moulded to the code.** A red gate is fixed in the code; changing the metric or the
+  threshold is what is forbidden.
+- **No home-made cryptography.** Vetted primitives only.
 
-## Trabajo
+## Working
 
-- **Un commit por unidad lógica**, en Conventional Commits, con el porqué en el cuerpo cuando no es obvio
-  por el diff. Nunca `git add -A` a ciegas.
-- **Los tags de release los corta el workflow**, nunca a mano.
-- **`push`, tags y PRs los decide Lain.**
-- **`package-lock.json` no se stagea**: es suyo.
-- **Nunca `cd` en un comando**; rutas absolutas.
-- **Los documentos del repo se actualizan en el mismo turno del cambio**, sin preguntar.
+- **One commit per logical unit**, Conventional Commits, with the why in the body when the diff does
+  not already say it. Never `git add -A` blind.
+- **Release tags are cut by the workflow**, never by hand.
+- **Pushing, tagging and opening pull requests are the maintainer's call.**
+- **`package-lock.json` is never staged** by an agent.
+- **Never `cd` in a command**; absolute paths.
+- **The repository's documents are updated in the same turn as the change**, without asking.
