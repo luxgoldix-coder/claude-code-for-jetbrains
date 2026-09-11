@@ -70,7 +70,9 @@ private val HINTS: Map<SecurityRule, String> = mapOf(
     SecurityRule.CONTAINER_ESCAPE to
         "entering the host's namespaces (nsenter into PID 1, /proc/1/ns), mounting the host's root " +
         "filesystem into a container (-v /:/…, --mount source=/), and running a container with full " +
-        "host control (--privileged, hostPID, privileged: true) — the documented ways out onto the host",
+        "host control (--privileged, hostPID, privileged: true), dangerous capabilities (--cap-add SYS_ADMIN, " +
+        "NET_ADMIN, SYS_RAWIO…), and disabled seccomp/AppArmor/SELinux/no-new-privileges " +
+        "on docker, podman, nerdctl, kubectl and oc — the documented ways out onto the host",
     SecurityRule.RESOURCE_HIJACKING to
         "known mining binaries (xmrig, minerd, cpuminer, ethminer, cgminer, t-rex and the like) and the " +
         "stratum+tcp:// pool-protocol scheme they connect with — matched at command position",

@@ -43,6 +43,52 @@ class ContainerEscapeTest : GuardProbe() {
     }
 
     @Test
+    fun `a privileged container or a dangerous capability is refused on every engine`() {
+        listOf(
+            "nerdctl run --privileged img",
+            "kubectl run x --privileged --image=img",
+            "oc debug node/n1 --as-root",
+            "oc adm policy add-scc-to-user privileged -z default",
+            "docker run --cap-add=NET_ADMIN img",
+            "podman run --cap-add SYS_RAWIO img",
+            "docker run --cap-add=SYS_CHROOT img",
+            "docker run --cap-add DAC_OVERRIDE img",
+            "docker run --cap-add=SYS_BOOT img",
+            "docker run --cap-add BPF img",
+            "docker run --cap-add=SETUID --cap-add=SETGID img",
+            "docker run --security-opt label=disable img",
+            "docker run --security-opt=no-new-privileges=false img",
+            "kubectl run p --overrides '{\"spec\":{\"containers\":[{\"securityContext\":{\"allowPrivilegeEscalation\":true}}]}}'",
+            "kubectl run p --overrides '{\"spec\":{\"containers\":[{\"securityContext\":{\"capabilities\":{\"add\":[\"SYS_ADMIN\"]}}}]}}'",
+        ).forEach {
+            assertEquals(Verdict.DENY, v(bash(it)), it)
+            assertEquals(SecurityRule.CONTAINER_ESCAPE, rule(bash(it)), it)
+        }
+    }
+
+    @Test
+    fun `handing a raw device to a container is already the device rule's finding`() {
+        listOf("docker run --device /dev/sda img", "podman run --device=/dev/mem img").forEach {
+            assertEquals(Verdict.DENY, v(bash(it)), it)
+            assertEquals(SecurityRule.SYSTEM_DEVICE, rule(bash(it)), it)
+        }
+    }
+
+    @Test
+    fun `hardening flags and harmless devices are not escapes`() {
+        listOf(
+            "docker run --cap-drop ALL img",
+            "docker run --security-opt no-new-privileges img",
+            "docker run --security-opt=no-new-privileges=true img",
+            "podman run --cap-add=NET_BIND_SERVICE img",
+            "docker run --device /dev/dri img",
+            "docker run --device=/dev/snd img",
+            "kubectl run p --overrides '{\"spec\":{\"containers\":[{\"securityContext\":{\"allowPrivilegeEscalation\":false}}]}}'",
+            "oc debug node/n1",
+        ).forEach { assertNotEquals(SecurityRule.CONTAINER_ESCAPE, rule(bash(it)), it) }
+    }
+
+    @Test
     fun `ordinary container and namespace use is not touched`() {
         listOf(
             "docker run -v /home/me/proj:/app node npm test",
