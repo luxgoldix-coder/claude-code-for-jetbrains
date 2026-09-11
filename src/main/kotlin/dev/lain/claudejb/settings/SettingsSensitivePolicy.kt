@@ -3,6 +3,7 @@ package dev.lain.claudejb.settings
 import dev.lain.claudejb.permission.CredentialPaths
 import dev.lain.claudejb.permission.SecurityRule
 import dev.lain.claudejb.permission.SensitiveGuard
+import com.intellij.openapi.util.SystemInfo
 import kotlinx.serialization.json.JsonObject
 
 fun ClaudeSettings.sensitiveGlobs(): List<String> {
@@ -39,6 +40,7 @@ fun ClaudeSettings.sensitivePolicy(projectRoot: String?): SensitiveGuard.Policy 
         currentUser = System.getProperty("user.name"),
         guardedRoots = snap.remoteRoots,
         wslHost = snap.isWsl,
+        caseInsensitivePaths = SystemInfo.isWindows || SystemInfo.isMac,
         projectRoot = projectRoot,
         pathResolver = { raw -> runCatching { java.io.File(raw).canonicalPath }.getOrNull() },
         envValues = launchEnvValues(env),

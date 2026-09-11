@@ -9,7 +9,7 @@ object ForeignTerritory {
     internal fun foreignHit(paths: List<String>, policy: SensitiveGuard.Policy): ForeignHit? {
         val (ownRoots, guarded) = normalizedRoots(policy)
         return paths.asSequence()
-            .filterNot { p -> ownRoots.any { GuardPaths.under(p, it) } }
+            .filterNot { p -> ownRoots.any { GuardPaths.under(p, it, policy.caseInsensitivePaths) } }
             .mapNotNull { p -> foreignRuleFor(p, policy, guarded)?.let { ForeignHit(p, it) } }
             .firstOrNull()
     }
@@ -40,7 +40,7 @@ object ForeignTerritory {
         isUnc(path) -> SecurityRule.NETWORK_MOUNT
         foreignHome(path, policy.currentUser) -> SecurityRule.OTHER_USER_HOME
         policy.wslHost && underForeignMnt(path) -> SecurityRule.WSL_MOUNT
-        guarded.any { GuardPaths.under(path, it) } -> SecurityRule.NETWORK_MOUNT
+        guarded.any { GuardPaths.under(path, it, policy.caseInsensitivePaths) } -> SecurityRule.NETWORK_MOUNT
         else -> null
     }
 

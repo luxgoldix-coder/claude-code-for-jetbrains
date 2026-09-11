@@ -14,6 +14,7 @@ object SensitiveGuard {
         val currentUser: String? = null,
         val guardedRoots: List<String> = emptyList(),
         val wslHost: Boolean = false,
+        val caseInsensitivePaths: Boolean = false,
         val projectRoot: String? = null,
         val pathResolver: ((String) -> String?)? = null,
         val envValues: Map<String, String> = emptyMap(),
@@ -104,7 +105,9 @@ object SensitiveGuard {
             policy,
         )
         val projRoot = policy.projectRoot?.let { GuardPaths.fold(GuardPaths.normalize(it, policy.home)) }
-        val outsideProject = paths.filter { projRoot == null || !GuardPaths.under(GuardPaths.fold(it), projRoot) }
+        val outsideProject = paths.filter {
+            projRoot == null || !GuardPaths.under(GuardPaths.fold(it), projRoot, policy.caseInsensitivePaths)
+        }
 
         return placeRules(paths, outsideProject, policy)
             ?: actionRules(input, policy, depth)
@@ -278,7 +281,7 @@ object SensitiveGuard {
         return ToolInputScanner.locationCandidates(input, policy.home, policy.envValues)
             .mapNotNull { GuardPaths.absoluteForm(it, projRoot) }
             .filterNot { ScriptExecution.inSystemBinDir(it) || SystemDevices.isDeviceNode(it) }
-            .firstOrNull { !GuardPaths.under(it, projRoot) }
+            .firstOrNull { !GuardPaths.under(it, projRoot, policy.caseInsensitivePaths) }
             ?.let { Hit(SecurityRule.OUTSIDE_PROJECT, "reaches outside the project: $it") }
     }
 
