@@ -94,7 +94,6 @@ class GitCommitInfoTest {
 
     @Test
     fun `the model carries exactly what a commit row needs`() {
-        // constructor silently swaps two strings, and detekt rejects them past three components anyway.
         val info = GitCommitInfo(
             hash = "0123456789abcdef",
             subject = "feat(git): read the branch and the recent commits",

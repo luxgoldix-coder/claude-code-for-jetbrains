@@ -71,7 +71,6 @@ class ClaudeProcess(
         log.info("claude started: ${binary.name} (${args.size} args)")
     }
 
-    // Suppressed, not silenced. detekt is right that a broad catch is usually a smell; it is wrong here, for
     @Suppress("TooGenericExceptionCaught")
     private fun consumeStdout(text: String) {
         val lines = ArrayList<String>()

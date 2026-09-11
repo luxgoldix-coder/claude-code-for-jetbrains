@@ -22,13 +22,6 @@ object SecuritySuspensions {
         }
     }
 
-    /**
-     * The two "until this IDE closes" relaxations cannot live in the settings document, because the point of them
-     * is that they die with the process. They are still **per project**, which is what the settings are and what
-     * the documentation promises: tuning one repository's rules says nothing about the next one you open. Keyed,
-     * therefore, rather than held in a single field — a scratch project must not be able to relax a rule, or the
-     * whole guard, for every other project open in the same IDE.
-     */
     private val sessionScoped = ConcurrentHashMap<String, MutableSet<SecurityRule>>()
 
     private val guardOffForSession = ConcurrentHashMap.newKeySet<String>()
