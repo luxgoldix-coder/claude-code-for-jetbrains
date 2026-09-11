@@ -38,6 +38,16 @@ object DiffPresenter {
         }
     }
 
+    const val MAX_DIFF_FILE_BYTES = 1_000_000L
+
+    fun readCurrent(path: String, projectRoot: String?): String? {
+        if (!isWithinRoot(path, projectRoot)) return null
+        val file = File(path)
+        if (!file.isFile) return ""
+        if (file.length() > MAX_DIFF_FILE_BYTES) return null
+        return runCatching { file.readText() }.getOrNull()
+    }
+
     fun proposedContent(toolName: String, input: JsonObject, currentText: String): String? = when (toolName) {
         "Write" -> input.str("content") ?: ""
 
