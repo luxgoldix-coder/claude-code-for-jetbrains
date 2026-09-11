@@ -26,17 +26,21 @@ internal class GitIntegration(private val project: Project) {
 
     private val states = mutableMapOf<String, ActionState>()
 
-    private var collecting = false
-    private var again = false
+    private var inFlight: List<() -> Unit>? = null
+    private val queued = ArrayList<() -> Unit>()
 
     fun snapshot(): JcefGitData.Snapshot? = snapshot
 
     fun refresh(onChanged: () -> Unit) {
-        if (collecting) {
-            again = true
+        if (inFlight != null) {
+            queued += onChanged
             return
         }
-        collecting = true
+        collectFor(listOf(onChanged))
+    }
+
+    private fun collectFor(waiting: List<() -> Unit>) {
+        inFlight = waiting
         val openFile = EditorContextProvider.currentFilePath(project)
         ApplicationManager.getApplication().executeOnPooledThread {
             val collected = runCatching { collect(openFile) }.getOrElse {
@@ -44,13 +48,10 @@ internal class GitIntegration(private val project: Project) {
                 null
             }
             edt(project) {
-                collecting = false
+                inFlight = null
                 if (collected != null) snapshot = collected
-                onChanged()
-                if (again) {
-                    again = false
-                    refresh(onChanged)
-                }
+                waiting.forEach { it() }
+                if (queued.isNotEmpty()) collectFor(queued.toList().also { queued.clear() })
             }
         }
     }
