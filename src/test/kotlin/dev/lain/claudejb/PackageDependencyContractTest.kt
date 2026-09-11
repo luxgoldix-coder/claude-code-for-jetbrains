@@ -12,7 +12,7 @@ class PackageDependencyContractTest {
         MainSources.codeOf(file)
             .map { it.trim() }
             .filter { it.startsWith(IMPORT_PREFIX) }
-            .map { line -> Import(file, from, line.removePrefix(IMPORT_PREFIX).substringBefore(" as ").trim()) }
+            .map { line -> Import(file, from, packageOfFqn(line.removePrefix(IMPORT_PREFIX).substringBefore(" as ").trim())) }
     }
 
     @Test
@@ -52,10 +52,7 @@ class PackageDependencyContractTest {
         return rel.removePrefix("$PACKAGE_ROOT/").substringBeforeLast('/', "")
     }
 
-    private data class Import(val file: File, val from: String, val to: String) {
-        constructor(file: File, from: String, fqn: String, unused: Unit = Unit) :
-            this(file, from, packageOfFqn(fqn))
-    }
+    private data class Import(val file: File, val from: String, val to: String)
 
     private companion object {
 
