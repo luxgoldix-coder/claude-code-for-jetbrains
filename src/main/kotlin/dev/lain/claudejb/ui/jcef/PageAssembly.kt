@@ -13,6 +13,8 @@ internal object PageAssembly {
 
     val appNames = listOf(
         "app-core.js",
+        "app-core-menus.js",
+        "app-core-report.js",
         "app-core-markdown.js",
         "app-core-diagram.js",
         "app-core-theme.js",
