@@ -9,7 +9,13 @@
 
   AT.attachImageFile = function (file: File | null | undefined): void {
     if (!file) return;
+    const name = file.name != null ? String(file.name) : 'image';
     const reader = new FileReader();
+    function failed(): void {
+      if (CC.announce) CC.announce('The image ' + name + ' could not be read and was not attached.');
+      send({ type: 'diag', report: 'attach: the browser could not read ' + name });
+    }
+    reader.onerror = failed;
     reader.onload = function () {
       const result = reader.result;
       if (typeof result !== 'string') return;
@@ -17,14 +23,16 @@
       const base64 = comma >= 0 ? result.slice(comma + 1) : result;
       send({
         type: 'attach',
-        name: file.name != null ? String(file.name) : 'image',
+        name: name,
         mediaType: file.type != null ? String(file.type) : 'application/octet-stream',
         base64: base64,
       });
     };
     try {
       reader.readAsDataURL(file);
-    } catch (e) {}
+    } catch (e) {
+      failed();
+    }
   };
 
   AT.isImageFile = function (f: File | null | undefined): boolean {
