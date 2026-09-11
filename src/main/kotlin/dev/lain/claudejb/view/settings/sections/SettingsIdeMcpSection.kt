@@ -15,6 +15,7 @@ import javax.swing.SpinnerNumberModel
 internal class SettingsIdeMcpSection(installer: PluginInstaller) : SettingsSection {
 
     private val godMode = JBCheckBox(GodMode.LABEL + " — " + GodMode.TAGLINE)
+    private val approveClients = JBCheckBox("Ask me before an unexpected client may talk to the servers")
     private val jetbrains = IdeServerControls(installer) { syncEnabled() }
     private val jetbrainsTransport = JComboBox(LaunchDefaults.IDE_MCP_TRANSPORTS.toTypedArray())
     private val jetbrainsPort = JSpinner(SpinnerNumberModel(LaunchDefaults.DEFAULT_IDE_MCP_PORT, MIN_PORT, MAX_PORT, 1))
@@ -22,6 +23,7 @@ internal class SettingsIdeMcpSection(installer: PluginInstaller) : SettingsSecti
     override fun addTo(panel: Panel) {
         panel.collapsibleGroup(TITLE) {
             row { cell(godMode) }.rowComment(GOD_MODE_NOTE, MAX_LINE_LENGTH_WORD_WRAP)
+            row { cell(approveClients) }.rowComment(APPROVE_NOTE, MAX_LINE_LENGTH_WORD_WRAP)
             row {
                 cell(jetbrains.check)
                 cell(jetbrains.action)
@@ -34,6 +36,7 @@ internal class SettingsIdeMcpSection(installer: PluginInstaller) : SettingsSecti
 
     override fun reset(s: ClaudeSettings.State) {
         godMode.isSelected = GodMode.isOn(s)
+        approveClients.isSelected = s.ideMcp.approveClients
         jetbrains.check.isSelected = s.ideMcpEnabled
         jetbrainsTransport.selectedItem = s.ideMcpTransport
         jetbrainsPort.value = s.ideMcpPort
@@ -43,6 +46,7 @@ internal class SettingsIdeMcpSection(installer: PluginInstaller) : SettingsSecti
 
     override fun apply(s: ClaudeSettings.State) {
         GodMode.set(s, godMode.isSelected)
+        s.ideMcp.approveClients = approveClients.isSelected
         s.ideMcpEnabled = jetbrains.check.isSelected
         s.ideMcpTransport = transportText()
         s.ideMcpPort = port()
@@ -50,6 +54,7 @@ internal class SettingsIdeMcpSection(installer: PluginInstaller) : SettingsSecti
 
     override fun changedFields(s: ClaudeSettings.State): List<Boolean> = listOf(
         godMode.isSelected != GodMode.isOn(s),
+        approveClients.isSelected != s.ideMcp.approveClients,
         jetbrains.check.isSelected != s.ideMcpEnabled,
         transportText() != s.ideMcpTransport,
         port() != s.ideMcpPort,
@@ -76,6 +81,10 @@ internal class SettingsIdeMcpSection(installer: PluginInstaller) : SettingsSecti
                 "ops — over Unix sockets, with no port and nothing to install. Each server offers its tools on " +
                 "demand, so the session pays only for the domains it uses. Takes effect on the next chat; the " +
                 "flame in the chat bar lights when it is on."
+
+        const val APPROVE_NOTE =
+            "The servers already refuse anyone without the session's token. This adds a notification with Allow " +
+                "and Reject for a connection the plugin did not launch itself; unanswered, it is rejected."
 
         const val JETBRAINS_NOTE =
             "⚠ JetBrains' own MCP Server plugin, bundled with recent IDEs, as an optional extra outside God Mode. " +

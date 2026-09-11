@@ -1,7 +1,9 @@
 package dev.lain.claudejb.controller.session
 
+import dev.lain.claudejb.controller.mcp.IdeMcpService
 import dev.lain.claudejb.controller.process.ClaudeProcess
 import dev.lain.claudejb.model.protocol.ClaudeEvent
+import dev.lain.claudejb.model.session.launch.IdeServer
 import dev.lain.claudejb.model.session.launch.SessionLauncher
 import dev.lain.claudejb.model.session.transcript.Speaker
 import dev.lain.claudejb.model.settings.ClaudeSettings
@@ -39,7 +41,7 @@ class SessionProcess(
     fun spawn(launchGen: Int, binary: File, workDir: File, env: Map<String, String>, resume: Boolean): Boolean {
         if (launchGen != generation) return false
         resumedLaunch = resume
-        val opts = s.launch.copy(sessionId = s.sessionId)
+        val opts = s.launch.copy(sessionId = s.sessionId, ideSockets = ideSockets())
         val proc = ClaudeProcess(
             binary = binary,
             workDir = workDir,
@@ -63,6 +65,16 @@ class SessionProcess(
             return false
         }
         return true
+    }
+
+    private fun ideSockets(): Map<IdeServer, String> {
+        if (!s.launch.ideIntegration) return emptyMap()
+        val service = IdeMcpService.getInstance(s.project)
+        val sockets = runCatching { service.sockets() }
+            .onFailure { log.warn("The IDE MCP servers could not start; the session runs without them", it) }
+            .getOrDefault(emptyMap())
+        service.expectConnections(sockets.size)
+        return sockets
     }
 
     private fun onTerminated(gen: Int, exitCode: Int) {

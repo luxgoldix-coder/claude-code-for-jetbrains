@@ -6,6 +6,7 @@ import dev.lain.claudejb.controller.session.AttentionLanding
 import dev.lain.claudejb.controller.session.AttentionReason
 import dev.lain.claudejb.controller.session.ClaudeSession
 import dev.lain.claudejb.model.diff.DiffPresenter
+import dev.lain.claudejb.model.mcp.RunCard
 import dev.lain.claudejb.model.permission.broker.GuardBypass
 import dev.lain.claudejb.model.permission.broker.GuardDenial
 import dev.lain.claudejb.model.permission.broker.PendingPermission
@@ -118,7 +119,8 @@ class SessionGuard(
                 detail = it.reason,
             )
         }
-        session.cards.present(request)
+        val card = RunCard.of(request.toolName, request.input)
+        session.cards.present(card?.let { request.copy(title = it.title, summary = it.summary) } ?: request)
         if (request.reviewable && request.toolName in DiffPresenter.REVIEWABLE_TOOLS) {
             session.diffs.openReviewDiff(request.requestId, request.toolName, request.input)
         }

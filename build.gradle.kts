@@ -678,6 +678,16 @@ kover {
                 // it talks to OsvHttp through a plain call and its gap is real debt, so it stays gated and
                 // visible rather than being defined out of the measurement.
                 classes("dev.lain.claudejb.controller.vuln.OsvHttp*", "dev.lain.claudejb.controller.vuln.VulnService*")
+                // The IDE MCP servers' platform-bound half: the project `@Service` that owns the sockets and
+                // the approval notifications, the catalog that binds servers to a Project, and the tools
+                // themselves (FileDocumentManager, FindInProjectUtil, FilenameIndex — every one needs a live
+                // index). `ServerEndpoint`, `SocketHome` and `GuardGate` are NOT excluded: they run on a real
+                // Unix socket and the real guard in unit tests, and the whole `model.mcp` layer is pure.
+                classes(
+                    "dev.lain.claudejb.controller.mcp.IdeMcpService*",
+                    "dev.lain.claudejb.controller.mcp.IdeToolCatalog*",
+                    "dev.lain.claudejb.controller.mcp.tools.*",
+                )
             }
         }
         verify {

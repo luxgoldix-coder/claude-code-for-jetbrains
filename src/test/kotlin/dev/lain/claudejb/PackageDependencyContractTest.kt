@@ -51,7 +51,7 @@ class PackageDependencyContractTest {
                     .map { "${file.name}: $it" }
             }
         assertEquals(emptyList<String>(), offenders) {
-            "model/protocol, model/permission and model/bridge unit-test on a plain JVM; a platform import there " +
+            "model/protocol, model/permission, model/bridge and model/mcp unit-test on a plain JVM; a platform import there " +
                 "drags the IDE into every test that touches them."
         }
     }
@@ -90,6 +90,8 @@ class PackageDependencyContractTest {
         const val GIT = "model/git"
         const val VULN = "model/vuln"
         const val SESSION = "model/session"
+        const val MCP = "model/mcp"
+        const val C_MCP = "controller/mcp"
         const val C_PROCESS = "controller/process"
         const val C_VULN = "controller/vuln"
         const val C_CONTEXT = "controller/context"
@@ -101,11 +103,13 @@ class PackageDependencyContractTest {
         const val C_COMMANDS = "controller/commands"
         const val C_ACTIONS = "controller/actions"
 
-        val MODEL = setOf(PROTOCOL, PERMISSION, BRIDGE, SETTINGS, DIFF, CONTEXT, GIT, VULN, SESSION, UTIL)
+        val MODEL = setOf(PROTOCOL, PERMISSION, BRIDGE, SETTINGS, DIFF, CONTEXT, GIT, VULN, SESSION, MCP, UTIL)
 
         val ALLOWED: Map<String, Set<String>> = mapOf(
             UTIL to setOf(),
             PROTOCOL to setOf(UTIL),
+            MCP to setOf(UTIL),
+            C_MCP to MODEL,
             DIFF to setOf(PROTOCOL, UTIL),
             CONTEXT to setOf(DIFF, PROTOCOL, UTIL),
             GIT to setOf(DIFF, UTIL),
@@ -118,7 +122,7 @@ class PackageDependencyContractTest {
             C_VULN to MODEL,
             C_CONTEXT to MODEL,
             C_GIT to MODEL,
-            C_SESSION to MODEL + setOf(C_PROCESS, C_VULN, C_GIT, C_CONTEXT, V_DIFF),
+            C_SESSION to MODEL + setOf(C_PROCESS, C_VULN, C_GIT, C_CONTEXT, C_MCP, V_DIFF),
             V_DIFF to MODEL,
             VIEW to MODEL + setOf(C_SESSION, C_GIT, C_VULN, C_PROCESS, C_CONTEXT, V_DIFF, C_COMMANDS, C_BRIDGE),
             C_BRIDGE to MODEL + setOf(C_SESSION, C_GIT, C_VULN, C_PROCESS, C_CONTEXT, V_DIFF, VIEW, C_COMMANDS),
@@ -126,7 +130,7 @@ class PackageDependencyContractTest {
             C_ACTIONS to MODEL + setOf(C_SESSION, C_GIT, C_VULN, C_PROCESS, C_CONTEXT, V_DIFF, VIEW, C_BRIDGE, C_COMMANDS),
         )
 
-        val PLATFORM_FREE = setOf(PROTOCOL, PERMISSION, BRIDGE)
+        val PLATFORM_FREE = setOf(PROTOCOL, PERMISSION, BRIDGE, MCP)
 
         val PLATFORM_IMPORTS = listOf("com.intellij", "org.cef", "java.awt", "javax.swing")
     }

@@ -29,7 +29,19 @@ class NoFileDeletionContractTest {
             "LegacySessionHistory.kt",
             "SettingsStore.kt",
             "SharedPluginFiles.kt",
+            "SocketHome.kt",
         )
+    }
+
+    @Test
+    fun `SocketHome only deletes inside the private directory it created`() {
+        val home = ktFiles().first { it.name == "SocketHome.kt" }
+        val allowed = Regex("""^(import |file\.deleteIfExists\(\)|runCatching \{ dir\.)""")
+        val bad = hits(home, single).filterNot { (_, line) -> allowed.containsMatchIn(line) }
+        assertTrue(bad.isEmpty()) {
+            "SocketHome.kt may only remove its own token file and the entries of the socket directory it " +
+                "created under the temp dir.\n" + bad.joinToString("\n") { "${home.name}:${it.first}: ${it.second}" }
+        }
     }
 
     @Test

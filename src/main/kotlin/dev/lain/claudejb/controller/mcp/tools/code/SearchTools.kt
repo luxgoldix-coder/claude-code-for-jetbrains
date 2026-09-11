@@ -1,0 +1,152 @@
+package dev.lain.claudejb.controller.mcp.tools.code
+
+import com.intellij.find.FindModel
+import com.intellij.find.impl.FindInProjectUtil
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.project.IndexNotReadyException
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.search.FilenameIndex
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.usageView.UsageInfo
+import com.intellij.usages.FindUsagesProcessPresentation
+import com.intellij.usages.UsageViewPresentation
+import dev.lain.claudejb.model.mcp.Param
+import dev.lain.claudejb.model.mcp.Tool
+import dev.lain.claudejb.model.mcp.ToolArgs
+import dev.lain.claudejb.model.mcp.ToolDomain
+import dev.lain.claudejb.model.mcp.ToolException
+import dev.lain.claudejb.model.mcp.ToolResult
+import dev.lain.claudejb.model.mcp.ToolSpec
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import java.nio.file.FileSystems
+import java.nio.file.Path
+
+internal class SearchTools(private val project: Project, private val io: CoroutineDispatcher = Dispatchers.IO) {
+
+    fun domain(): ToolDomain = ToolDomain(
+        "search",
+        "Text and file search over the project's content roots",
+        listOf(Tool(SEARCH_TEXT, ::searchText), Tool(FIND_FILES, ::findFiles)),
+    )
+
+    private suspend fun searchText(args: ToolArgs): ToolResult {
+        val query = args.string("query")
+        val max = args.int("max", DEFAULT_MAX)
+        val model = FindModel().apply {
+            stringToFind = query
+            isRegularExpressions = args.boolean("regex", false)
+            isCaseSensitive = args.boolean("case_sensitive", false)
+            isProjectScope = true
+            isWithSubdirectories = true
+            args.optionalString("path")?.let { directoryName = ReadTools.resolveDirectory(project, it).path }
+        }
+        val hits = ArrayList<UsageInfo>()
+        withContext(io) {
+            try {
+                FindInProjectUtil.findUsages(model, project, EmptyProgressIndicator(), PRESENTATION, emptySet()) { info ->
+                    hits += info
+                    hits.size < max
+                }
+            } catch (e: IndexNotReadyException) {
+                throw ToolException("the IDE is still indexing; retry in a moment", e)
+            }
+        }
+        val rows = readAction { hits.map { describe(it) } }
+        return ToolResult.toon(
+            buildJsonObject {
+                put("query", query)
+                put("truncated", hits.size >= max)
+                put("matches", buildJsonArray { rows.forEach { add(it) } })
+            },
+        )
+    }
+
+    private fun describe(info: UsageInfo): JsonObject = buildJsonObject {
+        val file = info.virtualFile
+        val document = file?.let { FileDocumentManager.getInstance().getDocument(it) }
+        put("file", file?.let(::relative) ?: "")
+        if (document != null) {
+            val line = document.getLineNumber(info.navigationOffset)
+            put("line", line + 1)
+            put("text", lineText(document, line))
+        }
+    }
+
+    private suspend fun findFiles(args: ToolArgs): ToolResult {
+        val name = args.string("name")
+        val max = args.int("max", DEFAULT_MAX)
+        val found = readAction {
+            try {
+                if ('*' in name || '?' in name) glob(name, max) else byName(name, max)
+            } catch (e: IndexNotReadyException) {
+                throw ToolException("the IDE is still indexing; retry in a moment", e)
+            }
+        }
+        return ToolResult.toon(
+            buildJsonObject {
+                put("name", name)
+                put("truncated", found.size >= max)
+                put("files", buildJsonArray { found.forEach { add(kotlinx.serialization.json.JsonPrimitive(it)) } })
+            },
+        )
+    }
+
+    private fun byName(name: String, max: Int): List<String> =
+        FilenameIndex.getVirtualFilesByName(name, false, GlobalSearchScope.projectScope(project)).map(::relative).sorted().take(max)
+
+    private fun glob(pattern: String, max: Int): List<String> {
+        val matcher = FileSystems.getDefault().getPathMatcher("glob:$pattern")
+        val out = ArrayList<String>()
+        ProjectFileIndex.getInstance(project).iterateContent { file ->
+            if (!file.isDirectory && matcher.matches(Path.of(file.name))) out += relative(file)
+            out.size < max
+        }
+        return out.sorted()
+    }
+
+    private fun relative(file: VirtualFile): String {
+        val base = project.basePath ?: return file.path
+        return file.path.removePrefix("$base/")
+    }
+
+    private fun lineText(document: Document, line: Int): String =
+        document.immutableCharSequence.subSequence(document.getLineStartOffset(line), document.getLineEndOffset(line)).toString().trim()
+
+    companion object {
+
+        private const val DEFAULT_MAX = 50
+        private val PRESENTATION = FindUsagesProcessPresentation(UsageViewPresentation())
+
+        val SEARCH_TEXT = ToolSpec(
+            "search_text",
+            "Finds text or a regular expression across the project, one row per match with file, line and the matching line.",
+            listOf(
+                Param("query", "Text or regular expression to find"),
+                Param("regex", "true to treat query as a regular expression (default false)", type = "boolean", required = false),
+                Param("case_sensitive", "true to match case (default false)", type = "boolean", required = false),
+                Param("path", "Directory to search under, relative to the project root (default: whole project)", required = false),
+                Param("max", "Maximum matches to return (default $DEFAULT_MAX)", type = "integer", required = false),
+            ),
+        )
+
+        val FIND_FILES = ToolSpec(
+            "find_files",
+            "Finds files by exact name or by glob (for example *.kt or Test?.java) across the project's content roots.",
+            listOf(
+                Param("name", "Exact file name, or a glob on the file name"),
+                Param("max", "Maximum files to return (default $DEFAULT_MAX)", type = "integer", required = false),
+            ),
+        )
+    }
+}
