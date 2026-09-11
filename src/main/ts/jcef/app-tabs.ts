@@ -61,7 +61,8 @@
     return null;
   }
 
-  const centred: Record<string, unknown> = Object.create(null);
+  let centred: Record<string, unknown> = Object.create(null);
+  let lastCentred: Record<string, unknown> = centred;
 
   function ownsARow(branches: TabBranch[], agentId: string): boolean {
     for (let i = 0; i < branches.length; i++) {
@@ -75,8 +76,8 @@
     T.dragToScroll(capsule);
     T.keepFocusVisible(capsule);
     if (priorScroll) T.scrollLeftTo(capsule, priorScroll);
-    if (centred[slot] === aimedAt) return;
     centred[slot] = aimedAt;
+    if (lastCentred[slot] === aimedAt) return;
     requestAnimationFrame(function () {
       const open = capsule.querySelector('.pill-wrap.selected');
       if (open && open.scrollIntoView) open.scrollIntoView({ block: 'nearest', inline: 'center' });
@@ -104,6 +105,8 @@
     });
     while (rows.firstChild) rows.removeChild(rows.firstChild);
     const host = rows;
+    lastCentred = centred;
+    centred = Object.create(null);
 
     const chatPills = T.state.chats.map(function (chat) {
       return T.pill({
