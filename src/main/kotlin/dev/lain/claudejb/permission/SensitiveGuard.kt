@@ -130,9 +130,11 @@ object SensitiveGuard {
     private fun sinkWriteFindings(input: JsonObject, policy: Policy, depth: Int): Hit? {
         if (depth > 0) return null
         val content = stringField(input, CONTENT_KEY)?.takeIf { it.isNotBlank() } ?: return null
-        val destination = stringField(input, PATH_KEY)
-            ?.let { CommandRules.deobfuscatePath(it, policy.home, policy.envValues) } ?: return null
-        if (!ExecutionSinks.isSink(destination)) return null
+        val raw = stringField(input, PATH_KEY) ?: return null
+        val destination = listOf(
+            CommandRules.deobfuscatePath(raw, policy.home, policy.envValues),
+            GuardPaths.normalize(raw, policy.home, policy.envValues),
+        ).firstOrNull { ExecutionSinks.isSink(it) } ?: return null
         val inner = classifyScript(content, policy, depth + 1) ?: return null
         return Hit(inner.rule, "${inner.text} — inside a file that runs when it is used: $destination")
     }

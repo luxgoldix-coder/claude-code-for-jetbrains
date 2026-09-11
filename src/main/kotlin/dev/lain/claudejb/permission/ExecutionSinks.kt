@@ -15,12 +15,14 @@ object ExecutionSinks {
         ".bashrc", ".bash_profile", ".bash_login", ".bash_logout", ".profile",
         ".zshrc", ".zshenv", ".zprofile", ".zlogin", ".zlogout",
         ".kshrc", ".mkshrc", "bash.bashrc", "zshrc", "zshenv", "zprofile", "config.fish",
+        "profile.ps1", "microsoft.powershell_profile.ps1",
     )
 
     private val SINK_PATH = Regex(
         """/\.git/hooks/|/\.githooks/|/\.config/autostart/|/\.config/systemd/|/etc/systemd/system/""" +
             """|/etc/systemd/user/|/library/launchagents/|/library/launchdaemons/""" +
-            """|/etc/cron\.[a-z]+/|/etc/cron\.d/|/etc/crontab$|/var/spool/cron/|/\.config/fish/""",
+            """|/etc/cron\.[a-z]+/|/etc/cron\.d/|/etc/crontab$|/var/spool/cron/|/\.config/fish/""" +
+            """|/appdata/roaming/microsoft/windows/start menu/programs/startup/""",
         RegexOption.IGNORE_CASE,
     )
 
