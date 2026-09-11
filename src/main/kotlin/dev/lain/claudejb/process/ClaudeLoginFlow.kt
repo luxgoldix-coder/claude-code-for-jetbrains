@@ -125,6 +125,7 @@ class ClaudeLoginFlow(
     }
 
     fun cancel() {
+        finished = true
         process?.destroy()
         process = null
     }

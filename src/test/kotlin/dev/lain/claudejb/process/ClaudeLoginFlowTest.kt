@@ -2,6 +2,7 @@ package dev.lain.claudejb.process
 
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayOutputStream
@@ -87,6 +88,26 @@ class ClaudeLoginFlowTest {
         assertEquals(listOf(AUTH_URL), urls)
     }
 
+    @Test
+    fun `a cancelled sign-in reports no result, so the card is not told it failed`() {
+        val reported = CountDownLatch(1)
+        val listener = object : ClaudeLoginFlow.Listener {
+            override fun onAuthUrl(url: String) {}
+
+            override fun onCodeRequested() {}
+
+            override fun onResult(success: Boolean, message: String) = reported.countDown()
+        }
+
+        assertTrue(flow.start(listener))
+        process.emit("Open $AUTH_URL\n")
+        flow.cancel()
+
+        assertFalse(reported.await(REPORT_GRACE_MS, TimeUnit.MILLISECONDS)) {
+            "the user cancelled, and the flow still reported the killed process's exit as a failed sign-in"
+        }
+    }
+
     private class FakeProcess : Process() {
 
         private val stdin = ByteArrayOutputStream()
@@ -120,5 +141,6 @@ class ClaudeLoginFlowTest {
         const val AUTH_URL = "https://claude.ai/oauth/authorize?code=true&client_id=abc"
         const val TOKEN = "sk-ant-oat01-abcdefghijklmnopqrstuvwxyz0123456789"
         const val EXIT_KILLED = 130
+        const val REPORT_GRACE_MS = 500L
     }
 }
