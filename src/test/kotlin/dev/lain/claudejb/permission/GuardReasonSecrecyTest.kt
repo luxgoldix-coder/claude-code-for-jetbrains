@@ -61,7 +61,7 @@ class GuardReasonSecrecyTest :
     fun `the reason still says what was wrong`() {
         val decision = decide(read("/etc/\$GITHUB_TOKEN"))
         val reason = decision.reason.orEmpty()
-        assertTrue(reason.contains("outside the project"), reason)
+        assertTrue(reason.contains(GuardReasonWords.OUTSIDE), reason)
         assertEquals(SecurityRule.OUTSIDE_PROJECT, decision.rule)
     }
 

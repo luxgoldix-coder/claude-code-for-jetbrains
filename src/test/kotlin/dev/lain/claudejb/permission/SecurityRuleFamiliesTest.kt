@@ -1,5 +1,10 @@
 package dev.lain.claudejb.permission
 
+import dev.lain.claudejb.permission.GuardReasonWords.CREDENTIAL_SURFACE
+import dev.lain.claudejb.permission.GuardReasonWords.CYCLE
+import dev.lain.claudejb.permission.GuardReasonWords.HIDDEN_VARIABLE
+import dev.lain.claudejb.permission.GuardReasonWords.RAW_DEVICE
+import dev.lain.claudejb.permission.GuardReasonWords.SUBSTITUTION
 import dev.lain.claudejb.permission.SensitiveGuard.Verdict
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -47,8 +52,8 @@ class SecurityRuleFamiliesTest : GuardProbe() {
 
     @Test
     fun `a device wins the wording over a credential, because it is the stronger claim`() {
-        assertTrue(why(read("/dev/sda")).contains("raw system device"))
-        assertTrue(why(bash("dd if=/dev/sda of=/home/me/dump.img")).contains("raw system device"))
+        assertTrue(why(read("/dev/sda")).contains(RAW_DEVICE))
+        assertTrue(why(bash("dd if=/dev/sda of=/home/me/dump.img")).contains(RAW_DEVICE))
     }
 
     @Test
@@ -188,7 +193,7 @@ class SecurityRuleFamiliesTest : GuardProbe() {
     fun `a variable the launch environment carries is RESOLVED and judged as what it names`() {
         val withEnv = policy.copy(envValues = mapOf("CREDS" to "/home/me/.ssh/id_rsa"))
         assertEquals(Verdict.DENY, v(bash("cat \$CREDS"), withEnv))
-        assertTrue(why(bash("cat \$CREDS"), withEnv).contains("credentials or key material"))
+        assertTrue(why(bash("cat \$CREDS"), withEnv).contains(CREDENTIAL_SURFACE))
         assertEquals(Verdict.DENY, v(bash("cat \$CREDS"), withEnv))
     }
 
@@ -197,7 +202,7 @@ class SecurityRuleFamiliesTest : GuardProbe() {
         val chained = policy.copy(
             envValues = mapOf("A" to "\$B", "B" to "\$C", "C" to "/home/me/.aws/credentials"),
         )
-        assertTrue(why(bash("cat \$A"), chained).contains("credentials or key material"))
+        assertTrue(why(bash("cat \$A"), chained).contains(CREDENTIAL_SURFACE))
     }
 
     @Test
@@ -205,7 +210,7 @@ class SecurityRuleFamiliesTest : GuardProbe() {
         val cyclic = policy.copy(envValues = mapOf("A" to "\$B", "B" to "\$A"))
         assertEquals(Verdict.DENY, v(read("\$A/data.txt"), cyclic))
         assertEquals(Verdict.DENY, v(bash("cat \$A"), cyclic))
-        assertTrue(why(bash("cat \$A"), cyclic).contains("cycle"))
+        assertTrue(why(bash("cat \$A"), cyclic).contains(CYCLE))
         val deep = policy.copy(
             envValues = mapOf(
                 "L1" to "\$L2",
@@ -223,7 +228,7 @@ class SecurityRuleFamiliesTest : GuardProbe() {
     @Test
     fun `a variable the command assigns itself resolves to what it assigned`() {
         assertEquals(Verdict.DENY, v(bash("CREDS=/home/me/.ssh/id_rsa; cat \$CREDS")))
-        assertTrue(why(bash("CREDS=/home/me/.ssh/id_rsa; cat \$CREDS")).contains("credentials or key material"))
+        assertTrue(why(bash("CREDS=/home/me/.ssh/id_rsa; cat \$CREDS")).contains(CREDENTIAL_SURFACE))
         assertEquals(Verdict.ALLOW, v(bash("OUT=/home/me/proj/build; ls \$OUT")))
     }
 
@@ -238,7 +243,7 @@ class SecurityRuleFamiliesTest : GuardProbe() {
         assertEquals(Verdict.DENY, v(bash("cat \$NOWHERE_DEFINED/notes.txt")))
         assertEquals(Verdict.DENY, v(read("\$NOWHERE_DEFINED/x")))
         assertTrue(
-            why(bash("cat \$NOWHERE_DEFINED/notes.txt")).contains("hidden behind a variable"),
+            why(bash("cat \$NOWHERE_DEFINED/notes.txt")).contains(HIDDEN_VARIABLE),
             why(bash("cat \$NOWHERE_DEFINED/notes.txt")),
         )
     }
@@ -291,7 +296,7 @@ class SecurityRuleFamiliesTest : GuardProbe() {
     fun `a dangerous command inside a substitution is caught AS that command, not as a generic unresolvable`() {
         assertEquals(SecurityRule.HACKING_TOOL, rule(bash("echo `nmap -sS 10.0.0.1`")))
         val why = why(bash("echo \$(nmap -sS 10.0.0.1)"))
-        assertTrue(why.contains("inside a command substitution"), why)
+        assertTrue(why.contains(SUBSTITUTION), why)
         assertEquals(Verdict.DENY, v(bash("cat \$(cat /etc/shadow)")))
     }
 
