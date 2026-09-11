@@ -87,22 +87,7 @@ class ClaudeSession(
 
     val backgroundTaskRegistry = BackgroundTaskRegistry()
 
-    val agentScanner: AgentScanner = AgentScanner(
-        project = project,
-        agents = runningAgents,
-        tasks = backgroundTaskRegistry,
-        sessionId = { sessionId },
-        ownerOfTask = ::ownerAgentOfTask,
-        ui = object : AgentScanner.Ui {
-            override fun labelCards() {
-                toolEvents.labelAgentCards()
-                poll.ensureAgentRevivalPoll()
-            }
-            override fun onFresh(fresh: List<String>) = fireAgents(fresh)
-            override fun onOutputGrew() = fireState()
-            override fun edt(block: () -> Unit) = dev.lain.claudejb.util.edt(block)
-        },
-    )
+    val agentScanner: AgentScanner = AgentScanner.forSession(this, onFresh = ::fireAgents, onOutputGrew = ::fireState)
 
     fun ownerAgentOfTask(taskId: String): String? {
         val fromLink = backgroundTaskRegistry.taskOf(taskId)?.ownerToolUseId
@@ -145,26 +130,7 @@ class ClaudeSession(
 
     private val listeners = CopyOnWriteArrayList<SessionListener>()
 
-    internal val poll = PollSchedule(
-        isRunning = ::isRunning,
-        turnActive = { turn.active },
-        effects = PollSchedule.SessionEffects(edt = ::edt, fireState = ::fireState),
-        quota = PollSchedule.QuotaSource(
-            requestSessionCost = queries::requestSessionCost,
-            requestContextUsage = queries::requestContextUsage,
-            onSessionCost = { signals.lastSessionCost = it },
-            onContextUsage = { signals.lastContextUsage = it },
-        ),
-        outputTail = PollSchedule.OutputTailSource(
-            anyTailable = { backgroundTaskRegistry.anyTailable },
-            tailNow = { agentScanner.tailNow() },
-        ),
-        agentRevival = PollSchedule.AgentRevivalSource(
-            anySettledAgent = { runningAgents.nodes.values.any { it.status != AgentStatus.RUNNING } },
-            anyRunningAgent = { runningAgents.nodes.values.any { it.status == AgentStatus.RUNNING } },
-            scanAgents = { agentScanner.scan() },
-        ),
-    )
+    internal val poll = PollSchedule.forSession(this, ::edt, ::fireState)
 
     val guard = SessionGuard(
         session = this,

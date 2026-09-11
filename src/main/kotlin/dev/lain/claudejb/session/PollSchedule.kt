@@ -111,5 +111,26 @@ class PollSchedule(
         const val QUOTA_POLL_MS = 1_000
 
         const val AGENT_REVIVAL_POLL_MS = 5_000
+
+        fun forSession(s: ClaudeSession, edt: (() -> Unit) -> Unit, fireState: () -> Unit) = PollSchedule(
+            isRunning = s::isRunning,
+            turnActive = { s.turn.active },
+            effects = SessionEffects(edt, fireState),
+            quota = QuotaSource(
+                requestSessionCost = s.queries::requestSessionCost,
+                requestContextUsage = s.queries::requestContextUsage,
+                onSessionCost = { s.signals.lastSessionCost = it },
+                onContextUsage = { s.signals.lastContextUsage = it },
+            ),
+            outputTail = OutputTailSource(
+                anyTailable = { s.backgroundTaskRegistry.anyTailable },
+                tailNow = { s.agentScanner.tailNow() },
+            ),
+            agentRevival = AgentRevivalSource(
+                anySettledAgent = { s.runningAgents.nodes.values.any { it.status != AgentStatus.RUNNING } },
+                anyRunningAgent = { s.runningAgents.nodes.values.any { it.status == AgentStatus.RUNNING } },
+                scanAgents = { s.agentScanner.scan() },
+            ),
+        )
     }
 }

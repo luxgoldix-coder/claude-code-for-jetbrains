@@ -104,4 +104,26 @@ class AgentScanner(
             if (tasks.seed(replayed)) ui.edt(onReplayed)
         }.onFailure { log.warn("could not replay background tasks for $id", it) }
     }
+
+    companion object {
+        fun forSession(s: ClaudeSession, onFresh: (List<String>) -> Unit, onOutputGrew: () -> Unit) = AgentScanner(
+            project = s.project,
+            agents = s.runningAgents,
+            tasks = s.backgroundTaskRegistry,
+            sessionId = { s.sessionId },
+            ownerOfTask = s::ownerAgentOfTask,
+            ui = object : Ui {
+                override fun labelCards() {
+                    s.toolEvents.labelAgentCards()
+                    s.poll.ensureAgentRevivalPoll()
+                }
+
+                override fun onFresh(fresh: List<String>) = onFresh(fresh)
+
+                override fun onOutputGrew() = onOutputGrew()
+
+                override fun edt(block: () -> Unit) = dev.lain.claudejb.util.edt(block)
+            },
+        )
+    }
 }
