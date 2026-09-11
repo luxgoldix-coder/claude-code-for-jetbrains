@@ -2,11 +2,42 @@ package dev.lain.claudejb.model.settings.guard
 
 import dev.lain.claudejb.model.permission.vocab.SecurityCategory
 import dev.lain.claudejb.model.permission.vocab.SecurityRule
+import dev.lain.claudejb.model.settings.ClaudeSettings
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class GuardWhitelistsTest {
+
+    @Test
+    fun `the entry a block offers is the program and its subcommand, never the operands`() {
+        assertEquals("npm install", GuardWhitelists.entryFor("npm install @scope/package"))
+        assertEquals("sudo ls", GuardWhitelists.entryFor("sudo ls /home/someone"))
+        assertEquals("git push", GuardWhitelists.entryFor("git push --force origin main"))
+        assertEquals("sudo", GuardWhitelists.entryFor("sudo -l"))
+        assertEquals("cat", GuardWhitelists.entryFor("cat /etc/passwd"))
+        assertEquals("kubectl delete", GuardWhitelists.entryFor("  kubectl   delete namespace prod "))
+        assertEquals("", GuardWhitelists.entryFor("   "))
+    }
+
+    @Test
+    fun `removing a command clears every level that covers it, so nothing above keeps allowing it`() {
+        val state = ClaudeSettings.State().apply {
+            securityCommandWhitelist = "sudo\nls"
+            securityCategoryWhitelists = "SYSTEM_INTEGRITY=sudo ls"
+            securityRuleWhitelists = "PRIVILEGE_ESCALATION=sudo ls /home\nPRIVILEGE_ESCALATION=git push"
+        }
+        val covers = { entry: String -> "sudo ls /home/me".startsWith(entry) }
+
+        val listed = GuardWhitelists.listedIn(state, SecurityRule.PRIVILEGE_ESCALATION, covers)
+        assertEquals(setOf(GuardWhitelists.Listed.EVERYWHERE, GuardWhitelists.Listed.CATEGORY, GuardWhitelists.Listed.RULE), listed)
+
+        GuardWhitelists.remove(state, SecurityRule.PRIVILEGE_ESCALATION, listed, covers)
+        assertEquals("ls", state.securityCommandWhitelist)
+        assertEquals("", state.securityCategoryWhitelists)
+        assertEquals("PRIVILEGE_ESCALATION=git push", state.securityRuleWhitelists)
+        assertTrue(GuardWhitelists.listedIn(state, SecurityRule.PRIVILEGE_ESCALATION, covers).isEmpty())
+    }
 
     @Test
     fun `the global list is bare commands, comments and blanks dropped`() {

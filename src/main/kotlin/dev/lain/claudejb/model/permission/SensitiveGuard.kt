@@ -3,6 +3,7 @@ package dev.lain.claudejb.model.permission
 import dev.lain.claudejb.model.permission.paths.CredentialPaths
 import dev.lain.claudejb.model.permission.paths.PathPresence
 import dev.lain.claudejb.model.permission.rules.CommandRules
+import dev.lain.claudejb.model.permission.scan.CommandTokenizer
 import dev.lain.claudejb.model.permission.scan.ToolInputScanner
 import dev.lain.claudejb.model.permission.vocab.SecurityCategory
 import dev.lain.claudejb.model.permission.vocab.SecurityRule
@@ -82,7 +83,19 @@ object SensitiveGuard {
         if (allowed.isNullOrEmpty()) return false
         val approved = allowed.map { canonicalCommand(it, policy) }.filter { it.isNotEmpty() }.toSet()
         if (approved.isEmpty()) return false
-        return issued.all { it in approved }
+        return issued.all { command -> approved.any { entry -> covers(entry, command) } || everySegmentCovered(command, approved) }
+    }
+
+    fun covers(entry: String, command: String): Boolean {
+        if (entry.isEmpty()) return false
+        if (entry == command) return true
+        val segments = CommandTokenizer.segments(command)
+        return segments.isNotEmpty() && segments.all { it.startsWith(entry) }
+    }
+
+    private fun everySegmentCovered(command: String, approved: Set<String>): Boolean {
+        val segments = CommandTokenizer.segments(command)
+        return segments.isNotEmpty() && segments.all { segment -> approved.any { segment.startsWith(it) } }
     }
 
     internal fun canonicalCommand(command: String, policy: Policy): String =

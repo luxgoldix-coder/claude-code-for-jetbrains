@@ -4,7 +4,9 @@ import dev.lain.claudejb.model.permission.GuardFixture.bash
 import dev.lain.claudejb.model.permission.vocab.SecurityCategory
 import dev.lain.claudejb.model.permission.vocab.SecurityRule
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class WhitelistScopeTest {
@@ -101,6 +103,45 @@ class WhitelistScopeTest {
             decision.verdict,
             "authorising one command is not authorising a line that contains it",
         )
+    }
+
+    @Test
+    fun `an entry is a prefix, so the bare program covers every invocation of it`() {
+        val lifted = policy(global = listOf("sudo"))
+
+        assertEquals(SensitiveGuard.Verdict.ALLOW, SensitiveGuard.evaluate(bash("sudo -l"), lifted).verdict)
+        assertEquals(SensitiveGuard.Verdict.ALLOW, SensitiveGuard.evaluate(bash("sudo ls /home/tester"), lifted).verdict)
+    }
+
+    @Test
+    fun `a longer entry covers what continues it and nothing shorter`() {
+        val lifted = policy(global = listOf("sudo ls /home"))
+
+        assertEquals(SensitiveGuard.Verdict.ALLOW, SensitiveGuard.evaluate(bash("sudo ls /home"), lifted).verdict)
+        assertEquals(SensitiveGuard.Verdict.ALLOW, SensitiveGuard.evaluate(bash("sudo ls /home/loquesea"), lifted).verdict)
+        assertNotEquals(SensitiveGuard.Verdict.ALLOW, SensitiveGuard.evaluate(bash("sudo ls /etc"), lifted).verdict)
+        assertNotEquals(SensitiveGuard.Verdict.ALLOW, SensitiveGuard.evaluate(bash("sudo -l"), lifted).verdict)
+    }
+
+    @Test
+    fun `every segment of a compound line must be covered, so a prefix cannot smuggle a second command`() {
+        val lifted = policy(global = listOf("sudo"))
+
+        assertNotEquals(SensitiveGuard.Verdict.ALLOW, SensitiveGuard.evaluate(bash("sudo -l && rm -rf /"), lifted).verdict)
+        assertNotEquals(SensitiveGuard.Verdict.ALLOW, SensitiveGuard.evaluate(bash("sudo -l; rm -rf /"), lifted).verdict)
+        assertNotEquals(SensitiveGuard.Verdict.ALLOW, SensitiveGuard.evaluate(bash("rm -rf / | sudo tee x"), lifted).verdict)
+        assertEquals(SensitiveGuard.Verdict.ALLOW, SensitiveGuard.evaluate(bash("sudo -l && sudo ls /"), lifted).verdict)
+    }
+
+    @Test
+    fun `covers is the one definition of an entry reaching a command, exact or by prefix on every segment`() {
+        assertTrue(SensitiveGuard.covers("sudo", "sudo -l"))
+        assertTrue(SensitiveGuard.covers("sudo ls /home", "sudo ls /home/loquesea"))
+        assertTrue(SensitiveGuard.covers("sudo", "sudo -l && sudo ls /"))
+        assertTrue(SensitiveGuard.covers("find . -exec /bin/sh \\;", "find . -exec /bin/sh \\;"))
+        assertFalse(SensitiveGuard.covers("sudo", "sudo -l && rm -rf /"))
+        assertFalse(SensitiveGuard.covers("sudo ls /home", "sudo ls"))
+        assertFalse(SensitiveGuard.covers("", "sudo"))
     }
 
     private fun firedRules(): Map<String, SecurityRule?> =

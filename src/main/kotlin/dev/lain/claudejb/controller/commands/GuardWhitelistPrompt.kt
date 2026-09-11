@@ -19,7 +19,7 @@ internal object GuardWhitelistPrompt {
     private fun body(rule: SecurityRule, command: String) =
         "$command\n\n" +
             "${rule.label} stopped this because ${rule.blockedWhy.replaceFirstChar { it.lowercase() }}\n\n" +
-            "Whitelisting it means that exact command runs without a card, in this project, until you remove " +
-            "it from Settings ▸ Claude Code Security. Every other rule still judges it, and every other " +
-            "command is unaffected."
+            "Whitelisting it means every command that starts with this text runs without a card, in this project, " +
+            "until you remove it from Settings ▸ Claude Code Security. Every other rule still judges it, and " +
+            "every other command is unaffected."
 }

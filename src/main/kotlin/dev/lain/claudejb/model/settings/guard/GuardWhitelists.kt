@@ -17,23 +17,30 @@ object GuardWhitelists {
         state.securityRuleWhitelists = withEntry(state.securityRuleWhitelists, rule.name, command)
     }
 
-    fun listedIn(state: ClaudeSettings.State, rule: SecurityRule, same: (String) -> Boolean): Listed? = when {
-        holds(state.securityRuleWhitelists, rule.name, same) -> Listed.RULE
-        holds(state.securityCategoryWhitelists, rule.category.name, same) -> Listed.CATEGORY
-        holds(state.securityCommandWhitelist, null, same) -> Listed.EVERYWHERE
-        else -> null
+    fun listedIn(state: ClaudeSettings.State, rule: SecurityRule, covers: (String) -> Boolean): Set<Listed> = buildSet {
+        if (holds(state.securityCommandWhitelist, null, covers)) add(Listed.EVERYWHERE)
+        if (holds(state.securityCategoryWhitelists, rule.category.name, covers)) add(Listed.CATEGORY)
+        if (holds(state.securityRuleWhitelists, rule.name, covers)) add(Listed.RULE)
     }
 
-    fun remove(state: ClaudeSettings.State, rule: SecurityRule, from: Listed, same: (String) -> Boolean) {
-        when (from) {
-            Listed.RULE -> state.securityRuleWhitelists = without(state.securityRuleWhitelists, rule.name, same)
-
-            Listed.CATEGORY ->
-                state.securityCategoryWhitelists = without(state.securityCategoryWhitelists, rule.category.name, same)
-
-            Listed.EVERYWHERE -> state.securityCommandWhitelist = without(state.securityCommandWhitelist, null, same)
+    fun remove(state: ClaudeSettings.State, rule: SecurityRule, from: Set<Listed>, covers: (String) -> Boolean) {
+        if (Listed.EVERYWHERE in from) state.securityCommandWhitelist = without(state.securityCommandWhitelist, null, covers)
+        if (Listed.CATEGORY in from) {
+            state.securityCategoryWhitelists = without(state.securityCategoryWhitelists, rule.category.name, covers)
         }
+        if (Listed.RULE in from) state.securityRuleWhitelists = without(state.securityRuleWhitelists, rule.name, covers)
     }
+
+    fun entryFor(command: String): String {
+        val tokens = command.trim().split(WHITESPACE).filter { it.isNotEmpty() }
+        val program = tokens.firstOrNull() ?: return ""
+        val subcommand = tokens.getOrNull(1)?.takeIf { SUBCOMMAND.matches(it) } ?: return program
+        return program + " " + subcommand
+    }
+
+    private val WHITESPACE = Regex("""\s+""")
+
+    private val SUBCOMMAND = Regex("""^[a-z][a-z0-9_-]*$""")
 
     fun commands(text: String): List<String> =
         text.lines().map { it.trim() }.filter { it.isNotBlank() && !it.startsWith("#") }

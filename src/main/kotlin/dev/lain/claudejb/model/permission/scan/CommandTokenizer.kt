@@ -25,6 +25,9 @@ internal object CommandTokenizer {
 
     internal fun commandTokens(command: String): List<String> = splitTokens(command, SPLIT_CHARS)
 
+    internal fun segments(command: String): List<String> =
+        withoutComments(command).split(SEGMENT_SPLIT).map { it.trim() }.filter { it.isNotEmpty() }
+
     private fun splitTokens(command: String, splitChars: CharArray): List<String> {
         val tokens = ArrayList<String>()
         val current = StringBuilder()

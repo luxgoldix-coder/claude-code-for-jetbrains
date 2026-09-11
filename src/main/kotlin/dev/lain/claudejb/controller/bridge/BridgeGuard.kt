@@ -76,22 +76,25 @@ internal class BridgeGuard(private val panel: JcefChatPanel) {
 
     private fun whitelist(m: Msg.GuardWhitelist) {
         val rule = SecurityRule.from(m.rule)
-        val command = m.command.trim()
-        if (rule == null || command.isEmpty()) {
-            log.warn("A guard block asked to whitelist something this build cannot place: ${m.rule}")
+        val entry = GuardWhitelists.entryFor(m.command)
+        if (rule == null || entry.isEmpty()) {
+            log.warn("A guard block asked to whitelist something this build cannot place: " + m.rule)
             return
         }
-        if (!GuardWhitelistPrompt.confirm(panel.project, rule, command)) return
+        if (!GuardWhitelistPrompt.confirm(panel.project, rule, entry)) return
         val policy = settings.sensitivePolicy(panel.project.basePath)
-        val canonical = SensitiveGuard.canonicalCommand(command, policy)
-        val already = GuardWhitelists.all(settings.state, rule).any { SensitiveGuard.canonicalCommand(it, policy) == canonical }
+        val canonical = SensitiveGuard.canonicalCommand(entry, policy)
+        val already =
+            GuardWhitelists.all(settings.state, rule).any { SensitiveGuard.canonicalCommand(it, policy) == canonical }
         if (already) {
-            session.systemNotice("`$command` is already whitelisted — nothing added.")
+            session.systemNotice("`" + entry + "` is already whitelisted — nothing added.")
             return
         }
-        settings.update { GuardWhitelists.add(it, rule, command) }
+        settings.update { GuardWhitelists.add(it, rule, entry) }
         LivePanels.pushSettingsMenu()
-        session.systemNotice("`$command` is whitelisted for ${rule.label}. Every other rule still judges it.")
+        session.systemNotice(
+            "Commands starting with `" + entry + "` are whitelisted for " + rule.label + ". Every other rule still judges them.",
+        )
     }
 
     private fun removeWhitelist(m: Msg.GuardRemoveWhitelist) {
@@ -102,15 +105,16 @@ internal class BridgeGuard(private val panel: JcefChatPanel) {
         }
         val policy = settings.sensitivePolicy(panel.project.basePath)
         val wanted = SensitiveGuard.canonicalCommand(m.command, policy)
-        val same = { entry: String -> SensitiveGuard.canonicalCommand(entry, policy) == wanted }
-        val listed = GuardWhitelists.listedIn(settings.state, rule, same)
-        if (listed == null) {
+        val covers = { entry: String -> SensitiveGuard.covers(SensitiveGuard.canonicalCommand(entry, policy), wanted) }
+        val listed = GuardWhitelists.listedIn(settings.state, rule, covers)
+        if (listed.isEmpty()) {
             session.systemNotice("`${m.command.trim()}` is not on any whitelist any more.")
             return
         }
-        settings.update { GuardWhitelists.remove(it, rule, listed, same) }
+        settings.update { GuardWhitelists.remove(it, rule, listed, covers) }
         LivePanels.pushSettingsMenu()
-        session.systemNotice("`${m.command.trim()}` is off the ${describe(listed, rule)}. ${rule.label} decides it again.")
+        val where = listed.joinToString(" and ") { describe(it, rule) }
+        session.systemNotice("`${m.command.trim()}` is off the $where. ${rule.label} decides it again.")
     }
 
     private fun describe(listed: GuardWhitelists.Listed, rule: SecurityRule): String = when (listed) {

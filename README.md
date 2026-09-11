@@ -512,10 +512,11 @@ turns the guard off for a chosen duration — 5 minutes up to *Forever*, five of
 their own. It is **on** by default, the shield is unlit whenever it is not, and while it is off the guard
 evaluates nothing at all.
 
-**Whitelisting a command** is the narrow alternative to switching a rule off: an exact command, matched whole
-and de-obfuscated on both sides, at one of three reaches — that rule, that category, or everywhere. Any rule
-can be whitelisted, and a blocked call offers a **Whitelist Command** link that files the command under the
-rule that stopped it.
+**Whitelisting a command** is the narrow alternative to switching a rule off: a command prefix — `sudo`,
+`npm install`, `sudo ls /home` — matched against every segment of the line and de-obfuscated on both sides,
+at one of three reaches — that rule, that category, or everywhere. Any rule can be whitelisted, and a blocked
+call offers a **Whitelist Command** link that files the program and its subcommand under the rule that
+stopped it.
 
 The built-in sensitive-path list is additive only by construction: it can be widened with extra globs and
 can never be shrunk. Paths under the project root are exempt from both the credential and
