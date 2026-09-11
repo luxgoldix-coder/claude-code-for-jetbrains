@@ -2,6 +2,7 @@ package dev.lain.claudejb.protocol
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -285,17 +286,19 @@ class ProtocolEventsTest {
     }
 
     @Test
-    fun `system event with hostile field shape degrades to Other`() {
+    fun `system event with hostile field shape degrades to Other and says why`() {
         val line = """{"type":"system","subtype":"task_progress","task_id":"t1","description":"x","usage":"nope"}"""
         val e = parseOne<ClaudeEvent.Other>(line)
         assertEquals("system", e.type)
         assertEquals("task_progress", e.subtype)
+        assertNotNull(e.cause)
     }
 
     @Test
-    fun `unknown system subtype still degrades to Other`() {
+    fun `unknown system subtype still degrades to Other without a cause`() {
         val e = parseOne<ClaudeEvent.Other>("""{"type":"system","subtype":"brand_new_subtype_2099"}""")
         assertEquals("system", e.type)
         assertEquals("brand_new_subtype_2099", e.subtype)
+        assertNull(e.cause)
     }
 }

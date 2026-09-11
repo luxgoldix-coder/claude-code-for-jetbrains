@@ -15,7 +15,7 @@ internal object MessageParsers {
         val parentToolUseId = root.str("parent_tool_use_id")
         val inner = (root["message"] as? JsonObject)
             ?.let { runCatching { ClaudeJson.decodeFromJsonElement(AssistantInner.serializer(), it) }.getOrNull() }
-            ?: return listOf(ClaudeEvent.Other("assistant", null, root))
+            ?: return listOf(ClaudeEvent.Other("assistant", null, root, "the message did not decode"))
         val out = ArrayList<ClaudeEvent>(inner.content.size)
         for (block in inner.content) {
             when (block.str("type")) {

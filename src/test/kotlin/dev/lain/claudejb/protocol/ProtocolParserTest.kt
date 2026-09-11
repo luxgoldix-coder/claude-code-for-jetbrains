@@ -22,14 +22,20 @@ class ProtocolParserTest {
     }
 
     @Test
-    fun `malformed json degrades to Other instead of throwing`() {
+    fun `malformed json degrades to Other instead of throwing, and says why without quoting the line`() {
         val event = parseOne<ClaudeEvent.Other>("{not valid json")
         assertEquals("?", event.type)
+        assertEquals("malformed JSON (15 chars)", event.cause)
     }
 
     @Test
-    fun `missing type field degrades to Other`() {
-        parseOne<ClaudeEvent.Other>("""{"foo":"bar"}""")
+    fun `missing type field degrades to Other with the cause`() {
+        assertEquals("no type field", parseOne<ClaudeEvent.Other>("""{"foo":"bar"}""").cause)
+    }
+
+    @Test
+    fun `an unknown top-level type is not a defect, so it carries no cause`() {
+        assertNull(parseOne<ClaudeEvent.Other>("""{"type":"brand_new_type_2099"}""").cause)
     }
 
     @Test

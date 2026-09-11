@@ -143,5 +143,5 @@ sealed interface ClaudeEvent {
 
     data class WorkerShuttingDown(val info: WorkerShuttingDownInfo) : Notice
 
-    data class Other(val type: String, val subtype: String?, val raw: JsonObject) : Notice
+    data class Other(val type: String, val subtype: String?, val raw: JsonObject, val cause: String? = null) : Notice
 }
