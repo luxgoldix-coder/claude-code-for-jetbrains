@@ -6,10 +6,11 @@ import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.Key
 import dev.lain.claudejb.protocol.ClaudeEvent
 import dev.lain.claudejb.protocol.ProtocolParser
+import dev.lain.claudejb.util.LogRedaction
+import dev.lain.claudejb.util.thisLogger
 import java.io.File
 import java.nio.charset.StandardCharsets
 
@@ -25,18 +26,19 @@ class ClaudeProcess(
     private val log = thisLogger()
     private val writeLock = Any()
     private val stdoutBuffer = StringBuilder()
+    private var stderrLines = 0
 
     private companion object {
         const val MAX_LINE_LENGTH = 16 * 1024 * 1024
 
-        const val LOG_PREVIEW_CHARS = 200
-        const val STDIN_LOG_PREVIEW_CHARS = 120
+        const val STDERR_LINES_AT_WARN = 200
     }
 
     @Volatile
     private var handler: KillableProcessHandler? = null
 
     fun start() {
+        LogRedaction.remember(extraEnv)
         val nodeScript = ClaudeBinaryLocator.resolveNodeScript(binary)
         val commandLine = (
             if (nodeScript != null) {
@@ -57,7 +59,8 @@ class ClaudeProcess(
             override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
                 when (outputType) {
                     ProcessOutputTypes.STDOUT -> consumeStdout(event.text)
-                    ProcessOutputTypes.STDERR -> if (event.text.isNotBlank()) log.debug("claude stderr: ${event.text}")
+                    ProcessOutputTypes.STDERR -> consumeStderr(event.text)
+                    else -> log.debug { "claude $outputType: ${event.text.trimEnd()}" }
                 }
             }
 
@@ -69,6 +72,16 @@ class ClaudeProcess(
         handler = processHandler
         processHandler.startNotify()
         log.info("claude started: ${binary.name} (${args.size} args)")
+    }
+
+    private fun consumeStderr(text: String) {
+        if (text.isBlank()) return
+        val line = text.trimEnd()
+        if (++stderrLines <= STDERR_LINES_AT_WARN) {
+            log.warn("claude stderr: $line")
+        } else {
+            log.debug { "claude stderr: $line" }
+        }
     }
 
     @Suppress("TooGenericExceptionCaught")
@@ -93,14 +106,14 @@ class ClaudeProcess(
             try {
                 ProtocolParser.parse(line).forEach(onEvent)
             } catch (e: Exception) {
-                log.warn("Failed to handle claude line: ${line.take(LOG_PREVIEW_CHARS)}", e)
+                log.warn("Failed to handle a ${line.length}-char claude line", e)
             }
         }
     }
 
     fun writeLine(line: String): Boolean {
         val stream = handler?.processInput ?: run {
-            log.warn("Dropping line to dead claude stdin: ${line.take(STDIN_LOG_PREVIEW_CHARS)}")
+            log.warn("Dropping a ${line.length}-char line to dead claude stdin")
             return false
         }
         return runCatching {
