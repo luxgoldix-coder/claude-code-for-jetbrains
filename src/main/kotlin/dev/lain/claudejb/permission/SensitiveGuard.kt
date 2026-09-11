@@ -156,12 +156,12 @@ object SensitiveGuard {
     }
 
     private fun placeRules(paths: List<String>, outsideProject: List<String>, policy: Policy): Hit? {
-        ForeignTerritory.foreignHit(paths, policy)?.let {
-            return Hit(it.rule, "reaches outside your own space: ${it.path}")
-        }
-
         SystemDevices.deviceHit(paths)?.let {
             return Hit(SecurityRule.SYSTEM_DEVICE, "addresses a raw system device: $it")
+        }
+
+        ForeignTerritory.foreignHit(paths, policy)?.let {
+            return Hit(it.rule, "reaches outside your own space: ${it.path}")
         }
 
         val matchers = policy.globs.map { CredentialPaths.compile(it, policy.home) }

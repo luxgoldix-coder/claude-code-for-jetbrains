@@ -79,6 +79,11 @@ object WindowsVectorCorpus {
         allow("the Maven wrapper on Windows", bash("mvnw.cmd test")),
     )
 
+    val devices: List<Vector> = listOf(
+        deny("a physical drive", read("""\\.\PhysicalDrive0"""), SecurityRule.SYSTEM_DEVICE),
+        deny("a named pipe", read("""\\.\pipe\x"""), SecurityRule.SYSTEM_DEVICE),
+    )
+
     val all: List<Vector> =
-        credentials + secretCommands + destructive + inhibitRecovery + privilege + foreign + temp + scripts
+        credentials + secretCommands + destructive + inhibitRecovery + privilege + foreign + devices + temp + scripts
 }
