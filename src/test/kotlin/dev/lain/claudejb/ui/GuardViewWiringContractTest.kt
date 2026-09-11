@@ -53,7 +53,7 @@ class GuardViewWiringContractTest {
         assertTrue(source("ui/SecurityViews.kt").readText().contains("window.cc.openGuardView")) {
             "nothing on the host side can open the guard view, so the gear entry lands nowhere"
         }
-        assertTrue(File(tsRoot(), "app-session-state.ts").readText().contains("guard: {")) {
+        assertTrue(File(tsRoot(), "dashboard/state.ts").readText().contains("guard: {")) {
             "the dashboard has no guard view for the host to open. A feature whose only door is the gear " +
                 "menu is a feature nobody finds."
         }
@@ -115,13 +115,13 @@ class GuardViewWiringContractTest {
     fun `the module and the stylesheet are declared, or the page silently does not serve them`() {
         val assembly = source("ui/jcef/PageAssembly.kt").readText()
 
-        assertTrue(assembly.contains("\"app-session-guard.js\"")) {
-            "app-session-guard.js is not in PageAssembly.appNames, so it is not served and cc.guard does not exist"
+        assertTrue(assembly.contains("\"dashboard/guard/guard.js\"")) {
+            "dashboard/guard/guard.js is not in PageAssembly.appNames, so it is not served and cc.guard does not exist"
         }
         assertTrue(assembly.contains("\"guard-log.css\"")) {
             "guard-log.css is not in PageAssembly.CSS_PARTS, so the view draws unstyled"
         }
-        assertTrue(File(tsRoot(), "app-session-guard.ts").isFile)
+        assertTrue(File(tsRoot(), "dashboard/guard/guard.ts").isFile)
         assertTrue(File(jcefRoot(), "css/guard-log.css").isFile)
     }
 

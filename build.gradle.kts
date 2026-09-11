@@ -166,6 +166,7 @@ tasks {
         inputs.dir("src/main/ts/jcef")
         inputs.file("tsconfig.json")
         outputs.dir(layout.buildDirectory.dir("web"))
+        doFirst { delete(layout.buildDirectory.dir("web")) }
         commandLine(npm, "run", "build")
     }
 

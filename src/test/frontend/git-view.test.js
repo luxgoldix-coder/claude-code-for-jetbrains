@@ -319,7 +319,7 @@ describe('git view', () => {
 
   it('every git- class the view emits has a real CSS rule', () => {
     const src = appModules()
-      .filter((name) => name.startsWith('app-session-git'))
+      .filter((name) => name.startsWith('dashboard/git/'))
       .map(readApp)
       .join('\n');
     const emitted = new Set();

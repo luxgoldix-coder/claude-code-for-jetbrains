@@ -30,6 +30,6 @@ class TranscriptCapContractTest {
             ?: error("could not locate $TRIM_MODULE from ${File("").absolutePath}")
 
     private companion object {
-        const val TRIM_MODULE = "src/main/ts/jcef/app-transcript-trim.ts"
+        const val TRIM_MODULE = "src/main/ts/jcef/transcript/trim.ts"
     }
 }

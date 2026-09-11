@@ -74,7 +74,7 @@ describe('Kotlin↔JS bridge — every host call reaches a real implementation',
 
   it('recognises app-core.js null-safe fallbacks as unimplemented', () => {
     const fallbacks = [
-      ...readApp('app-core.js').matchAll(
+      ...readApp('core/core.js').matchAll(
         /typeof cc\.([A-Za-z0-9_$]+) !== 'function'\)\s*cc\.\1\s*=\s*(function\s*\([^)]*\)\s*\{[^}]*\})/g
       ),
     ];

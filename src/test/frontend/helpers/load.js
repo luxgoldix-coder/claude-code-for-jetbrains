@@ -44,16 +44,19 @@ function declaredList(name, entry) {
 }
 
 function appModules() {
-  return declaredList('appNames', /"(app-[\w.-]+\.js)"/g);
+  return declaredList('appNames', /"([\w-]+(?:\/[\w-]+)*\.js)"/g);
 }
 
 function cssParts() {
   return declaredList('CSS_PARTS', /"([\w-]+\.css)"/g);
 }
 
+const LEGACY_FAMILY = { session: 'dashboard' };
+
 function familyOf(name) {
-  const m = /^app-([a-z]+)/.exec(name);
-  return m ? m[1] : name;
+  const legacy = /^app-([a-z]+)/.exec(name);
+  if (legacy) return LEGACY_FAMILY[legacy[1]] || legacy[1];
+  return name.includes('/') ? name.slice(0, name.indexOf('/')) : name;
 }
 
 function loadFrontend(files = [], { vendor = true } = {}) {
@@ -66,9 +69,22 @@ function loadFrontend(files = [], { vendor = true } = {}) {
   return window;
 }
 
+const SOURCES = path.resolve(__dirname, '../../../main/ts/jcef');
+
+function modulesUnder(root, prefix = '') {
+  if (!fs.existsSync(root)) return [];
+  return fs.readdirSync(root, { withFileTypes: true }).flatMap((entry) => {
+    const relative = prefix + entry.name;
+    if (entry.isDirectory())
+      return entry.name === 'types' ? [] : modulesUnder(path.join(root, entry.name), relative + '/');
+    return entry.name.endsWith('.ts') && !entry.name.endsWith('.d.ts')
+      ? [relative.replace(/\.ts$/, '.js')]
+      : [];
+  });
+}
+
 function appJsFiles() {
-  const emitted = fs.existsSync(EMIT) ? fs.readdirSync(EMIT) : [];
-  return [...new Set([...emitted, ...fs.readdirSync(JCEF)])].filter((f) => /^app-.*\.js$/.test(f)).sort();
+  return modulesUnder(SOURCES).sort();
 }
 
 function readCss() {
