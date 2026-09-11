@@ -163,6 +163,13 @@
     }
   }
 
+  function hasRows(c: HTMLElement): boolean {
+    for (let i = 0; i < c.children.length; i++) {
+      if (c.children[i].id !== 'empty') return true;
+    }
+    return false;
+  }
+
   function showEmptyState(show: boolean): void {
     const empty = emptyEl();
     if (empty) {
@@ -198,7 +205,7 @@
       }
     }
 
-    if (rows.size > 0 || (c && c.children.length > 0)) {
+    if (rows.size > 0 || (c && hasRows(c))) {
       showEmptyState(false);
     }
 
