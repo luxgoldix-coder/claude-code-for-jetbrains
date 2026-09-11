@@ -34,9 +34,10 @@ First, because everything else rests on the compiler telling the truth.
   reflection does not come back.
 - ☑ `InternalPlatformApiContractTest`: scans production sources for the internal symbols the compiler cannot
   flag, each with its public replacement named in the failure message.
-- ☐ Coverage thresholds reviewed for the packages about to appear.
+- ☐ Coverage thresholds reviewed for the packages about to appear. Carried into sprint 1, because there is
+  nothing to measure until the packages exist.
 
-**Commit**: `build: warnings are errors, and no internal platform API gets in`
+**Commit**: ☑ `build: warnings are errors, and no internal platform API gets in`
 
 ## Sprint 1 — the third parties go
 
