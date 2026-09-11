@@ -1,6 +1,7 @@
 package dev.lain.claudejb.controller.mcp
 
 import com.intellij.openapi.project.Project
+import dev.lain.claudejb.controller.git.GitAvailability
 import dev.lain.claudejb.controller.mcp.tools.code.DiagnosticsTools
 import dev.lain.claudejb.controller.mcp.tools.code.EditTools
 import dev.lain.claudejb.controller.mcp.tools.code.EditorTools
@@ -18,6 +19,9 @@ import dev.lain.claudejb.controller.mcp.tools.run.DebugTools
 import dev.lain.claudejb.controller.mcp.tools.run.RunTools
 import dev.lain.claudejb.controller.mcp.tools.run.TerminalTools
 import dev.lain.claudejb.controller.mcp.tools.run.TestTools
+import dev.lain.claudejb.controller.mcp.tools.vcs.ForgeTools
+import dev.lain.claudejb.controller.mcp.tools.vcs.GitReadTools
+import dev.lain.claudejb.controller.mcp.tools.vcs.GitWriteTools
 import dev.lain.claudejb.model.mcp.ToolCatalog
 import dev.lain.claudejb.model.mcp.ToolDomain
 import dev.lain.claudejb.model.session.launch.IdeServer
@@ -47,8 +51,17 @@ internal object IdeToolCatalog {
             { p, _ -> DebugTools(p).domain() },
             { p, _ -> BreakpointTools(p).domain() },
         ),
+        IdeServer.VCS to listOf(
+            { p, _ -> GitReadTools(p).domain() },
+            { p, _ -> GitWriteTools(p).domain() },
+            { p, s -> ForgeTools(p, IdeActions(p, s)).domain() },
+        ),
     )
 
-    fun catalog(server: IdeServer, project: Project, scope: CoroutineScope): ToolCatalog =
-        ToolCatalog(DOMAINS[server].orEmpty().map { it(project, scope) })
+    private val REQUIRES: Map<IdeServer, () -> Boolean> = mapOf(IdeServer.VCS to GitAvailability::isGitPluginEnabled)
+
+    fun catalog(server: IdeServer, project: Project, scope: CoroutineScope): ToolCatalog {
+        if (REQUIRES[server]?.invoke() == false) return ToolCatalog(emptyList())
+        return ToolCatalog(DOMAINS[server].orEmpty().map { it(project, scope) })
+    }
 }

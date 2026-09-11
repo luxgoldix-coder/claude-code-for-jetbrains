@@ -3,6 +3,8 @@ package dev.lain.claudejb.controller.mcp.tools.code
 import com.intellij.analysis.problemsView.FileProblem
 import com.intellij.analysis.problemsView.Problem
 import com.intellij.analysis.problemsView.ProblemsCollector
+import com.intellij.analysis.problemsView.toolWindow.ProblemsViewTab
+import com.intellij.analysis.problemsView.toolWindow.ProblemsViewToolWindowUtils
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
@@ -25,8 +27,8 @@ internal class DiagnosticsTools(private val project: Project, private val daemon
 
     fun domain(): ToolDomain = ToolDomain(
         "diagnostics",
-        "What the IDE's own analysis flags: the highlights of one file, or the Problems view for the whole project",
-        listOf(Tool(PROBLEMS, ::problems), Tool(PROJECT_PROBLEMS, ::projectProblems)),
+        "What the IDE's own analysis flags: the highlights of one file, the Problems view for the whole project, and its tabs",
+        listOf(Tool(PROBLEMS, ::problems), Tool(PROJECT_PROBLEMS, ::projectProblems), Tool(PROBLEMS_VIEW, ::problemsView)),
     )
 
     private suspend fun problems(args: ToolArgs): ToolResult {
@@ -66,20 +68,12 @@ internal class DiagnosticsTools(private val project: Project, private val daemon
 
     private suspend fun projectProblems(args: ToolArgs): ToolResult {
         val max = args.int("max", DEFAULT_MAX)
+        val group = args.optionalString("group")
         val (rows, total) = withContext(Dispatchers.EDT) {
             val collector = ProblemsCollector.getInstance(project)
-            val rows = ArrayList<JsonObject>()
-            for (file in collector.getProblemFiles()) {
-                for (problem in collector.getFileProblems(file)) {
-                    if (rows.size >= max) break
-                    rows += row(problem)
-                }
-            }
-            for (problem in collector.getOtherProblems()) {
-                if (rows.size >= max) break
-                rows += row(problem)
-            }
-            rows to collector.getProblemCount()
+            val all = collector.getProblemFiles().flatMap { collector.getFileProblems(it) } + collector.getOtherProblems()
+            val matching = all.filter { group == null || it.group?.contains(group, ignoreCase = true) == true }
+            matching.take(max).map(::row) to matching.size
         }
         return ToolResult.toon(
             buildJsonObject {
@@ -89,6 +83,47 @@ internal class DiagnosticsTools(private val project: Project, private val daemon
             },
         )
     }
+
+    private suspend fun problemsView(args: ToolArgs): ToolResult {
+        val wanted = args.optionalString("tab")
+        val tabs = withContext(Dispatchers.EDT) { tabs() }
+        val chosen = wanted?.let { name -> tab(tabs, name) }
+        chosen?.let { ProblemsViewToolWindowUtils.selectTabAsync(project, it.id) }
+        val selected = withContext(Dispatchers.EDT) { ProblemsViewToolWindowUtils.getSelectedTab(project)?.getTabId() ?: "" }
+        return ToolResult.toon(
+            buildJsonObject {
+                put("selected", selected)
+                put("count", tabs.size)
+                put(
+                    "tabs",
+                    buildJsonArray {
+                        tabs.forEach { tab ->
+                            add(
+                                buildJsonObject {
+                                    put("id", tab.id)
+                                    put("name", tab.name)
+                                    put("selected", tab.id == selected)
+                                },
+                            )
+                        }
+                    },
+                )
+            },
+        )
+    }
+
+    private class ProblemsTab(val id: String, val name: String)
+
+    private fun tabs(): List<ProblemsTab> {
+        val toolWindow = ProblemsViewToolWindowUtils.getToolWindow(project) ?: throw ToolException("this IDE has no Problems tool window")
+        return toolWindow.contentManager.contents
+            .mapNotNull { it.component as? ProblemsViewTab }
+            .map { ProblemsTab(it.getTabId(), it.getName(0)) }
+    }
+
+    private fun tab(tabs: List<ProblemsTab>, name: String): ProblemsTab =
+        tabs.firstOrNull { it.id.equals(name, ignoreCase = true) || it.name.equals(name, ignoreCase = true) }
+            ?: throw ToolException("no Problems tab named $name; the tabs are ${tabs.joinToString { it.id }}")
 
     private fun row(problem: Problem): JsonObject = buildJsonObject {
         val inFile = problem as? FileProblem
@@ -125,8 +160,18 @@ internal class DiagnosticsTools(private val project: Project, private val daemon
         val PROJECT_PROBLEMS = ToolSpec(
             "project_problems",
             "Everything the Problems view lists right now across the project: file problems with their positions, " +
-                "and problems with no file.",
-            listOf(Param("max", "Maximum problems to return (default $DEFAULT_MAX)", type = "integer", required = false)),
+                "and problems with no file. Filter by group to isolate what one inspection family or plugin reports.",
+            listOf(
+                Param("max", "Maximum problems to return (default $DEFAULT_MAX)", type = "integer", required = false),
+                Param("group", "Only problems whose group contains this text, e.g. an inspection family or a plugin", required = false),
+            ),
+        )
+
+        val PROBLEMS_VIEW = ToolSpec(
+            "problems_view",
+            "Lists the tabs of the IDE's Problems tool window (Current File, Project Errors, and any a plugin adds, such as " +
+                "Qodana's server-side analysis) and, given a tab, shows it to the user.",
+            listOf(Param("tab", "Tab id or title to show (default: only list them)", required = false)),
         )
     }
 }
