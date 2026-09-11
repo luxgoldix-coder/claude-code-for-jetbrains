@@ -1,5 +1,11 @@
 package dev.lain.claudejb.ui
 
+import com.intellij.openapi.ide.CopyPasteManager
+import com.intellij.openapi.project.Project
+import dev.lain.claudejb.git.ForgeViewNavigator
+import dev.lain.claudejb.git.GitLogNavigator
+import java.awt.datatransfer.StringSelection
+
 internal object GitActionCatalog {
 
     enum class Kind { DIRECT, PROMPT, IDE, HOST }
@@ -22,16 +28,40 @@ internal object GitActionCatalog {
         val hasChangedFile: Boolean = false,
     )
 
+    interface PromptSubject {
+        val changes: List<String>
+        val changedFile: String?
+    }
+
+    sealed interface Behaviour {
+        data object InitRepository : Behaviour
+
+        class Prompt(val text: (PromptSubject, String) -> String?) : Behaviour
+
+        data class Ide(val actionId: String) : Behaviour
+
+        class Host(val run: (Project, String) -> Boolean) : Behaviour
+    }
+
     data class GitAction(
         val id: String,
         val label: String,
         val hint: String,
-        val kind: Kind,
+        val behaviour: Behaviour,
         val requires: Requires,
-        val ideActionId: String? = null,
         val group: String,
         val startsBlock: Boolean = false,
     ) {
+
+        val kind: Kind
+            get() = when (behaviour) {
+                Behaviour.InitRepository -> Kind.DIRECT
+                is Behaviour.Prompt -> Kind.PROMPT
+                is Behaviour.Ide -> Kind.IDE
+                is Behaviour.Host -> Kind.HOST
+            }
+
+        val ideActionId: String? get() = (behaviour as? Behaviour.Ide)?.actionId
 
         val takesCommit: Boolean get() = requires == Requires.COMMIT
     }
@@ -41,7 +71,7 @@ internal object GitActionCatalog {
             id = "init",
             label = "Initialize repository",
             hint = "Run git init -b main in the project root",
-            kind = Kind.DIRECT,
+            behaviour = Behaviour.InitRepository,
             requires = Requires.NO_REPO,
             group = "Repository",
         ),
@@ -49,7 +79,9 @@ internal object GitActionCatalog {
             id = "commit",
             label = "Commit with Claude",
             hint = "Claude stages the changes and writes the commit message",
-            kind = Kind.PROMPT,
+            behaviour = Behaviour.Prompt { subject, _ ->
+                subject.changes.takeIf { it.isNotEmpty() }?.let(GitPromptedActions::commitPrompt)
+            },
             requires = Requires.CHANGES,
             group = "Ask Claude",
         ),
@@ -57,41 +89,54 @@ internal object GitActionCatalog {
             id = "revertFile",
             label = "Revert this file with Claude",
             hint = "Restore the file open in the editor to its committed state",
-            kind = Kind.PROMPT,
+            behaviour = Behaviour.Prompt { subject, _ -> subject.changedFile?.let(GitPromptedActions::revertFilePrompt) },
             requires = Requires.CHANGED_FILE,
             group = "Ask Claude",
         ),
-        commitAction("commitDiff", "View diff", "Show this commit and its changes in the IDE", Kind.HOST),
-        commitAction("commitCopyHash", "Copy hash", "Put the full commit hash on the clipboard", Kind.HOST),
+        commitAction(
+            "commitDiff",
+            "View diff",
+            "Show this commit and its changes in the IDE",
+            Behaviour.Host { project, hash -> GitLogNavigator.showCommit(project, hash) },
+        ),
+        commitAction(
+            "commitCopyHash",
+            "Copy hash",
+            "Put the full commit hash on the clipboard",
+            Behaviour.Host { _, hash ->
+                CopyPasteManager.getInstance().setContents(StringSelection(hash))
+                true
+            },
+        ),
         commitAction(
             "commitRevertToBranch",
             "Revert to this commit on a new branch",
             "Ask Claude to create a branch at this commit — the branch you are on does not move",
-            Kind.PROMPT,
+            Behaviour.Prompt { _, hash -> GitPromptedActions.revertToCommitOnNewBranchPrompt(hash) },
         ),
         commitAction(
             "commitRevert",
             "Revert just this commit",
             "Ask Claude to record a new commit undoing this one, keeping the history",
-            Kind.PROMPT,
+            Behaviour.Prompt { _, hash -> GitPromptedActions.revertCommitPrompt(hash) },
         ),
         commitAction(
             "commitBranch",
             "Create branch from this commit",
             "Ask Claude to start a branch at this commit — the branch you are on does not move",
-            Kind.PROMPT,
+            Behaviour.Prompt { _, hash -> GitPromptedActions.createBranchFromCommitPrompt(hash) },
         ),
         commitAction(
             "commitTag",
             "Create tag from this commit",
             "Ask Claude to put a tag on this commit",
-            Kind.PROMPT,
+            Behaviour.Prompt { _, hash -> GitPromptedActions.createTagFromCommitPrompt(hash) },
         ),
         GitAction(
             id = "forgeView",
             label = "Requests",
             hint = "Open the IDE's own pull or merge request view",
-            kind = Kind.HOST,
+            behaviour = Behaviour.Host { project, _ -> ForgeViewNavigator.open(project) },
             requires = Requires.REPO,
             group = "Repository",
         ),
@@ -99,7 +144,7 @@ internal object GitActionCatalog {
             id = "gitLog",
             label = "Git log",
             hint = "Open the IDE's Git log",
-            kind = Kind.HOST,
+            behaviour = Behaviour.Host { project, _ -> GitLogNavigator.showLog(project) },
             requires = Requires.REPO,
             group = "Repository",
         ),
@@ -132,11 +177,11 @@ internal object GitActionCatalog {
 
     fun ideActions(): List<GitAction> = ACTIONS.filter { it.kind == Kind.IDE }
 
-    private fun commitAction(id: String, label: String, hint: String, kind: Kind) = GitAction(
+    private fun commitAction(id: String, label: String, hint: String, behaviour: Behaviour) = GitAction(
         id = id,
         label = label,
         hint = hint,
-        kind = kind,
+        behaviour = behaviour,
         requires = Requires.COMMIT,
         group = "Commit",
     )
@@ -147,16 +192,13 @@ internal object GitActionCatalog {
         hint: String,
         actionId: String,
         startsBlock: Boolean = false,
-        requires: Requires = Requires.REPO,
-        group: String = "IDE actions",
     ) = GitAction(
         id = id,
         label = label,
         hint = hint,
-        kind = Kind.IDE,
-        requires = requires,
-        ideActionId = actionId,
-        group = group,
+        behaviour = Behaviour.Ide(actionId),
+        requires = Requires.REPO,
+        group = "IDE actions",
         startsBlock = startsBlock,
     )
 

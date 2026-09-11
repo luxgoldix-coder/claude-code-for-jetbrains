@@ -42,7 +42,7 @@ class IdeActionApiContractTest {
             3,
             deprecated.size,
             "Expected all three ActionUtil.invokeAction overloads to be deprecated on this platform. " +
-                "Found ${deprecated.size}; re-read the migration note before changing GitIntegration.",
+                "Found ${deprecated.size}; re-read the migration note before changing IdeActionInvoker.",
         )
     }
 
@@ -65,11 +65,11 @@ class IdeActionApiContractTest {
         val field = load("com.intellij.openapi.actionSystem.ActionUiKind").getField("TOOLBAR")
         assertFalse(
             field.isAnnotationPresent(java.lang.Deprecated::class.java) || field.isAnnotationPresent(Deprecated::class.java),
-            "ActionUiKind.TOOLBAR is deprecated — GitIntegration names it on every IDE invocation.",
+            "ActionUiKind.TOOLBAR is deprecated — IdeActionInvoker names it on every IDE invocation.",
         )
         assertTrue(
-            codeOf("ui/GitIntegration.kt").any { "ActionUiKind.TOOLBAR" in it },
-            "GitIntegration no longer names ActionUiKind.TOOLBAR; pin the kind it does name instead of this one.",
+            codeOf("ui/IdeActionInvoker.kt").any { "ActionUiKind.TOOLBAR" in it },
+            "IdeActionInvoker no longer names ActionUiKind.TOOLBAR; pin the kind it does name instead of this one.",
         )
     }
 
@@ -119,11 +119,11 @@ class IdeActionApiContractTest {
     }
 
     @Test
-    fun `GitIntegration invokes actions through performAction and nothing else`() {
-        val source = source("src/main/kotlin/dev/lain/claudejb/ui/GitIntegration.kt")
+    fun `IdeActionInvoker invokes actions through performAction and nothing else`() {
+        val source = source("src/main/kotlin/dev/lain/claudejb/ui/IdeActionInvoker.kt")
         assertTrue(
             "ActionUtil.performAction(" in source,
-            "GitIntegration must invoke platform actions through ActionUtil.performAction.",
+            "IdeActionInvoker must invoke platform actions through ActionUtil.performAction.",
         )
         assertFalse(
             "ActionUtil.invokeAction(" in source,
@@ -133,9 +133,9 @@ class IdeActionApiContractTest {
 
     @Test
     fun `the one command the plugin runs is a fixed argument vector, never a shell string`() {
-        val source = source("src/main/kotlin/dev/lain/claudejb/ui/GitIntegration.kt")
+        val source = source("src/main/kotlin/dev/lain/claudejb/ui/GitInit.kt")
         listOf("/bin/sh", "cmd.exe", "powershell", "-c\"", "ProcessBuilder", "Runtime.getRuntime").forEach {
-            assertFalse(it in source, "GitIntegration must not reach a shell or spawn a process by hand: found '$it'")
+            assertFalse(it in source, "GitInit must not reach a shell or spawn a process by hand: found '$it'")
         }
         assertTrue(
             Regex("""runGit\(root, "init", "-b",""").containsMatchIn(source),
@@ -145,14 +145,14 @@ class IdeActionApiContractTest {
 
     @Test
     fun `the IDE invocation is given the tool window's own component, not the project alone`() {
-        val code = codeOf("ui/GitIntegration.kt")
+        val code = codeOf("ui/IdeActionInvoker.kt")
         assertTrue(
             code.any { "ClaudeToolWindowFactory.contextComponent(" in it },
-            "GitIntegration no longer builds its data context from the tool window's component.",
+            "IdeActionInvoker no longer builds its data context from the tool window's component.",
         )
         assertTrue(
             code.any { "DataManager.getInstance().getDataContext(" in it },
-            "GitIntegration no longer asks DataManager for the component's context, so every key the tool " +
+            "IdeActionInvoker no longer asks DataManager for the component's context, so every key the tool " +
                 "window's providers contribute is gone and the actions are back to deciding on one key.",
         )
     }
