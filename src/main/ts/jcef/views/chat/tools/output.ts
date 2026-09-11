@@ -91,7 +91,8 @@
         block.classList.add('flow');
         block.classList.add('live');
         codeEl.textContent = raw;
-        block.scrollTop = block.scrollHeight;
+        codeEl.scrollTop = codeEl.scrollHeight;
+        setLiveTail(card, raw);
       } else {
         block.classList.remove('diff');
         block.classList.remove('command');
@@ -107,6 +108,26 @@
       }
     }
     return true;
+  };
+
+  function setLiveTail(card: RowEl, raw: string): void {
+    let tail = card.__liveTail || null;
+    if (!tail) {
+      tail = el('div', { class: 'tool-live-tail' });
+      const out = card.__outNode || card.querySelector<HTMLElement>('.tool-out');
+      if (out && out.parentNode) out.parentNode.insertBefore(tail, out);
+      else card.appendChild(tail);
+      card.__liveTail = tail;
+    }
+    const lines = raw.split('\n');
+    let last = '';
+    for (let i = lines.length - 1; i >= 0 && !last; i--) last = lines[i].trim();
+    tail.textContent = last;
+  }
+
+  TX.scrollLiveToEnd = function (card: HTMLElement): void {
+    const codes = card.querySelectorAll<HTMLElement>('.tool-out pre.live code');
+    for (let i = 0; i < codes.length; i++) codes[i].scrollTop = codes[i].scrollHeight;
   };
 
   function renderDiff(codeEl: HTMLElement, text: string, lang: string | null): void {

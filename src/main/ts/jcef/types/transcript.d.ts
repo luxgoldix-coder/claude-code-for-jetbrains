@@ -29,6 +29,7 @@ interface RowEl extends HTMLElement {
   __isAgentCard?: boolean;
   __cmdNode?: HTMLElement | null;
   __msgNode?: HTMLElement | null;
+  __liveTail?: HTMLElement | null;
   __nameNode?: HTMLElement | null;
   __childrenNode?: HTMLElement | null;
   __elapsedNode?: HTMLElement | null;
@@ -77,6 +78,7 @@ interface TranscriptNs {
   applyToolElapsed(node: RowEl, state: string | null | undefined, elapsedSecs: unknown): void;
   applyToolState(node: RowEl, state: string | null | undefined, meta: string | null | undefined): void;
   routeToolOutput(entry: TranscriptEntry, cards?: Map<string, RowEl>): boolean;
+  scrollLiveToEnd(card: HTMLElement): void;
   renderCommandBlock(cmdNode: HTMLElement | null | undefined, commandText: unknown): void;
   jbHref(relPath: unknown, line?: unknown): string;
   renderToon(root: HTMLElement, json: string): void;

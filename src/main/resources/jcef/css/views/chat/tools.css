@@ -163,6 +163,19 @@
 .tool.open > .tool-out {
   display: block;
 }
+.tool-live-tail {
+  padding: 4px 12px 6px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tool-live-tail:empty,
+.tool.open > .tool-live-tail {
+  display: none;
+}
 .tool-out pre,
 .tool-cmd pre.command-src,
 .tool-msg pre.message-src {

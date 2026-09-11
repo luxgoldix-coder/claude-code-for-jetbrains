@@ -223,6 +223,40 @@ describe('tool output — live lines pushed while an own tool runs', () => {
     expect(blocks[0].textContent).toContain('BUILD SUCCESSFUL');
     expect(blocks[1].classList.contains('toon')).toBe(true);
   });
+
+  it('a collapsed card shows the last non-empty live line outside the body, and the body once opened', () => {
+    const win = loadFrontend(['app-transcript.js']);
+    win.cc.batch([
+      row(355, 0, 'TOOL', 'run ▸ build', {
+        meta: 'mcp__run__run',
+        toolUseId: 'tu-live3',
+        state: 'LOADING',
+      }),
+      row(356, 1, 'TOOL_OUTPUT', '> Task :compileKotlin\n> Task :jar\n\n', {
+        meta: 'live',
+        toolUseId: 'tu-live3',
+      }),
+    ]);
+
+    const card = win.document.querySelector('.tool');
+    const tail = card.querySelector(':scope > .tool-live-tail');
+    expect(card.classList.contains('open')).toBe(false);
+    expect(tail).not.toBeNull();
+    expect(tail.textContent).toBe('> Task :jar');
+    expect(tail.nextElementSibling.classList.contains('tool-out')).toBe(true);
+
+    win.cc.batch([
+      row(356, 1, 'TOOL_OUTPUT', '> Task :compileKotlin\n> Task :jar\nBUILD SUCCESSFUL', {
+        meta: 'live',
+        toolUseId: 'tu-live3',
+      }),
+    ]);
+    expect(card.querySelectorAll(':scope > .tool-live-tail').length).toBe(1);
+    expect(tail.textContent).toBe('BUILD SUCCESSFUL');
+
+    card.querySelector('.tool-head').dispatchEvent(new win.Event('click', { bubbles: true }));
+    expect(card.classList.contains('open')).toBe(true);
+  });
 });
 
 describe('tool output — the message a call SENDS is shown without expanding the card', () => {

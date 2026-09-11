@@ -83,6 +83,7 @@
         return;
       }
       node.classList.toggle('open');
+      if (node.classList.contains('open')) TX.scrollLiveToEnd(node);
     });
     node.appendChild(head);
     node.appendChild(msg);
