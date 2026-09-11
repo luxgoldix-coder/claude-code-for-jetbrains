@@ -39,12 +39,15 @@
     return code ? code.textContent || '' : '';
   }
   function flashCopied(copyEl: HTMLElement): void {
-    const prev = copyEl.textContent;
-    copyEl.textContent = 'Copied';
-    copyEl.classList.add('copied');
-    setTimeout(function () {
-      copyEl.textContent = prev;
-      copyEl.classList.remove('copied');
+    const el = copyEl as FlashEl;
+    if (el.__ccFlashTimer != null) clearTimeout(el.__ccFlashTimer);
+    else el.__ccFlashLabel = el.textContent;
+    el.textContent = 'Copied';
+    el.classList.add('copied');
+    el.__ccFlashTimer = setTimeout(function () {
+      el.textContent = el.__ccFlashLabel == null ? '' : el.__ccFlashLabel;
+      el.classList.remove('copied');
+      el.__ccFlashTimer = null;
     }, 1200);
   }
   CC.flashCopied = flashCopied;

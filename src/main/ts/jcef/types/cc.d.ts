@@ -114,6 +114,11 @@ interface BodyEl extends HTMLElement {
   __rawText?: string;
 }
 
+interface FlashEl extends HTMLElement {
+  __ccFlashLabel?: string | null;
+  __ccFlashTimer?: ReturnType<typeof setTimeout> | null;
+}
+
 interface RowEl extends HTMLElement {
   __outNode?: HTMLElement | null;
   __toolUseId?: string | null;
