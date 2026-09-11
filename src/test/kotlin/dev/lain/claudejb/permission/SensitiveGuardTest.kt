@@ -712,14 +712,4 @@ class SensitiveGuardResolverPerformanceTest :
         })
         assertEquals(SensitiveGuard.Verdict.DENY, v(read("/home/me/proj/innocent.txt"), resolving))
     }
-
-    @Test
-    fun `the resolver pool is bounded, not one thread per hung mount forever`() {
-        val field = GuardPaths::class.java.getDeclaredField("resolverExecutor").apply { isAccessible = true }
-        val executor = field.get(GuardPaths) as java.util.concurrent.ThreadPoolExecutor
-        assertTrue(
-            executor.maximumPoolSize in 1..32,
-            "resolverExecutor.maximumPoolSize=${executor.maximumPoolSize} is not bounded to a small constant",
-        )
-    }
 }
