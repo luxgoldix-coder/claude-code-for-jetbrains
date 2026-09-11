@@ -169,6 +169,9 @@ object SensitiveGuard {
         val matchers = policy.globs.map { CredentialPaths.compile(it, policy.home) }
         return outsideProject.firstOrNull { p -> matchers.any { it.matches(p) } }
             ?.let { Hit(SecurityRule.CREDENTIALS, "reads credentials or key material outside the project: $it") }
+            ?: AlternateDataStreams.streamHit(paths)?.let {
+                Hit(SecurityRule.SHELL_FILE_WRITE, "addresses an NTFS alternate data stream, which no diff shows: $it")
+            }
     }
 
     private fun actionRules(input: JsonObject, policy: Policy, depth: Int): Hit? {

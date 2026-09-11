@@ -52,8 +52,9 @@ traced, and a handful of bugs found on the way are fixed.
   family. The guard's own code is restructured under those tests with no verdict changed.
 - **The guard sees more of Windows.** Writes into the Startup folder and PowerShell profiles are
   judged by their content; `copy`, `move`, `del`, `Set-Content`, `Out-File` and friends count as file
-  writes with no diff; an 8.3 short name never folds a path inside the project; a caret-split command
-  is read as what it runs; and a raw device is named as a device rather than as a network mount. Four
+  writes with no diff; an 8.3 short name never folds a path inside the project; an explicit NTFS
+  alternate data stream is a write no diff shows; a caret-split command is read as what it runs; and a
+  raw device is named as a device rather than as a network mount. Four
   Windows false positives are gone: a `set` assignment binds its variable so a later use is not opaque,
   a `PATH` prepend is split on `;` with a drive letter not mistaken for a separator, a drive-relative
   path is judged as outside the project, and a local long-path prefix on a project file is spelling,
