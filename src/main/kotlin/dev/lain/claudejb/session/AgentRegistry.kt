@@ -16,11 +16,8 @@ enum class AgentStatus {
     companion object {
         fun parse(status: String): AgentStatus = when (status.lowercase()) {
             "completed", "complete", "done", "finished", "success", "succeeded" -> COMPLETED
-
             "", "running", "in_progress", "in-progress", "started", "starting", "pending", "queued", "paused" -> RUNNING
-
             "stopped", "cancelled", "canceled", "interrupted", "aborted", "killed" -> STOPPED
-
             else -> FAILED
         }
     }

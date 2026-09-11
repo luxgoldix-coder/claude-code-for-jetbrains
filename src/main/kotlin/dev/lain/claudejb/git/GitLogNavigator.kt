@@ -1,7 +1,6 @@
 package dev.lain.claudejb.git
 
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.AbstractVcsHelper
@@ -13,6 +12,7 @@ import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil
 import com.intellij.vcsUtil.VcsUtil
 import dev.lain.claudejb.diff.DiffPresenter
+import dev.lain.claudejb.util.logger
 
 object GitLogNavigator {
 

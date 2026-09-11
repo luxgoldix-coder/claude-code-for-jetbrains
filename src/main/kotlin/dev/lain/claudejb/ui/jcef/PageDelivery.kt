@@ -2,10 +2,10 @@ package dev.lain.claudejb.ui.jcef
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.jcef.JBCefBrowser
 import com.intellij.util.Alarm
 import dev.lain.claudejb.util.edtNow
+import dev.lain.claudejb.util.logger
 
 internal class PageDelivery(
     private val browser: JBCefBrowser,

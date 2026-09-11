@@ -1,9 +1,9 @@
 package dev.lain.claudejb.settings
 
+import com.intellij.openapi.util.SystemInfo
 import dev.lain.claudejb.permission.CredentialPaths
 import dev.lain.claudejb.permission.SecurityRule
 import dev.lain.claudejb.permission.SensitiveGuard
-import com.intellij.openapi.util.SystemInfo
 import kotlinx.serialization.json.JsonObject
 
 fun ClaudeSettings.sensitiveGlobs(): List<String> {

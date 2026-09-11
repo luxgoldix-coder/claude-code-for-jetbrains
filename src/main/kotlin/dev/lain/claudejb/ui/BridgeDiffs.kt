@@ -1,13 +1,13 @@
 package dev.lain.claudejb.ui
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.thisLogger
 import dev.lain.claudejb.diff.DiffPresenter
 import dev.lain.claudejb.diff.EditSnapshot
 import dev.lain.claudejb.permission.PendingPermission
 import dev.lain.claudejb.ui.jcef.JcefTranscriptPayload
 import dev.lain.claudejb.ui.jcef.Msg
 import dev.lain.claudejb.util.edt
+import dev.lain.claudejb.util.thisLogger
 
 internal class BridgeDiffs(private val panel: JcefChatPanel) {
 

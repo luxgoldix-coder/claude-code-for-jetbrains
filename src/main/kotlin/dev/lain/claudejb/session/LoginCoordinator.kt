@@ -1,12 +1,12 @@
 package dev.lain.claudejb.session
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import dev.lain.claudejb.process.ClaudeBinaryLocator
 import dev.lain.claudejb.process.TerminalLauncher
 import dev.lain.claudejb.settings.ClaudeSettings
 import dev.lain.claudejb.settings.Provider
+import dev.lain.claudejb.util.thisLogger
 import java.io.File
 
 class LoginCoordinator(

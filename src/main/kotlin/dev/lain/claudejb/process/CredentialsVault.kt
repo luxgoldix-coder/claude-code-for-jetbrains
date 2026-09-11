@@ -1,8 +1,8 @@
 package dev.lain.claudejb.process
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.thisLogger
 import dev.lain.claudejb.settings.SecretStore
+import dev.lain.claudejb.util.thisLogger
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
@@ -174,7 +174,7 @@ object CredentialsVault {
     fun harvest(): Boolean {
         if (inertHere()) return false
         if (renewingOnDisk) {
-            log.debug("not harvesting: a credential refresh is using the file right now")
+            log.debug { "not harvesting: a credential refresh is using the file right now" }
             return false
         }
         return harvestNow()

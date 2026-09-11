@@ -7,9 +7,9 @@ import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import dev.lain.claudejb.ui.jcef.JcefGitData
+import dev.lain.claudejb.util.logger
 
 internal object IdeActionInvoker {
 

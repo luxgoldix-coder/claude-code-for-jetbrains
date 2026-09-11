@@ -1,6 +1,6 @@
 package dev.lain.claudejb.settings
 
-import com.intellij.openapi.diagnostic.logger
+import dev.lain.claudejb.util.logger
 
 internal object UntrustedState {
 

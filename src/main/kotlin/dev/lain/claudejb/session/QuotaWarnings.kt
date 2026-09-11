@@ -1,11 +1,11 @@
 package dev.lain.claudejb.session
 
-import com.intellij.openapi.diagnostic.Logger
 import dev.lain.claudejb.protocol.UsageReport
+import dev.lain.claudejb.util.PluginLog
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 
-class QuotaWarnings(private val log: Logger, private val announce: Announce) {
+class QuotaWarnings(private val log: PluginLog, private val announce: Announce) {
 
     class Announce(
         val inTranscript: (String) -> Unit,
@@ -17,7 +17,7 @@ class QuotaWarnings(private val log: Logger, private val announce: Announce) {
     fun onReport(report: UsageReport) {
         report.windows.forEach { (key, w) ->
             w.utilizationPercent()?.let { pct ->
-                log.info("usage window $key: utilization=${w.utilization} -> $pct%")
+                log.debug { "usage window $key: utilization=${w.utilization} -> $pct%" }
                 warnOnCrossing(key, w.title(key), pct)
             }
         }
@@ -50,7 +50,7 @@ class QuotaWarnings(private val log: Logger, private val announce: Announce) {
     private fun logOnce(line: String) {
         if (line == lastLogged) return
         lastLogged = line
-        log.info(line)
+        log.debug { line }
     }
 
     private companion object {

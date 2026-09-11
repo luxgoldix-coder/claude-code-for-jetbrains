@@ -1,12 +1,12 @@
 package dev.lain.claudejb.session
 
-import com.intellij.openapi.diagnostic.thisLogger
 import dev.lain.claudejb.protocol.AccountInfo
 import dev.lain.claudejb.protocol.AgentInfo
 import dev.lain.claudejb.protocol.InitializeResponse
 import dev.lain.claudejb.protocol.ModelInfo
 import dev.lain.claudejb.protocol.SlashCommand
 import dev.lain.claudejb.settings.LaunchDefaults
+import dev.lain.claudejb.util.thisLogger
 
 class BinaryCatalog(
     private val s: ClaudeSession,
@@ -48,12 +48,12 @@ class BinaryCatalog(
         agents = info.agents
         availableOutputStyles = info.availableOutputStyles
         account = info.account
-        log.debug(
+        log.debug {
             "initialize reply: account(email=${info.account.email.isNotBlank()}," +
                 " org=${info.account.organization.isNotBlank()}, plan='${info.account.subscriptionType}'," +
                 " provider='${info.account.apiProvider}') models=${info.models.size}" +
-                " commands=${info.commands.size} agents=${info.agents.size}",
-        )
+                " commands=${info.commands.size} agents=${info.agents.size}"
+        }
         initialized = true
         if (info.outputStyle.isNotBlank()) outputStyle = info.outputStyle
         val pinMissing = info.models.isNotEmpty() && info.models.none { it.value == LaunchDefaults.DEFAULT_MODEL }

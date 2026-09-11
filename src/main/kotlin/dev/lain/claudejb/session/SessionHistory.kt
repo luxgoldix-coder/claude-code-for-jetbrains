@@ -2,10 +2,10 @@ package dev.lain.claudejb.session
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import dev.lain.claudejb.settings.SecretStore
 import dev.lain.claudejb.settings.SettingsScope
+import dev.lain.claudejb.util.logger
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 

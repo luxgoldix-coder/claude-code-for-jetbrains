@@ -15,7 +15,10 @@ class PromptQueueTest {
     private val queue = PromptQueue(
         transcript = transcript,
         edt = { it() },
-        write = { line -> written.add(line); writeSucceeds },
+        write = { line ->
+            written.add(line)
+            writeSucceeds
+        },
         canSend = { !turnActive },
         onSent = { turnActive = true },
         fireState = { stateFired++ },

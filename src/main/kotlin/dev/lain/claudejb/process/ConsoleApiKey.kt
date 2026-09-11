@@ -1,6 +1,6 @@
 package dev.lain.claudejb.process
 
-import com.intellij.openapi.diagnostic.thisLogger
+import dev.lain.claudejb.util.thisLogger
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive

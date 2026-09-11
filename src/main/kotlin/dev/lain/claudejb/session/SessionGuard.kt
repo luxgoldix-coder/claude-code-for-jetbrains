@@ -15,6 +15,7 @@ import dev.lain.claudejb.settings.GuardAlertLog
 import dev.lain.claudejb.settings.GuardCommandApprovals
 import dev.lain.claudejb.settings.guardSuspended
 import dev.lain.claudejb.settings.sensitiveDecision
+import dev.lain.claudejb.util.thisLogger
 import java.util.concurrent.CopyOnWriteArrayList
 
 class SessionGuard(
@@ -25,6 +26,8 @@ class SessionGuard(
     private val fireState: () -> Unit,
     private val fireAttention: (AttentionReason, AttentionLanding) -> Unit,
 ) {
+
+    private val log = thisLogger()
 
     val approvals = GuardCommandApprovals()
 
@@ -128,6 +131,7 @@ class SessionGuard(
         inAgent: Boolean = false,
     ) {
         val matched = rule ?: return
+        log.info("guard: $verdict ${matched.name} tool=$toolName")
         val settings = ClaudeSettings.getInstance(project)
         val alert = GuardAlert(
             at = System.currentTimeMillis(),

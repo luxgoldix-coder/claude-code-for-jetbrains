@@ -1,10 +1,10 @@
 package dev.lain.claudejb.session
 
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.SystemInfo
 import dev.lain.claudejb.process.PluginContextPrompt
 import dev.lain.claudejb.util.InstalledPlugins
+import dev.lain.claudejb.util.thisLogger
 import java.io.File
 
 object SessionLauncher {
@@ -73,7 +73,7 @@ object SessionLauncher {
             port = opts.ideMcpPort,
             customMcpServers = opts.customMcpServers,
             stdioParams = if (opts.ideMcpEnabled && opts.ideMcpTransport == "stdio") resolveStdioParams(opts) else null,
-            onCustomParseError = { log.debug("Failed to parse custom MCP servers JSON", it) },
+            onCustomParseError = { log.debug { "Failed to parse custom MCP servers JSON: $it" } },
         )
 
     fun resolveStdioParams(opts: LaunchOptions): McpConfigBuilder.StdioParams? {

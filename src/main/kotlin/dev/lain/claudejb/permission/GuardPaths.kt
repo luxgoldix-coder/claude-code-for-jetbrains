@@ -137,7 +137,9 @@ object GuardPaths {
         when {
             segments.isNotEmpty() && segments.last() != ".." && !SHORT_NAME.containsMatchIn(segments.last()) ->
                 segments.removeAt(segments.lastIndex)
+
             prefix.isEmpty() -> segments.add("..")
+
             else -> Unit
         }
     }

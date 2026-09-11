@@ -1,6 +1,5 @@
 package dev.lain.claudejb.ui
 
-import com.intellij.openapi.diagnostic.thisLogger
 import dev.lain.claudejb.permission.SecurityRule
 import dev.lain.claudejb.permission.SensitiveGuard
 import dev.lain.claudejb.permission.ToolInputScanner
@@ -9,6 +8,7 @@ import dev.lain.claudejb.settings.GuardWhitelists
 import dev.lain.claudejb.settings.SecuritySuspensions
 import dev.lain.claudejb.settings.sensitivePolicy
 import dev.lain.claudejb.ui.jcef.Msg
+import dev.lain.claudejb.util.thisLogger
 
 internal class BridgeGuard(private val panel: JcefChatPanel) {
 

@@ -1,7 +1,7 @@
 package dev.lain.claudejb.vuln
 
-import com.intellij.openapi.diagnostic.logger
 import dev.lain.claudejb.util.PluginIdentity
+import dev.lain.claudejb.util.logger
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream

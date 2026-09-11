@@ -1,9 +1,9 @@
 package dev.lain.claudejb.session
 
-import com.intellij.openapi.diagnostic.thisLogger
 import dev.lain.claudejb.protocol.ClaudeEvent
 import dev.lain.claudejb.protocol.ControlProtocol
 import dev.lain.claudejb.protocol.DialogResponder
+import dev.lain.claudejb.util.thisLogger
 import kotlinx.serialization.json.JsonObject
 
 class ControlEvents(
@@ -65,7 +65,7 @@ class ControlEvents(
 
                     is HookSideEffect.TranscriptNote -> s.transcript.add(Speaker.SYSTEM, effect.text)
 
-                    is HookSideEffect.Marker -> log.debug("hook marker ${effect.event} ${effect.detail ?: ""}")
+                    is HookSideEffect.Marker -> log.debug { "hook marker ${effect.event} ${effect.detail ?: ""}" }
                 }
             }
         }

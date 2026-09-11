@@ -1,8 +1,8 @@
 package dev.lain.claudejb.ui
 
-import com.intellij.openapi.diagnostic.thisLogger
 import dev.lain.claudejb.ui.jcef.JcefVulnData
 import dev.lain.claudejb.ui.jcef.Msg
+import dev.lain.claudejb.util.thisLogger
 import dev.lain.claudejb.vuln.VulnPromptedActions
 import dev.lain.claudejb.vuln.VulnService
 

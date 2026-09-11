@@ -3,16 +3,18 @@ package dev.lain.claudejb.ui
 import com.intellij.navigation.ChooseByNameContributor
 import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import dev.lain.claudejb.diff.DiffPresenter
+import dev.lain.claudejb.util.logger
 import java.io.File
 
 object LinkResolver {
+
+    private val log = logger<LinkResolver>()
 
     data class Resolved(val token: String, val path: String, val line: Int?)
 
@@ -177,7 +179,7 @@ object LinkResolver {
     } catch (e: ProcessCanceledException) {
         throw e
     } catch (e: Exception) {
-        Logger.getInstance(LinkResolver::class.java).debug("could not resolve the symbol '$name' to a link", e)
+        log.debug { "could not resolve the symbol '$name' to a link: $e" }
         null
     }
 

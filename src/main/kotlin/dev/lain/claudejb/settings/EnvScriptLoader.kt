@@ -2,8 +2,8 @@ package dev.lain.claudejb.settings
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.SystemInfo
+import dev.lain.claudejb.util.thisLogger
 import java.io.File
 import java.nio.charset.StandardCharsets
 

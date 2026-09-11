@@ -1,6 +1,6 @@
 package dev.lain.claudejb.ui.jcef
 
-import com.intellij.openapi.diagnostic.logger
+import dev.lain.claudejb.util.logger
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.util.Base64
@@ -143,7 +143,7 @@ internal object PageAssembly {
 
         val absent = (LIB_NAMES + appNames).filterNot { contents.containsKey(it) }
         if (absent.isNotEmpty()) {
-            log.error("Claude Code chat page is missing declared scripts, so parts of the UI cannot exist: $absent")
+            log.warn("Claude Code chat page is missing declared scripts, so parts of the UI cannot exist: $absent")
         }
 
         val hashes = contents.values.map { "'sha256-" + sha256Base64(it) + "'" }

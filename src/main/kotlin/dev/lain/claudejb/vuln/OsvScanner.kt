@@ -1,6 +1,6 @@
 package dev.lain.claudejb.vuln
 
-import com.intellij.openapi.diagnostic.logger
+import dev.lain.claudejb.util.logger
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put

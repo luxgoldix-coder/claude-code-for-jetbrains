@@ -1,6 +1,5 @@
 package dev.lain.claudejb.ui
 
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.options.ShowSettingsUtil
 import dev.lain.claudejb.settings.ClaudeSettings
 import dev.lain.claudejb.settings.LaunchDefaults
@@ -8,6 +7,7 @@ import dev.lain.claudejb.settings.Provider
 import dev.lain.claudejb.ui.jcef.JcefSettingsMenu
 import dev.lain.claudejb.ui.jcef.Msg
 import dev.lain.claudejb.ui.jcef.SettingsMenuApply
+import dev.lain.claudejb.util.thisLogger
 
 internal class BridgeSettings(private val panel: JcefChatPanel) {
 

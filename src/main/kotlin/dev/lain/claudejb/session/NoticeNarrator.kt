@@ -1,10 +1,10 @@
 package dev.lain.claudejb.session
 
-import com.intellij.openapi.diagnostic.Logger
 import dev.lain.claudejb.protocol.ClaudeEvent
+import dev.lain.claudejb.util.PluginLog
 
 class NoticeNarrator(
-    private val log: Logger,
+    private val log: PluginLog,
     private val systemNotice: (String) -> Unit,
     private val addRow: (Speaker, String, String?) -> Unit,
     private val notifyInfo: (String) -> Unit,
@@ -38,7 +38,16 @@ class NoticeNarrator(
 
             is ClaudeEvent.WorkerShuttingDown -> log.info("worker_shutting_down: ${event.info.reason}")
 
-            is ClaudeEvent.Other -> log.debug("Ignored ${event.type}/${event.subtype}")
+            is ClaudeEvent.Other -> onOther(event)
+        }
+    }
+
+    private fun onOther(event: ClaudeEvent.Other) {
+        val cause = event.cause
+        if (cause != null) {
+            log.warn("protocol: could not decode ${event.type}/${event.subtype}: $cause")
+        } else {
+            log.debug { "protocol: ignored ${event.type}/${event.subtype}" }
         }
     }
 
@@ -72,7 +81,7 @@ class NoticeNarrator(
 
     private fun onPluginInstall(event: ClaudeEvent.PluginInstall) {
         val i = event.info
-        log.debug("plugin_install status=${i.status} name=${i.name}")
+        log.debug { "plugin_install status=${i.status} name=${i.name}" }
         when (i.status) {
             "installed" -> systemNotice("Plugin installed${i.name?.let { ": $it" } ?: ""}")
             "failed" -> systemNotice("Plugin install failed${i.error?.let { ": $it" } ?: ""}")

@@ -1,7 +1,7 @@
 package dev.lain.claudejb.process
 
-import com.intellij.openapi.diagnostic.thisLogger
 import com.pty4j.PtyProcessBuilder
+import dev.lain.claudejb.util.thisLogger
 import java.nio.charset.StandardCharsets
 
 class ClaudeLoginFlow(
@@ -76,11 +76,11 @@ class ClaudeLoginFlow(
                 acc.append(String(buf, 0, n, StandardCharsets.UTF_8))
                 if (!(urlSeen && promptSeen && tokenSeen)) scan(acc.toString(), listener)
             }
-        }.onFailure { log.debug("login PTY reader stopped", it) }
+        }.onFailure { log.debug { "login PTY reader stopped: $it" } }
 
         val exit = runCatching { proc.waitFor() }.getOrDefault(-1)
         val out = acc.toString()
-        log.debug("claude login finished (exit=$exit):\n${LoginOutputParser.redactSecrets(out)}")
+        log.debug { "claude login finished (exit=$exit):\n${LoginOutputParser.redactSecrets(out)}" }
         val success = exit == 0 && !LoginOutputParser.looksLikeFailure(out)
         finish(listener, success, LoginOutputParser.resultMessage(out, success))
     }

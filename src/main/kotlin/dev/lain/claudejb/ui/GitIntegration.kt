@@ -3,7 +3,6 @@ package dev.lain.claudejb.ui
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import dev.lain.claudejb.context.EditorContextProvider
 import dev.lain.claudejb.git.GitAvailability
@@ -18,6 +17,7 @@ import dev.lain.claudejb.ui.GitActionCatalog.Behaviour
 import dev.lain.claudejb.ui.jcef.JcefGitData
 import dev.lain.claudejb.ui.jcef.JcefGitData.ActionState
 import dev.lain.claudejb.util.edt
+import dev.lain.claudejb.util.logger
 
 @Service(Service.Level.PROJECT)
 internal class GitIntegration(private val project: Project) {
@@ -68,11 +68,8 @@ internal class GitIntegration(private val project: Project) {
         }
         when (val behaviour = action.behaviour) {
             Behaviour.InitRepository -> initRepository(action.id, onChanged)
-
             is Behaviour.Prompt -> runPrompt(action.id, behaviour, hash, chat, onChanged)
-
             is Behaviour.Ide -> settle(action.id, IdeActionInvoker.invoke(project, behaviour.actionId, action.id), onChanged)
-
             is Behaviour.Host -> settle(action.id, stateOf(behaviour.run(project, hash)), onChanged)
         }
     }

@@ -1,6 +1,6 @@
 package dev.lain.claudejb.context
 
-import com.intellij.openapi.diagnostic.thisLogger
+import dev.lain.claudejb.util.thisLogger
 import java.io.File
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
@@ -156,7 +156,7 @@ internal object ClipboardCli {
         val bytes = try {
             reader.get(3, TimeUnit.SECONDS)
         } catch (e: TimeoutException) {
-            log.debug("Clipboard helper ${cmd.firstOrNull()} timed out after 3s; killing it", e)
+            log.debug { "Clipboard helper ${cmd.firstOrNull()} timed out after 3s; killing it: $e" }
             proc.destroyForcibly()
             reader.cancel(true)
             return@runCatching null

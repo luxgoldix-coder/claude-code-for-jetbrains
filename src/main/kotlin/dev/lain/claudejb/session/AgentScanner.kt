@@ -1,8 +1,8 @@
 package dev.lain.claudejb.session
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import dev.lain.claudejb.util.logger
 import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -25,7 +25,7 @@ class AgentScanner(
         fun edt(block: () -> Unit)
     }
 
-    private val log = Logger.getInstance(AgentScanner::class.java)
+    private val log = logger<AgentScanner>()
 
     private val outputTail = LiveOutputTail()
 
@@ -92,7 +92,7 @@ class AgentScanner(
             replayTasks(id, onTasksReplayed)
             val admitted = runCatching { PluginAgentIndex.getInstance(project).admittedAgents(id) }
                 .getOrDefault(emptyList())
-            log.debug("agent restore: session=$id indexed=${admitted.size}")
+            log.debug { "agent restore: session=$id indexed=${admitted.size}" }
             admitted.takeIf { it.isNotEmpty() }?.let { agents.preAdmit(it) }
             scan()
         }

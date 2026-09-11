@@ -2,11 +2,11 @@ package dev.lain.claudejb.session
 
 import com.intellij.ide.RecentProjectListActionProvider
 import com.intellij.ide.ReopenProjectAction
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.ProjectManager
 import dev.lain.claudejb.settings.ClaudeHome
 import dev.lain.claudejb.settings.SecretStore
 import dev.lain.claudejb.settings.SettingsScope
+import dev.lain.claudejb.util.logger
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths

@@ -1,12 +1,12 @@
 package dev.lain.claudejb.session
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import dev.lain.claudejb.process.ClaudeBinaryLocator
 import dev.lain.claudejb.protocol.ClaudeEvent
 import dev.lain.claudejb.protocol.ControlProtocol
 import dev.lain.claudejb.settings.ClaudeSettings
+import dev.lain.claudejb.util.thisLogger
 
 class ConversationEvents(
     private val s: ClaudeSession,

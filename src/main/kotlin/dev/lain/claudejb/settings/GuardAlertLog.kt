@@ -1,6 +1,6 @@
 package dev.lain.claudejb.settings
 
-import com.intellij.openapi.diagnostic.logger
+import dev.lain.claudejb.util.logger
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.util.concurrent.Future

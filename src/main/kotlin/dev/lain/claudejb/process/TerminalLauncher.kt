@@ -1,9 +1,9 @@
 package dev.lain.claudejb.process
 
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import dev.lain.claudejb.util.InstalledPlugins
+import dev.lain.claudejb.util.thisLogger
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 
 object TerminalLauncher {

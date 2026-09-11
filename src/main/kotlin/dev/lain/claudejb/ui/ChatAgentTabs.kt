@@ -9,6 +9,7 @@ import dev.lain.claudejb.settings.ClaudeSettings
 import dev.lain.claudejb.ui.jcef.JcefBridge
 import dev.lain.claudejb.ui.jcef.JcefTabsData
 import dev.lain.claudejb.ui.jcef.Msg
+import dev.lain.claudejb.util.logger
 
 internal class ChatAgentTabs(private val panel: JcefChatPanel) {
 
@@ -119,6 +120,6 @@ internal class ChatAgentTabs(private val panel: JcefChatPanel) {
     }
 
     private companion object {
-        val LOG = com.intellij.openapi.diagnostic.Logger.getInstance(ChatAgentTabs::class.java)
+        val LOG = logger<ChatAgentTabs>()
     }
 }

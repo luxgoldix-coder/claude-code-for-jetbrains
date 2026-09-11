@@ -3,12 +3,12 @@ package dev.lain.claudejb.git
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vfs.VirtualFile
+import dev.lain.claudejb.util.logger
 
 @Service(Service.Level.PROJECT)
 class GitHistoryService(private val project: Project) {

@@ -1,7 +1,7 @@
 package dev.lain.claudejb.ui
 
-import com.intellij.openapi.diagnostic.thisLogger
 import dev.lain.claudejb.ui.jcef.Msg
+import dev.lain.claudejb.util.thisLogger
 
 internal class BridgeNavigation(private val panel: JcefChatPanel) {
 

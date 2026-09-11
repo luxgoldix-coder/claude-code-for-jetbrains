@@ -1,9 +1,9 @@
 package dev.lain.claudejb.session
 
-import com.intellij.openapi.diagnostic.thisLogger
 import dev.lain.claudejb.process.ClaudeProcess
 import dev.lain.claudejb.protocol.ClaudeEvent
 import dev.lain.claudejb.settings.ClaudeSettings
+import dev.lain.claudejb.util.thisLogger
 import java.io.File
 
 class SessionProcess(

@@ -2,11 +2,11 @@ package dev.lain.claudejb.session
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import dev.lain.claudejb.context.Attachment
 import dev.lain.claudejb.protocol.ClaudeEvent
 import dev.lain.claudejb.util.edt
+import dev.lain.claudejb.util.thisLogger
 import java.util.concurrent.CopyOnWriteArrayList
 
 class ClaudeSession(

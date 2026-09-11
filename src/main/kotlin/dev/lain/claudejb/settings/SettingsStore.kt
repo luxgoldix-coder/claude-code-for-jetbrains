@@ -1,6 +1,6 @@
 package dev.lain.claudejb.settings
 
-import com.intellij.openapi.diagnostic.logger
+import dev.lain.claudejb.util.logger
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.booleanOrNull
@@ -83,7 +83,7 @@ internal object SettingsStore {
     @Synchronized
     fun save(scope: SettingsScope, state: ClaudeSettings.State): Boolean {
         if (SecretStore.inert()) {
-            log.debug("not saving the settings: no credential store is installed in this JVM")
+            log.debug { "not saving the settings: no credential store is installed in this JVM" }
             return false
         }
         if (failed(scope)) {

@@ -3,10 +3,10 @@ package dev.lain.claudejb.vuln
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import dev.lain.claudejb.settings.ClaudeSettings
 import dev.lain.claudejb.util.edt
+import dev.lain.claudejb.util.logger
 import java.io.File
 
 @Service(Service.Level.PROJECT)

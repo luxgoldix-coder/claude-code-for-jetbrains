@@ -1,8 +1,8 @@
 package dev.lain.claudejb.session
 
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.concurrency.AppExecutorUtil
 import dev.lain.claudejb.protocol.ClaudeEvent
+import dev.lain.claudejb.util.thisLogger
 import kotlinx.serialization.json.JsonObject
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ScheduledFuture
@@ -38,7 +38,6 @@ class SessionControlClient(
     private val log = thisLogger()
 
     private companion object {
-        const val TRACE_MAX = 2000
         const val DEFAULT_TIMEOUT_SECONDS = 30L
     }
 
@@ -61,13 +60,13 @@ class SessionControlClient(
             settle(id, ClaudeEvent.ControlResult(requestId = id, success = false, payload = null, error = "control request timed out"))
         }
         pending[id] = Pending(watchdog) { res ->
-            log.debug(
-                "CC-TRACE control reply ${requestSubtype(requestLine)} id=$id success=${res.success}" +
-                    " err=${res.error ?: "-"} payload=${res.payload?.toString()?.take(TRACE_MAX) ?: "null"}",
-            )
+            log.debug {
+                "control reply ${requestSubtype(requestLine)} id=$id success=${res.success}" +
+                    " err=${res.error ?: "-"} payload=${res.payload ?: "null"}"
+            }
             onOutcome(res)
         }
-        log.debug("CC-TRACE control send ${requestSubtype(requestLine)} id=$id")
+        log.debug { "control send ${requestSubtype(requestLine)} id=$id" }
         write(requestLine)
     }
 

@@ -21,6 +21,7 @@ import dev.lain.claudejb.ui.jcef.JcefState
 import dev.lain.claudejb.ui.jcef.JcefTheme
 import dev.lain.claudejb.ui.jcef.SettingsMenuRows
 import dev.lain.claudejb.util.edt
+import dev.lain.claudejb.util.logger
 import dev.lain.claudejb.vuln.VulnService
 import java.awt.BorderLayout
 
@@ -186,7 +187,7 @@ class JcefChatPanel(internal val project: Project, val session: ClaudeSession) :
         )
         if (json == lastSessionJson) return
         lastSessionJson = json
-        LOG.debug("CC-TRACE pushSession ${json.take(TRACE_MAX)}")
+        LOG.debug { "pushSession $json" }
         host.exec("window.cc.session && window.cc.session($json)")
     }
 
@@ -223,8 +224,6 @@ class JcefChatPanel(internal val project: Project, val session: ClaudeSession) :
     }
 
     private companion object {
-        val LOG = com.intellij.openapi.diagnostic.Logger.getInstance(JcefChatPanel::class.java)
-
-        const val TRACE_MAX = 2000
+        val LOG = logger<JcefChatPanel>()
     }
 }

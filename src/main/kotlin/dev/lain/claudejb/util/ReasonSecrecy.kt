@@ -1,4 +1,4 @@
-package dev.lain.claudejb.permission
+package dev.lain.claudejb.util
 
 object ReasonSecrecy {
 
@@ -11,11 +11,12 @@ object ReasonSecrecy {
         RegexOption.IGNORE_CASE,
     )
 
+    fun isSensitive(name: String, value: String): Boolean =
+        value.length >= MIN_SECRET_LENGTH && SENSITIVE_NAME.containsMatchIn(name)
+
     fun redact(text: String?, env: Map<String, String>): String? {
         if (text.isNullOrEmpty() || env.isEmpty()) return text
-        val secrets = env.entries
-            .filter { it.value.length >= MIN_SECRET_LENGTH && SENSITIVE_NAME.containsMatchIn(it.key) }
-            .map { it.value }
+        val secrets = env.entries.filter { isSensitive(it.key, it.value) }.map { it.value }
         return secrets.fold(text) { carried, secret -> carried.replace(secret, PLACEHOLDER) }
     }
 }

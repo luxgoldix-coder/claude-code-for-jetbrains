@@ -1,7 +1,6 @@
 package dev.lain.claudejb.ui
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
 import dev.lain.claudejb.settings.ClaudeSettings
 import dev.lain.claudejb.settings.GuardAlert
 import dev.lain.claudejb.settings.GuardAlertLog
@@ -9,6 +8,7 @@ import dev.lain.claudejb.settings.SecretStore
 import dev.lain.claudejb.settings.SettingsScope
 import dev.lain.claudejb.ui.jcef.JcefGuardData
 import dev.lain.claudejb.util.edt
+import dev.lain.claudejb.util.logger
 
 internal class GuardFeed(private val panel: JcefChatPanel) {
 
@@ -61,6 +61,6 @@ internal class GuardFeed(private val panel: JcefChatPanel) {
     }
 
     private companion object {
-        private val logger = Logger.getInstance(GuardFeed::class.java)
+        private val logger = logger<GuardFeed>()
     }
 }

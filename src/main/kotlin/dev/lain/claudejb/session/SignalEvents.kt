@@ -1,8 +1,8 @@
 package dev.lain.claudejb.session
 
-import com.intellij.openapi.diagnostic.thisLogger
 import dev.lain.claudejb.protocol.ClaudeEvent
 import dev.lain.claudejb.protocol.isHiddenUsageWindow
+import dev.lain.claudejb.util.thisLogger
 
 class SignalEvents(
     private val s: ClaudeSession,
@@ -47,10 +47,10 @@ class SignalEvents(
 
     private fun onRateLimit(event: ClaudeEvent.RateLimit) {
         val incoming = event.info
-        log.debug(
+        log.debug {
             "rate_limit_event: window=${incoming.rateLimitType} status=${incoming.status}" +
-                " utilization=${incoming.utilization} -> pct=${incoming.utilizationPercent()}",
-        )
+                " utilization=${incoming.utilization} -> pct=${incoming.utilizationPercent()}"
+        }
         val window = incoming.rateLimitType
         if (isHiddenUsageWindow(window)) return
         val previous = window?.let { s.signals.rateLimits[it] } ?: s.signals.rateLimit.takeIf { it?.rateLimitType == window }
@@ -74,7 +74,7 @@ class SignalEvents(
             val of = (i.maxRetries ?: 0).takeIf { it > 0 }?.let { "/$it" } ?: ""
             s.systemNotice("Retrying (attempt ${i.attempt ?: 1}$of)…")
         } else {
-            log.debug("control_request_progress: ${i.status} for ${i.requestId}")
+            log.debug { "control_request_progress: ${i.status} for ${i.requestId}" }
         }
     }
 }

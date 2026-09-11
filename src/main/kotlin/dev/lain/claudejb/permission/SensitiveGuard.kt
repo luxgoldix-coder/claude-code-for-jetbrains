@@ -1,5 +1,6 @@
 package dev.lain.claudejb.permission
 
+import dev.lain.claudejb.util.ReasonSecrecy
 import kotlinx.serialization.json.JsonObject
 
 object SensitiveGuard {

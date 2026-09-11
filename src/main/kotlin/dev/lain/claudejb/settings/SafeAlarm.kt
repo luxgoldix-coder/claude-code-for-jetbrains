@@ -3,8 +3,8 @@ package dev.lain.claudejb.settings
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.logger
 import dev.lain.claudejb.util.PluginIdentity
+import dev.lain.claudejb.util.logger
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal object SafeAlarm {

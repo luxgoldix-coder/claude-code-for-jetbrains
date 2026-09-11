@@ -1,9 +1,9 @@
 package dev.lain.claudejb.ui
 
-import com.intellij.openapi.diagnostic.thisLogger
 import dev.lain.claudejb.settings.ClaudeSettings
 import dev.lain.claudejb.settings.WorkloadWindow
 import dev.lain.claudejb.ui.jcef.Msg
+import dev.lain.claudejb.util.thisLogger
 
 internal class BridgeSessionControl(private val panel: JcefChatPanel) {
 

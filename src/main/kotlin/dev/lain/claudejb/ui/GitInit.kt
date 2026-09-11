@@ -3,7 +3,6 @@ package dev.lain.claudejb.ui
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsDirectoryMapping
@@ -11,6 +10,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import dev.lain.claudejb.git.GitAvailability
 import dev.lain.claudejb.util.edt
+import dev.lain.claudejb.util.logger
 import java.io.File
 
 internal class GitInit(private val project: Project) {
