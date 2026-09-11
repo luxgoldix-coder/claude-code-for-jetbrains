@@ -1,30 +1,11 @@
 package dev.lain.claudejb.permission
 
 import dev.lain.claudejb.permission.SensitiveGuard.Verdict
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
-class OutsideProjectViaCommandTest {
-
-    private val home = "/home/me"
-
-    private val policy = SensitiveGuard.Policy(
-        globs = CredentialPaths.SENSITIVE_GLOBS,
-        home = home,
-        currentUser = "me",
-        guardedRoots = listOf("/mnt/share", "/net/nfs"),
-        wslHost = false,
-        projectRoot = "/home/me/proj",
-    )
-
-    private fun bash(cmd: String) = buildJsonObject { put("command", cmd) }
-
-    private fun v(input: JsonObject) = SensitiveGuard.evaluate(input, policy).verdict
-
-    private fun rule(input: JsonObject) = SensitiveGuard.evaluate(input, policy).rule
+class OutsideProjectViaCommandTest :
+    GuardProbe(GuardFixture.basePolicy().copy(guardedRoots = GuardFixture.GUARDED_ROOTS, wslHost = false)) {
 
     @Test
     fun `a shell command reaching outside the project is refused, like the file tools already were`() {
@@ -38,7 +19,7 @@ class OutsideProjectViaCommandTest {
 
     @Test
     fun `the same reach through a file tool and through a command reach the same verdict`() {
-        val throughTool = buildJsonObject { put("file_path", "/var/log/dnf5.log") }
+        val throughTool = read("/var/log/dnf5.log")
 
         assertEquals(v(throughTool), v(bash("cat /var/log/dnf5.log")))
         assertEquals(rule(throughTool), rule(bash("cat /var/log/dnf5.log")))

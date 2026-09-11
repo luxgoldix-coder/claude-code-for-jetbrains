@@ -1,22 +1,11 @@
 package dev.lain.claudejb.permission
 
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import kotlin.system.measureTimeMillis
 
-class GuardCommandLengthTest {
-
-    private val policy = SensitiveGuard.Policy(
-        globs = CredentialPaths.SENSITIVE_GLOBS,
-        home = "/home/me",
-        currentUser = "me",
-        projectRoot = "/home/me/proj",
-    )
-
-    private fun bash(cmd: String) = buildJsonObject { put("command", cmd) }
+class GuardCommandLengthTest : GuardProbe() {
 
     private fun repeatTo(unit: String, length: Int): String {
         val builder = StringBuilder(length + unit.length)

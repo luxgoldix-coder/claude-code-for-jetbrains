@@ -1,27 +1,11 @@
 package dev.lain.claudejb.permission
 
 import dev.lain.claudejb.permission.SensitiveGuard.Verdict
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Test
 
-class InhibitRecoveryTest {
-
-    private val policy = SensitiveGuard.Policy(
-        globs = CredentialPaths.SENSITIVE_GLOBS,
-        home = "/home/me",
-        currentUser = "me",
-        projectRoot = "/home/me/proj",
-    )
-
-    private fun bash(cmd: String) = buildJsonObject { put("command", cmd) }
-
-    private fun v(input: JsonObject) = SensitiveGuard.evaluate(input, policy).verdict
-
-    private fun rule(input: JsonObject) = SensitiveGuard.evaluate(input, policy).rule
+class InhibitRecoveryTest : GuardProbe() {
 
     @Test
     fun `destroying backups and recovery is refused`() {

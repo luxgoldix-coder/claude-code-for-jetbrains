@@ -1,20 +1,12 @@
 package dev.lain.claudejb.permission
 
 import dev.lain.claudejb.permission.SensitiveGuard.Verdict
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
-class GuardCloudCommandsTest {
+class GuardCloudCommandsTest : GuardProbe() {
 
-    private val policy = SensitiveGuard.Policy(
-        home = "/home/me",
-        currentUser = "me",
-        projectRoot = "/home/me/proj",
-    )
-
-    private fun v(cmd: String) = SensitiveGuard.evaluate(buildJsonObject { put("command", cmd) }, policy).verdict
+    private fun v(cmd: String) = v(bash(cmd))
 
     private fun denied(cases: List<String>) = cases.forEach { assertEquals(Verdict.DENY, v(it), it) }
 

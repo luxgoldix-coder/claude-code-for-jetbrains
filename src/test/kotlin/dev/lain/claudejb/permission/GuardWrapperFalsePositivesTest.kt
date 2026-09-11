@@ -1,8 +1,7 @@
 package dev.lain.claudejb.permission
 
+import dev.lain.claudejb.permission.GuardFixture.bash
 import dev.lain.claudejb.permission.SensitiveGuard.Verdict
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Test
@@ -21,10 +20,9 @@ class GuardWrapperFalsePositivesTest {
         fileReader = { path -> scripts[path] },
     )
 
-    private fun v(cmd: String) = SensitiveGuard.evaluate(buildJsonObject { put("command", cmd) }, policy).verdict
+    private fun v(cmd: String) = SensitiveGuard.evaluate(bash(cmd), policy).verdict
 
-    private fun why(cmd: String) =
-        SensitiveGuard.evaluate(buildJsonObject { put("command", cmd) }, policy).reason.orEmpty()
+    private fun why(cmd: String) = SensitiveGuard.evaluate(bash(cmd), policy).reason.orEmpty()
 
     @Test
     fun `a case branch pattern is a glob, not a place`() {

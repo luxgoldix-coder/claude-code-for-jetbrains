@@ -1,5 +1,6 @@
 package dev.lain.claudejb.permission
 
+import dev.lain.claudejb.permission.GuardFixture.HOME
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonArray
@@ -12,19 +13,8 @@ import org.junit.jupiter.api.Test
 import kotlin.random.Random
 
 @Suppress("VariableNaming", "ktlint:standard:property-naming")
-class SensitiveGuardFuzzTest {
-
-    private val home = "/home/me"
-    private val trustedPolicy = SensitiveGuard.Policy(
-        globs = CredentialPaths.SENSITIVE_GLOBS,
-        home = home,
-        currentUser = "me",
-        guardedRoots = listOf("/mnt/share", "/net/nfs"),
-        wslHost = true,
-        projectRoot = "/home/me/proj",
-    )
-
-    private fun verdict(input: JsonObject) = SensitiveGuard.evaluate(input, trustedPolicy).verdict
+class SensitiveGuardFuzzTest :
+    GuardProbe(GuardFixture.basePolicy().copy(guardedRoots = GuardFixture.GUARDED_ROOTS, wslHost = true)) {
 
     private val ALPHABET = ('a'..'z') + ('A'..'Z') + ('0'..'9')
     private val NOISE_CHARS = ALPHABET + " _-.,:=+!@#%^&*()[]{}"
@@ -124,8 +114,8 @@ class SensitiveGuardFuzzTest {
                 val path = if (concrete.startsWith("/")) concrete else "/srv/${rng.noise(15)}/$concrete"
                 val input = rng.wrapPayload(rng.randomLocationKey(), path)
                 cases++
-                assertEquals(SensitiveGuard.Verdict.DENY, verdict(input), "glob '$glob' -> '$path' in $input (trusted)")
-                assertEquals(SensitiveGuard.Verdict.DENY, verdict(input), "glob '$glob' -> '$path' in $input (untrusted)")
+                assertEquals(SensitiveGuard.Verdict.DENY, v(input), "glob '$glob' -> '$path' in $input (trusted)")
+                assertEquals(SensitiveGuard.Verdict.DENY, v(input), "glob '$glob' -> '$path' in $input (untrusted)")
             }
         }
         assertTrue(cases >= CredentialPaths.SENSITIVE_GLOBS.size * GLOB_REPEATS, "fuzz did not cover every glob")
@@ -137,12 +127,12 @@ class SensitiveGuardFuzzTest {
         val sample = CredentialPaths.SENSITIVE_GLOBS.filter { !it.startsWith("/") }
         repeat(300) {
             val glob = sample.random(rng)
-            val bare = "$home/${rng.instantiateGlob(glob)}"
+            val bare = "$HOME/${rng.instantiateGlob(glob)}"
             val needle = if (' ' in bare) "\"$bare\"" else bare
             val junkWords = { List(rng.nextInt(0, 6)) { rng.token() }.joinToString(" ") }
             val cmd = "${junkWords()} cat $needle ${junkWords()}".trim()
             val input = rng.wrapPayload(COMMAND_KEYS.random(rng), cmd)
-            assertNotEquals(SensitiveGuard.Verdict.ALLOW, verdict(input), "needle '$needle' in '$cmd'")
+            assertNotEquals(SensitiveGuard.Verdict.ALLOW, v(input), "needle '$needle' in '$cmd'")
         }
     }
 
@@ -152,9 +142,9 @@ class SensitiveGuardFuzzTest {
         repeat(300) {
             val reps = rng.nextInt(10, 500)
             val segment = listOf("/.", "/..").random(rng)
-            val path = "$home/.ssh${segment.repeat(reps)}/id_rsa"
+            val path = "$HOME/.ssh${segment.repeat(reps)}/id_rsa"
             val input = rng.wrapPayload(rng.randomLocationKey(), path)
-            assertNotEquals(SensitiveGuard.Verdict.ALLOW, verdict(input), "reps=$reps segment='$segment' len=${path.length}")
+            assertNotEquals(SensitiveGuard.Verdict.ALLOW, v(input), "reps=$reps segment='$segment' len=${path.length}")
         }
     }
 
@@ -200,8 +190,8 @@ class SensitiveGuardFuzzTest {
             val key = COMMAND_KEYS.random(rng)
             val trusted = rng.wrapPayload(key, cmd)
             val untrusted = trusted
-            assertEquals(SensitiveGuard.Verdict.DENY, verdict(trusted), "key=$key cmd='$cmd' json=$trusted")
-            assertEquals(SensitiveGuard.Verdict.DENY, verdict(untrusted), "key=$key cmd='$cmd'")
+            assertEquals(SensitiveGuard.Verdict.DENY, v(trusted), "key=$key cmd='$cmd' json=$trusted")
+            assertEquals(SensitiveGuard.Verdict.DENY, v(untrusted), "key=$key cmd='$cmd'")
         }
     }
 
@@ -212,7 +202,7 @@ class SensitiveGuardFuzzTest {
             val tool = OFFENSIVE_TOOLS.random(rng)
             val cmd = rng.mentionVariant(tool)
             val input = rng.wrapPayload(COMMAND_KEYS.random(rng), cmd)
-            assertEquals(SensitiveGuard.Verdict.ALLOW, verdict(input), cmd)
+            assertEquals(SensitiveGuard.Verdict.ALLOW, v(input), cmd)
         }
     }
 
@@ -224,7 +214,7 @@ class SensitiveGuardFuzzTest {
             val kw = keywords.random(rng)
             val cmd = "${rng.noise(40)} $kw ${rng.noise(40)}".trim()
             val input = rng.wrapPayload(COMMAND_KEYS.random(rng), cmd)
-            assertEquals(SensitiveGuard.Verdict.DENY, verdict(input), cmd)
+            assertEquals(SensitiveGuard.Verdict.DENY, v(input), cmd)
         }
     }
 
@@ -301,7 +291,7 @@ class SensitiveGuardFuzzTest {
             val input = rng.wrapPayload(COMMAND_KEYS.random(rng), obfuscated)
             assertNotEquals(
                 SensitiveGuard.Verdict.ALLOW,
-                verdict(input),
+                v(input),
                 "obfuscated '$obfuscated' (from '$base')",
             )
         }
@@ -321,7 +311,7 @@ class SensitiveGuardFuzzTest {
             val encoded = java.util.Base64.getEncoder().encodeToString(base.toByteArray())
             val cmd = decodeWrappers.random(rng)(encoded)
             val input = rng.wrapPayload(COMMAND_KEYS.random(rng), cmd)
-            assertNotEquals(SensitiveGuard.Verdict.ALLOW, verdict(input), cmd)
+            assertNotEquals(SensitiveGuard.Verdict.ALLOW, v(input), cmd)
         }
     }
 
@@ -359,8 +349,8 @@ class SensitiveGuardFuzzTest {
         repeat(600) {
             val path = FOREIGN_GENERATORS.random(rng)(rng)
             val input = rng.wrapPayload(rng.randomLocationKey(), path)
-            assertEquals(SensitiveGuard.Verdict.DENY, verdict(input), "trusted: $path in $input")
-            assertEquals(SensitiveGuard.Verdict.DENY, verdict(input), "untrusted: $path")
+            assertEquals(SensitiveGuard.Verdict.DENY, v(input), "trusted: $path in $input")
+            assertEquals(SensitiveGuard.Verdict.DENY, v(input), "untrusted: $path")
         }
     }
 
@@ -374,8 +364,8 @@ class SensitiveGuardFuzzTest {
             4 -> "/var/folders/${token(2, 2)}/${token(4, 4)}"
             5 -> "C:/Windows/Temp"
             6 -> "/mnt/c/Windows/Temp"
-            7 -> "C:/Users/${trustedPolicy.currentUser}/AppData/Local/Temp"
-            else -> "/mnt/c/Users/${trustedPolicy.currentUser}/AppData/Local/Temp"
+            7 -> "C:/Users/${policy.currentUser}/AppData/Local/Temp"
+            else -> "/mnt/c/Users/${policy.currentUser}/AppData/Local/Temp"
         }
         return if (tail.isEmpty()) base else "$base/$tail"
     }
@@ -387,8 +377,8 @@ class SensitiveGuardFuzzTest {
             val path = rng.tempDirPath()
             val cmd = "${rng.noise(20)} ls $path ${rng.noise(20)}".trim()
             val input = rng.wrapPayload(COMMAND_KEYS.random(rng), cmd)
-            assertEquals(SensitiveGuard.Verdict.DENY, verdict(input), path)
-            assertEquals(SensitiveGuard.Verdict.DENY, verdict(input), path)
+            assertEquals(SensitiveGuard.Verdict.DENY, v(input), path)
+            assertEquals(SensitiveGuard.Verdict.DENY, v(input), path)
         }
     }
 
@@ -404,8 +394,8 @@ class SensitiveGuardFuzzTest {
         repeat(600) {
             val path = rng.outsideProjectPath()
             val input = rng.wrapPayload(rng.randomLocationKey(), path)
-            assertEquals(SensitiveGuard.Verdict.DENY, verdict(input), path)
-            assertEquals(SensitiveGuard.Verdict.DENY, verdict(input), path)
+            assertEquals(SensitiveGuard.Verdict.DENY, v(input), path)
+            assertEquals(SensitiveGuard.Verdict.DENY, v(input), path)
         }
     }
 
@@ -430,8 +420,8 @@ class SensitiveGuardFuzzTest {
             } else {
                 rng.wrapPayload(COMMAND_KEYS.random(rng), "dd if=$path bs=1M count=1")
             }
-            assertEquals(SensitiveGuard.Verdict.DENY, verdict(input), path)
-            assertEquals(SensitiveGuard.Verdict.DENY, verdict(input), path)
+            assertEquals(SensitiveGuard.Verdict.DENY, v(input), path)
+            assertEquals(SensitiveGuard.Verdict.DENY, v(input), path)
         }
     }
 
@@ -442,7 +432,7 @@ class SensitiveGuardFuzzTest {
         repeat(300) {
             val node = exempt.random(rng)
             val cmd = "wc -c $node"
-            assertEquals(SensitiveGuard.Verdict.ALLOW, verdict(rng.wrapPayload(COMMAND_KEYS.random(rng), cmd)), cmd)
+            assertEquals(SensitiveGuard.Verdict.ALLOW, v(rng.wrapPayload(COMMAND_KEYS.random(rng), cmd)), cmd)
         }
     }
 
@@ -465,14 +455,14 @@ class SensitiveGuardFuzzTest {
         repeat(600) {
             val cmd = rng.mutatingCommand()
             val input = rng.wrapPayload(COMMAND_KEYS.random(rng), cmd)
-            assertNotEquals(SensitiveGuard.Verdict.ALLOW, verdict(input), cmd)
+            assertNotEquals(SensitiveGuard.Verdict.ALLOW, v(input), cmd)
         }
     }
 
     @Test
     fun `every way of naming another proxy is caught once one is declared, and ignored while none is`() {
         val rng = Random(20260818L + 14)
-        val declared = trustedPolicy.copy(httpProxy = "http://proxy.corp:3128", httpsProxy = "http://proxy.corp:3128")
+        val declared = policy.copy(httpProxy = "http://proxy.corp:3128", httpsProxy = "http://proxy.corp:3128")
         repeat(400) {
             val other = "http://${rng.token()}.${listOf("net", "io", "com").random(rng)}:${rng.nextInt(1024, 65535)}"
             val cmd = when (rng.nextInt(0, 5)) {
@@ -483,12 +473,8 @@ class SensitiveGuardFuzzTest {
                 else -> "http_proxy=$other ${listOf("curl", "wget").random(rng)} https://api.example.com"
             }
             val input = rng.wrapPayload(COMMAND_KEYS.random(rng), cmd)
-            assertEquals(
-                SensitiveGuard.Verdict.DENY,
-                SensitiveGuard.evaluate(input, declared).verdict,
-                "declared: $cmd",
-            )
-            assertEquals(SensitiveGuard.Verdict.ALLOW, verdict(input), "undeclared: $cmd")
+            assertEquals(SensitiveGuard.Verdict.DENY, v(input, declared), "declared: $cmd")
+            assertEquals(SensitiveGuard.Verdict.ALLOW, v(input), "undeclared: $cmd")
         }
     }
 
@@ -504,7 +490,7 @@ class SensitiveGuardFuzzTest {
             } else {
                 rng.wrapPayload(COMMAND_KEYS.random(rng), "curl -s $url")
             }
-            assertNotEquals(SensitiveGuard.Verdict.ALLOW, verdict(input), url)
+            assertNotEquals(SensitiveGuard.Verdict.ALLOW, v(input), url)
         }
     }
 
@@ -515,7 +501,7 @@ class SensitiveGuardFuzzTest {
             val domain = DangerousDomains.BLOCKED_DOMAINS.random(rng)
             val host = if (rng.nextBoolean()) "${rng.token()}$domain" else "$domain.${rng.token()}.example.org"
             val url = "https://$host/${rng.token()}"
-            assertEquals(SensitiveGuard.Verdict.ALLOW, verdict(rng.wrapPayload("url", url)), url)
+            assertEquals(SensitiveGuard.Verdict.ALLOW, v(rng.wrapPayload("url", url)), url)
         }
     }
 
@@ -524,13 +510,13 @@ class SensitiveGuardFuzzTest {
         val rng = Random(20260818L + 17)
         val sample = CredentialPaths.SENSITIVE_GLOBS.filter { !it.startsWith("/") }
         repeat(300) {
-            val target = "$home/${rng.instantiateGlob(sample.random(rng))}"
+            val target = "$HOME/${rng.instantiateGlob(sample.random(rng))}"
             val hops = rng.nextInt(1, 5)
             val names = (1..hops).map { "V${rng.token(2, 4)}$it" }
             val env = names.mapIndexed { i, n -> n to (names.getOrNull(i + 1)?.let { "\$$it" } ?: target) }.toMap()
-            val policy = trustedPolicy.copy(envValues = env)
+            val chained = policy.copy(envValues = env)
             val cmd = "cat \"\$${names.first()}\""
-            val decision = SensitiveGuard.evaluate(rng.wrapPayload(COMMAND_KEYS.random(rng), cmd), policy)
+            val decision = SensitiveGuard.evaluate(rng.wrapPayload(COMMAND_KEYS.random(rng), cmd), chained)
             assertNotEquals(SensitiveGuard.Verdict.ALLOW, decision.verdict, "chain=$env cmd=$cmd")
             assertTrue(
                 decision.reason.orEmpty().contains("credentials or key material"),
@@ -549,13 +535,9 @@ class SensitiveGuardFuzzTest {
                 val next = names.getOrNull(i + 1) ?: if (cyclic) names.first() else null
                 n to (next?.let { "\$$it" } ?: "/home/me/${rng.token()}")
             }.toMap()
-            val policy = trustedPolicy.copy(envValues = env)
+            val chained = policy.copy(envValues = env)
             val input = rng.wrapPayload(rng.randomLocationKey(), "\$${names.first()}/${rng.token()}")
-            assertEquals(
-                SensitiveGuard.Verdict.DENY,
-                SensitiveGuard.evaluate(input, policy).verdict,
-                "cyclic=$cyclic env=$env",
-            )
+            assertEquals(SensitiveGuard.Verdict.DENY, v(input, chained), "cyclic=$cyclic env=$env")
         }
     }
 
@@ -572,7 +554,7 @@ class SensitiveGuardFuzzTest {
                 4 -> "./$name ${rng.token()}"
                 else -> "sudo bash /home/me/proj/$name"
             }
-            assertNotEquals(SensitiveGuard.Verdict.ALLOW, verdict(rng.wrapPayload(COMMAND_KEYS.random(rng), cmd)), cmd)
+            assertNotEquals(SensitiveGuard.Verdict.ALLOW, v(rng.wrapPayload(COMMAND_KEYS.random(rng), cmd)), cmd)
         }
     }
 }

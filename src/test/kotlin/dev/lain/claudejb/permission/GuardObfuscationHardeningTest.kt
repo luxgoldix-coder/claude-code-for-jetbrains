@@ -1,5 +1,6 @@
 package dev.lain.claudejb.permission
 
+import dev.lain.claudejb.permission.GuardFixture.bash
 import dev.lain.claudejb.permission.SensitiveGuard.Verdict
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -64,8 +65,6 @@ class GuardObfuscationHardeningTest {
         projectRoot = "/home/me/proj",
         fileReader = { path -> hooks[path] },
     )
-
-    private fun bash(cmd: String) = buildJsonObject { put("command", cmd) }
 
     private fun v(cmd: String) = SensitiveGuard.evaluate(bash(cmd), policy).verdict
 

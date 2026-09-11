@@ -1,28 +1,11 @@
 package dev.lain.claudejb.permission
 
 import dev.lain.claudejb.permission.SensitiveGuard.Verdict
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Test
 
-class AntiForensicsTest {
-
-    private val policy = SensitiveGuard.Policy(
-        globs = CredentialPaths.SENSITIVE_GLOBS,
-        home = "/home/me",
-        currentUser = "me",
-        projectRoot = "/home/me/proj",
-    )
-
-    private fun bash(cmd: String) = buildJsonObject { put("command", cmd) }
-
-    private fun read(path: String) = buildJsonObject { put("file_path", path) }
-
-    private fun v(input: kotlinx.serialization.json.JsonObject) = SensitiveGuard.evaluate(input, policy).verdict
-
-    private fun rule(input: kotlinx.serialization.json.JsonObject) = SensitiveGuard.evaluate(input, policy).rule
+class AntiForensicsTest : GuardProbe() {
 
     @Test
     fun `clearing the trail is refused as anti-forensic`() {

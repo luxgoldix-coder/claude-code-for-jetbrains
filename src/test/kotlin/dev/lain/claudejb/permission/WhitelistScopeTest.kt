@@ -1,14 +1,11 @@
 package dev.lain.claudejb.permission
 
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
+import dev.lain.claudejb.permission.GuardFixture.bash
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Test
 
 class WhitelistScopeTest {
-
-    private fun bash(cmd: String) = buildJsonObject { put("command", cmd) }
 
     private fun policy(
         global: List<String> = emptyList(),

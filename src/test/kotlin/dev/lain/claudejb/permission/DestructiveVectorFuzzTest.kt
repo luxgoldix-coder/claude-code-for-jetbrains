@@ -1,23 +1,12 @@
 package dev.lain.claudejb.permission
 
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Test
 import kotlin.random.Random
 
 @Suppress("VariableNaming", "ktlint:standard:property-naming")
-class DestructiveVectorFuzzTest {
-
-    private val policy = SensitiveGuard.Policy(
-        globs = CredentialPaths.SENSITIVE_GLOBS,
-        home = "/home/me",
-        currentUser = "me",
-        projectRoot = "/home/me/proj",
-    )
-
-    private fun bash(cmd: String) = buildJsonObject { put("command", cmd) }
+class DestructiveVectorFuzzTest : GuardProbe() {
 
     private fun Random.scramble(base: String): String {
         val cased = if (nextBoolean()) {
@@ -182,7 +171,7 @@ class DestructiveVectorFuzzTest {
         repeat(700) {
             val (rule, bases) = BENIGN.random(rng)
             val cmd = bases.random(rng)
-            assertNotEquals(rule, SensitiveGuard.evaluate(bash(cmd), policy).rule, cmd)
+            assertNotEquals(rule, rule(bash(cmd)), cmd)
         }
     }
 }

@@ -1,57 +1,49 @@
 package dev.lain.claudejb.permission
 
+import dev.lain.claudejb.permission.GuardFixture.HOME
+import dev.lain.claudejb.permission.GuardFixture.PROJECT
+import dev.lain.claudejb.permission.GuardFixture.USER
 import dev.lain.claudejb.permission.SensitiveGuard.Verdict
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
+import kotlinx.serialization.json.JsonObject
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-class GuardReasonSecrecyTest {
+private const val TOKEN = "ghp_A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8"
 
-    private val token = "ghp_A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8"
+private const val API_KEY = "sk-ant-api03-ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
 
-    private val apiKey = "sk-ant-api03-ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+private val ENV = mapOf(
+    "GITHUB_TOKEN" to TOKEN,
+    "ANTHROPIC_API_KEY" to API_KEY,
+    "AWS_SECRET_ACCESS_KEY" to "wJalrXUtnFEMI7K7MDENGbPxRfiCYEXAMPLEKEY",
+    "LANG" to "C",
+    "HOME" to "/home/me",
+    "EDITOR" to "vim",
+)
 
-    private val env = mapOf(
-        "GITHUB_TOKEN" to token,
-        "ANTHROPIC_API_KEY" to apiKey,
-        "AWS_SECRET_ACCESS_KEY" to "wJalrXUtnFEMI7K7MDENGbPxRfiCYEXAMPLEKEY",
-        "LANG" to "C",
-        "HOME" to "/home/me",
-        "EDITOR" to "vim",
-    )
+class GuardReasonSecrecyTest :
+    GuardProbe(SensitiveGuard.Policy(home = HOME, currentUser = USER, projectRoot = PROJECT, envValues = ENV)) {
 
-    private val policy = SensitiveGuard.Policy(
-        home = "/home/me",
-        currentUser = "me",
-        projectRoot = "/home/me/proj",
-        envValues = env,
-    )
-
-    private fun decide(input: kotlinx.serialization.json.JsonObject) = SensitiveGuard.evaluate(input, policy)
-
-    private fun read(path: String) = buildJsonObject { put("file_path", path) }
-
-    private fun bash(cmd: String) = buildJsonObject { put("command", cmd) }
+    private fun decide(input: JsonObject) = SensitiveGuard.evaluate(input, policy)
 
     @Test
     fun `a secret expanded into a refused path never comes back in the reason`() {
         val decision = decide(read("/etc/\$GITHUB_TOKEN"))
 
         assertEquals(Verdict.DENY, decision.verdict, "reaching outside the project is still refused")
-        assertFalse(decision.reason.orEmpty().contains(token), "the denial goes back to the model: it cannot carry the token")
-        assertFalse(decision.detail.orEmpty().contains(token), "the detail is stored in the alert log and the transcript")
+        assertFalse(decision.reason.orEmpty().contains(TOKEN), "the denial goes back to the model: it cannot carry the token")
+        assertFalse(decision.detail.orEmpty().contains(TOKEN), "the detail is stored in the alert log and the transcript")
     }
 
     @Test
     fun `every sensitive variable is covered, in any spelling that expands`() {
         listOf(
-            "/etc/\$GITHUB_TOKEN" to token,
-            "/etc/\${GITHUB_TOKEN}" to token,
-            "/etc/\$ANTHROPIC_API_KEY" to apiKey,
-            "/etc/\$AWS_SECRET_ACCESS_KEY" to env.getValue("AWS_SECRET_ACCESS_KEY"),
+            "/etc/\$GITHUB_TOKEN" to TOKEN,
+            "/etc/\${GITHUB_TOKEN}" to TOKEN,
+            "/etc/\$ANTHROPIC_API_KEY" to API_KEY,
+            "/etc/\$AWS_SECRET_ACCESS_KEY" to ENV.getValue("AWS_SECRET_ACCESS_KEY"),
         ).forEach { (path, secret) ->
             val decision = decide(read(path))
             assertFalse(decision.reason.orEmpty().contains(secret), "leaked via $path")
@@ -62,7 +54,7 @@ class GuardReasonSecrecyTest {
     @Test
     fun `a secret named inside a command is not echoed either`() {
         val decision = decide(bash("cat /etc/\$GITHUB_TOKEN"))
-        assertFalse(decision.reason.orEmpty().contains(token))
+        assertFalse(decision.reason.orEmpty().contains(TOKEN))
     }
 
     @Test

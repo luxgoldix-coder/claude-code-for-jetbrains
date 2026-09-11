@@ -6,22 +6,11 @@ import kotlinx.serialization.json.put
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
-class PrivilegeEscalationTest {
+class PrivilegeEscalationTest : GuardProbe(GuardFixture.basePolicy().copy(guardedRoots = emptyList(), wslHost = false)) {
 
-    private val policy = SensitiveGuard.Policy(
-        globs = CredentialPaths.SENSITIVE_GLOBS,
-        home = "/home/me",
-        currentUser = "me",
-        guardedRoots = emptyList(),
-        wslHost = false,
-        projectRoot = "/home/me/proj",
-    )
+    private fun v(cmd: String) = v(bash(cmd))
 
-    private fun bash(cmd: String) = buildJsonObject { put("command", cmd) }
-
-    private fun v(cmd: String) = SensitiveGuard.evaluate(bash(cmd), policy).verdict
-
-    private fun rule(cmd: String) = SensitiveGuard.evaluate(bash(cmd), policy).rule
+    private fun rule(cmd: String) = rule(bash(cmd))
 
     @Test
     fun `every ordinary way of becoming root is refused`() {
@@ -79,20 +68,16 @@ class PrivilegeEscalationTest {
 
     @Test
     fun `it is a rule about running, never about text that mentions running`() {
-        val read = buildJsonObject { put("file_path", "/home/me/proj/INSTALL.md") }
+        val read = read("/home/me/proj/INSTALL.md")
         val write = buildJsonObject {
             put("file_path", "/home/me/proj/INSTALL.md")
             put("content", "Run sudo apt update before building, then doas pkg upgrade on BSD.")
         }
-        val edit = buildJsonObject {
-            put("file_path", "/home/me/proj/README.md")
-            put("old_string", "sudo make install")
-            put("new_string", "make install")
-        }
+        val edit = edit("/home/me/proj/README.md", "sudo make install", "make install")
         val search = buildJsonObject { put("pattern", "sudo|doas|pkexec") }
 
         listOf(read, write, edit, search).forEach {
-            assertEquals(Verdict.ALLOW, SensitiveGuard.evaluate(it, policy).verdict, it.toString())
+            assertEquals(Verdict.ALLOW, v(it), it.toString())
         }
     }
 

@@ -1,23 +1,13 @@
 package dev.lain.claudejb.permission
 
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Test
 
-class IntrusionTechniqueTest {
+class IntrusionTechniqueTest : GuardProbe() {
 
-    private val policy = SensitiveGuard.Policy(
-        globs = CredentialPaths.SENSITIVE_GLOBS,
-        home = "/home/me",
-        currentUser = "me",
-        projectRoot = "/home/me/proj",
-    )
-
-    private fun bash(cmd: String) = buildJsonObject { put("command", cmd) }
-    private fun ruleFor(cmd: String) = SensitiveGuard.evaluate(bash(cmd), policy).rule
-    private fun verdictFor(cmd: String) = SensitiveGuard.evaluate(bash(cmd), policy).verdict
+    private fun ruleFor(cmd: String) = rule(bash(cmd))
+    private fun verdictFor(cmd: String) = v(bash(cmd))
 
     private fun blockedBy(rule: SecurityRule, vararg commands: String) = commands.forEach {
         assertEquals(SensitiveGuard.Verdict.DENY, verdictFor(it), it)

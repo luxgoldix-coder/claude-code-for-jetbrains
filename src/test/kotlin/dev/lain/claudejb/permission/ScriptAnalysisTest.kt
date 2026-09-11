@@ -1,8 +1,7 @@
 package dev.lain.claudejb.permission
 
+import dev.lain.claudejb.permission.GuardFixture.bash
 import dev.lain.claudejb.permission.SensitiveGuard.Verdict
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -33,7 +32,6 @@ class ScriptAnalysisTest {
         return file
     }
 
-    private fun bash(cmd: String) = buildJsonObject { put("command", cmd) }
     private fun v(cmd: String, p: SensitiveGuard.Policy = policy()) =
         SensitiveGuard.evaluate(bash(cmd), p).verdict
 
