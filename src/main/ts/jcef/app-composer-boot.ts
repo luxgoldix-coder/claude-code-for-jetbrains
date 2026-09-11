@@ -1,24 +1,24 @@
 (function () {
   'use strict';
 
-  var cc = window.cc || (window.cc = {});
-  var CC = window.CC || (window.CC = {});
-  var CX = (CC.composer = CC.composer || {});
+  const cc = (window.cc = window.cc || {});
+  const CC = (window.CC = window.CC || ({} as CcShared));
+  const CX = (CC.composer = CC.composer || ({} as ComposerNs));
 
-  var announcedBoot = false;
-  var announcedMissing = false;
-  var installMethods = [];
-  var installsBuilt = false;
-  var installingId = null;
+  let announcedBoot = false;
+  let announcedMissing = false;
+  let installMethods: InstallMethod[] = [];
+  let installsBuilt = false;
+  let installingId: string | null = null;
 
-  CX.renderBoot = function (s) {
-    var boot = document.getElementById('boot');
-    var app = document.getElementById('app');
+  CX.renderBoot = function (s: ComposerState): void {
+    const boot = document.getElementById('boot');
+    const app = document.getElementById('app');
     if (!boot) return;
-    var missing = !!s.binaryMissing;
-    var awaitingAuth = CX.authWanted(s);
-    var booting = !s.running;
-    var showBoot = missing || (booting && !awaitingAuth);
+    const missing = !!s.binaryMissing;
+    const awaitingAuth = CX.authWanted(s);
+    const booting = !s.running;
+    const showBoot = missing || (booting && !awaitingAuth);
     boot.hidden = !showBoot;
     boot.classList.toggle('missing', missing);
     if (showBoot && !missing && !announcedBoot) {
@@ -28,7 +28,7 @@
     if (!showBoot) announcedBoot = false;
     if (app) app.classList.toggle('booting', booting);
     CC.coverTranscript && CC.coverTranscript('waiting', showBoot || awaitingAuth);
-    var card = document.getElementById('boot-missing');
+    const card = document.getElementById('boot-missing');
     if (card) card.hidden = !missing;
     if (missing && !announcedMissing) {
       announcedMissing = true;
@@ -44,20 +44,20 @@
       renderInstallMethods();
       return;
     }
-    var sub = document.getElementById('boot-sub');
+    const sub = document.getElementById('boot-sub');
     if (sub) sub.textContent = s.resuming ? 'Resuming your session' : 'Starting the agent';
   };
 
-  function renderInstallMethods() {
-    var box = document.getElementById('boot-installs');
+  function renderInstallMethods(): void {
+    const box = document.getElementById('boot-installs');
     if (!box) return;
     if (!installsBuilt) {
       box.textContent = '';
       installMethods.forEach(function (m) {
-        var row = document.createElement('div');
+        const row = document.createElement('div');
         row.className = 'boot-install';
 
-        var btn = document.createElement('button');
+        const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'btn primary boot-install-btn';
         btn.setAttribute('data-method', m.id);
@@ -70,22 +70,22 @@
         });
         row.appendChild(btn);
 
-        var hint = document.createElement('div');
+        const hint = document.createElement('div');
         hint.className = 'boot-install-hint';
-        var hintLabel = document.createElement('span');
+        const hintLabel = document.createElement('span');
         hintLabel.className = 'boot-install-hint-label';
         hintLabel.textContent = 'or copy this command to ' + (m.shell || 'a shell') + ':';
-        var code = document.createElement('code');
+        const code = document.createElement('code');
         code.className = 'boot-install-cmd';
         code.textContent = m.display;
-        var copy = document.createElement('button');
+        const copy = document.createElement('button');
         copy.type = 'button';
         copy.className = 'btn ghost boot-install-copy';
         copy.textContent = 'Copy';
         copy.setAttribute('aria-label', 'Copy the ' + (m.label || 'install') + ' command');
-        copy.addEventListener('click', function (e) {
+        copy.addEventListener('click', function (e: MouseEvent) {
           CC.send({ type: 'copy', text: m.display });
-          if (CC.flashCopied) CC.flashCopied(e.currentTarget || copy);
+          if (CC.flashCopied) CC.flashCopied((e.currentTarget as HTMLElement) || copy);
         });
         hint.appendChild(hintLabel);
         hint.appendChild(code);
@@ -100,11 +100,11 @@
     syncInstallButtons();
   }
 
-  function wireRecheck() {
-    var card = document.getElementById('boot-missing');
-    var installs = document.getElementById('boot-installs');
+  function wireRecheck(): void {
+    const card = document.getElementById('boot-missing');
+    const installs = document.getElementById('boot-installs');
     if (!card || document.getElementById('boot-recheck')) return;
-    var btn = document.createElement('button');
+    const btn = document.createElement('button');
     btn.type = 'button';
     btn.id = 'boot-recheck';
     btn.className = 'btn ghost boot-recheck';
@@ -117,51 +117,51 @@
     card.insertBefore(btn, installs ? installs.nextSibling : null);
   }
 
-  function syncInstallButtons() {
-    var box = document.getElementById('boot-installs');
+  function syncInstallButtons(): void {
+    const box = document.getElementById('boot-installs');
     if (!box) return;
-    var btns = box.querySelectorAll('.boot-install-btn');
-    for (var i = 0; i < btns.length; i++) {
-      var b = btns[i];
-      var m = null;
-      for (var j = 0; j < installMethods.length; j++) {
+    const btns = box.querySelectorAll<HTMLElement>('.boot-install-btn');
+    for (let i = 0; i < btns.length; i++) {
+      const b = btns[i];
+      let m: InstallMethod | null = null;
+      for (let j = 0; j < installMethods.length; j++) {
         if (installMethods[j].id === b.getAttribute('data-method')) m = installMethods[j];
       }
       if (!m) continue;
-      var busy = installingId === m.id;
-      b.textContent = busy ? 'Installing…' : m.label;
+      const busy = installingId === m.id;
+      b.textContent = busy ? 'Installing…' : m.label || '';
       b.classList.toggle('installing', busy);
       b.setAttribute('aria-busy', busy ? 'true' : 'false');
     }
   }
 
-  function wirePathRow() {
-    var use = document.getElementById('boot-path-use');
-    var input = document.getElementById('boot-path');
+  function wirePathRow(): void {
+    const use = document.getElementById('boot-path-use') as WiredEl | null;
+    const input = document.getElementById('boot-path') as HTMLInputElement | null;
     if (!use || !input || use.__wired) return;
     use.__wired = true;
-    var submit = function () {
+    const submit = function () {
       setBootError('');
       CC.send({ type: 'setBinaryPath', path: input.value || '' });
     };
     use.addEventListener('click', submit);
-    input.addEventListener('keydown', function (e) {
+    input.addEventListener('keydown', function (e: KeyboardEvent) {
       if (e.key === 'Enter') submit();
     });
   }
 
-  function setBootError(msg) {
-    var el = document.getElementById('boot-path-err');
+  function setBootError(msg: string): void {
+    const el = document.getElementById('boot-path-err');
     if (el) el.textContent = msg || '';
   }
 
-  CX.setInstallMethods = function (methods) {
+  CX.setInstallMethods = function (methods: InstallMethod[]): void {
     installMethods = methods;
     installsBuilt = false;
     renderInstallMethods();
   };
 
-  cc.bootPathError = function (msg) {
+  cc.bootPathError = function (msg?: unknown): void {
     installingId = null;
     syncInstallButtons();
     setBootError(String(msg == null ? '' : msg));

@@ -1,50 +1,50 @@
 (function () {
   'use strict';
 
-  var CC = window.CC || (window.CC = {});
-  var CX = (CC.composer = CC.composer || {});
+  const CC = (window.CC = window.CC || ({} as CcShared));
+  const CX = (CC.composer = CC.composer || ({} as ComposerNs));
 
-  var h = CX.h;
-  var send = CX.send;
+  const h = CX.h;
+  const send = CX.send;
 
   CX.openMenu = null;
 
-  function currentOptions(def) {
+  function currentOptions(def: PillDef): PillOption[] {
     if (!CX.lastState) return [];
-    var f = CX.lastState[def.field];
+    const f = CX.lastState[def.field] as PillField | undefined;
     if (!f || !Array.isArray(f.options)) return [];
     return f.options;
   }
 
-  function menuSig(def) {
-    var opts = currentOptions(def);
-    var sig = opts.length + '|';
-    for (var i = 0; i < opts.length; i++) {
+  function menuSig(def: PillDef): string {
+    const opts = currentOptions(def);
+    let sig = opts.length + '|';
+    for (let i = 0; i < opts.length; i++) {
       sig += (opts[i].selected ? '1' : '0') + (opts[i].label != null ? String(opts[i].label) : '') + '';
     }
     return sig;
   }
   CX.menuSig = menuSig;
 
-  CX.togglePillMenu = function (def, anchorEl) {
+  CX.togglePillMenu = function (def: PillDef, anchorEl: HTMLElement): void {
     if (CX.openMenu && CX.openMenu.pill === def.key) {
       closeMenu();
       return;
     }
     closeMenu();
-    var opts = currentOptions(def);
+    const opts = currentOptions(def);
     if (!opts.length) return;
 
-    var menu = h('div', { class: 'menu', attrs: { role: 'listbox' } });
+    const menu = h('div', { class: 'menu', attrs: { role: 'listbox' } });
 
-    function optionItem(o) {
-      var item = h(
+    function optionItem(o: PillOption): HTMLElement {
+      return h(
         'div',
         {
           class: 'menu-item' + (o.selected ? ' selected' : ''),
           attrs: { role: 'option' },
           on: {
-            click: function (e) {
+            click: function (e: Event) {
               e.preventDefault();
               e.stopPropagation();
               chooseOption(def, o);
@@ -53,32 +53,31 @@
         },
         h('span', { class: 'menu-item-label', text: o.label != null ? String(o.label) : '' })
       );
-      return item;
     }
 
-    var main = [];
-    var other = [];
-    for (var i = 0; i < opts.length; i++) {
+    const main: PillOption[] = [];
+    const other: PillOption[] = [];
+    for (let i = 0; i < opts.length; i++) {
       (opts[i].group === 'other' ? other : main).push(opts[i]);
     }
-    for (var j = 0; j < main.length; j++) menu.appendChild(optionItem(main[j]));
+    for (let j = 0; j < main.length; j++) menu.appendChild(optionItem(main[j]));
 
     if (other.length) {
-      var expanded = other.some(function (o) {
+      const expanded = other.some(function (o) {
         return o.selected;
       });
-      var group = h('div', { class: 'menu-group' + (expanded ? ' open' : '') });
-      var items = h('div', { class: 'menu-group-items' });
-      var header = h(
+      const group = h('div', { class: 'menu-group' + (expanded ? ' open' : '') });
+      const items = h('div', { class: 'menu-group-items' });
+      const header = h(
         'div',
         {
           class: 'menu-item menu-group-header',
           attrs: { role: 'button', 'aria-expanded': expanded ? 'true' : 'false' },
           on: {
-            click: function (e) {
+            click: function (e: Event) {
               e.preventDefault();
               e.stopPropagation();
-              var nowOpen = !group.classList.contains('open');
+              const nowOpen = !group.classList.contains('open');
               group.classList.toggle('open', nowOpen);
               header.setAttribute('aria-expanded', nowOpen ? 'true' : 'false');
               if (CX.openMenu && CX.openMenu.anchor) positionMenu(menu, CX.openMenu.anchor);
@@ -88,7 +87,7 @@
         h('span', { class: 'menu-item-label', text: 'Other models' }),
         h('span', { class: 'menu-group-caret' })
       );
-      for (var k = 0; k < other.length; k++) items.appendChild(optionItem(other[k]));
+      for (let k = 0; k < other.length; k++) items.appendChild(optionItem(other[k]));
       group.appendChild(header);
       group.appendChild(items);
       menu.appendChild(group);
@@ -102,16 +101,15 @@
     CX.openMenu = { el: menu, pill: def.key, anchor: anchorEl, sig: menuSig(def) };
   };
 
-  var positionMenu = CC.placeMenu;
+  const positionMenu = CC.placeMenu;
   CX.positionMenu = positionMenu;
 
-  function chooseOption(def, o) {
+  function chooseOption(def: PillDef, o: PillOption): void {
     closeMenu();
-    var msg = def.msg(o);
-    send(msg);
+    send(def.msg(o));
   }
 
-  function closeMenu() {
+  function closeMenu(): void {
     if (!CX.openMenu) return;
     if (CX.openMenu.el && CX.openMenu.el.parentNode) CX.openMenu.el.parentNode.removeChild(CX.openMenu.el);
     if (CX.openMenu.anchor) CX.openMenu.anchor.classList.remove('pill-open');
@@ -121,10 +119,11 @@
 
   document.addEventListener(
     'mousedown',
-    function (e) {
+    function (e: MouseEvent) {
       if (CX.openMenu) {
-        if (CX.openMenu.el && CX.openMenu.el.contains(e.target)) return;
-        if (CX.openMenu.anchor && CX.openMenu.anchor.contains(e.target)) return;
+        const target = e.target as Node | null;
+        if (CX.openMenu.el && CX.openMenu.el.contains(target)) return;
+        if (CX.openMenu.anchor && CX.openMenu.anchor.contains(target)) return;
         closeMenu();
       }
     },

@@ -1,13 +1,13 @@
 (function () {
   'use strict';
 
-  var cc = window.cc || (window.cc = {});
-  var CC = window.CC || (window.CC = {});
-  var CX = (CC.composer = CC.composer || {});
+  const cc = (window.cc = window.cc || {});
+  const CC = (window.CC = window.CC || ({} as CcShared));
+  const CX = (CC.composer = CC.composer || ({} as ComposerNs));
 
-  var h = CX.h;
+  const h = CX.h;
 
-  function svg(body) {
+  function svg(body: string): string {
     return (
       '<svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" ' +
       'stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
@@ -16,7 +16,7 @@
     );
   }
 
-  var GLYPH = {
+  const GLYPH = {
     newChat: svg('<path d="M8 3.5v9"/><path d="M3.5 8h9"/>'),
     commands: svg('<circle cx="7" cy="7" r="4"/><path d="m10 10 3 3"/>'),
     git: svg(
@@ -29,13 +29,13 @@
     signOut: svg('<path d="M9.5 3.5H4v9h5.5"/><path d="M11 5.5 13.5 8 11 10.5"/><path d="M13.5 8h-6"/>'),
   };
 
-  function actionButton(glyph, label, onClick) {
-    var btn = h('button', {
+  function actionButton(glyph: string, label: string, onClick: () => void): HTMLElement {
+    const btn = h('button', {
       class: 'bar-icon',
       title: label,
       attrs: { type: 'button', 'aria-label': label },
       on: {
-        click: function (e) {
+        click: function (e: Event) {
           e.preventDefault();
           e.stopPropagation();
           onClick();
@@ -46,18 +46,18 @@
     return btn;
   }
 
-  function send(message) {
+  function send(message: unknown): void {
     if (CC.send) CC.send(message);
   }
 
-  CX.buildActionRows = function () {
-    var controls = document.getElementById('controls');
-    var actions = document.getElementById('actions');
-    var views = document.getElementById('views');
+  CX.buildActionRows = function (): HTMLElement | null {
+    const controls = document.getElementById('controls');
+    const actions = document.getElementById('actions');
+    const views = document.getElementById('views');
     if (!controls || !actions || !views) return null;
     if (CX.mountSettingsButton) CX.mountSettingsButton();
     actions.innerHTML = '';
-    var commandsBtn = actionButton(GLYPH.commands, 'Browse slash commands', function () {
+    const commandsBtn = actionButton(GLYPH.commands, 'Browse slash commands', function () {
       if (cc.openPalette) cc.openPalette();
     });
     [
@@ -84,13 +84,13 @@
     return controls;
   };
 
-  function wireOverflow(controls, views, actions) {
+  function wireOverflow(controls: HTMLElement, views: HTMLElement, actions: HTMLElement): void {
     if (!CX.createOverflow) return;
     CX.createOverflow({
       row: controls,
       label: 'More chat controls',
       items: function () {
-        var out = [];
+        const out: HTMLElement[] = [];
         collect(views, out);
         collect(actions, out);
         return out;
@@ -101,16 +101,16 @@
     });
   }
 
-  function collect(container, out) {
+  function collect(container: HTMLElement | null, out: HTMLElement[]): void {
     if (!container) return;
-    for (var i = 0; i < container.children.length; i++) {
-      var el = container.children[i];
+    for (let i = 0; i < container.children.length; i++) {
+      const el = container.children[i] as HTMLElement;
       if (el.classList.contains('dash-toggles')) collect(el, out);
       else out.push(el);
     }
   }
 
-  CX.viewsRow = function () {
+  CX.viewsRow = function (): HTMLElement | null {
     return document.getElementById('views');
   };
 })();
