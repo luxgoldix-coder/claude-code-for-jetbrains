@@ -15,7 +15,7 @@ import javax.swing.SpinnerNumberModel
 
 internal class SettingsMcpSection : SettingsSection {
 
-    private val ideMcpCheck = JBCheckBox("Enable JetBrains MCP server — lets Claude query the IDE")
+    internal val ideMcpCheck = JBCheckBox("Enable JetBrains MCP server — lets Claude query the IDE")
     private val ideMcpTransportCombo = JComboBox(LaunchDefaults.IDE_MCP_TRANSPORTS.toTypedArray())
     private val ideMcpPortSpinner =
         JSpinner(SpinnerNumberModel(LaunchDefaults.DEFAULT_IDE_MCP_PORT, MIN_PORT, MAX_PORT, 1))

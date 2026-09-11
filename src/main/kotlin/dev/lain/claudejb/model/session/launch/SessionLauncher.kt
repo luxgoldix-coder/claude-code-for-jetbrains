@@ -28,7 +28,7 @@ object SessionLauncher {
         args += modelFlags(opts)
         args += toolFilterFlags(opts)
         args += advancedFlags(opts)
-        args += appendSystemPromptFlags(PluginContextPrompt.TEXT)
+        args += appendSystemPromptFlags(systemPrompt(opts))
         mcpConfig?.let { args += listOf("--mcp-config", it) }
         if (resume) {
             opts.sessionId?.let { args += listOf("--resume", it) }
@@ -56,6 +56,17 @@ object SessionLauncher {
     fun appendSystemPromptFlags(prompt: String): List<String> =
         prompt.trim().ifBlank { null }?.let { listOf("--append-system-prompt", it) } ?: emptyList()
 
+    fun systemPrompt(opts: LaunchOptions): String =
+        listOf(PluginContextPrompt.TEXT, IdeMcpPrompt.text(opts.ideRules, ideServers(opts), opts.knownIdeTools))
+            .filter { it.isNotBlank() }
+            .joinToString("\n\n")
+
+    fun ideServers(opts: LaunchOptions): Set<IdeServer> = buildSet {
+        if (opts.ideMcpEnabled) add(IdeServer.JETBRAINS)
+        if (opts.indexMcpEnabled) add(IdeServer.INDEX)
+        if (opts.debuggerMcpEnabled) add(IdeServer.DEBUGGER)
+    }
+
     private fun advancedFlags(opts: LaunchOptions): List<String> = buildList {
         opts.maxTurns?.let { addAll(listOf("--max-turns", it.toString())) }
         opts.maxBudgetUsd?.let { addAll(listOf("--max-budget-usd", it.toString())) }
@@ -73,6 +84,10 @@ object SessionLauncher {
             customMcpServers = opts.customMcpServers,
             stdioParams = if (opts.ideMcpEnabled && opts.ideMcpTransport == "stdio") resolveStdioParams(opts) else null,
             onCustomParseError = { log.debug { "Failed to parse custom MCP servers JSON: $it" } },
+            hechtcarmelServers = buildMap {
+                if (opts.indexMcpEnabled) put(IdeServer.INDEX, opts.indexMcpPort)
+                if (opts.debuggerMcpEnabled) put(IdeServer.DEBUGGER, opts.debuggerMcpPort)
+            },
         )
 
     fun resolveStdioParams(opts: LaunchOptions): McpConfigBuilder.StdioParams? {

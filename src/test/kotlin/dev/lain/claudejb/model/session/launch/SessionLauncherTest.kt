@@ -57,6 +57,23 @@ class SessionLauncherTest {
     private val promptTail = listOf("--append-system-prompt", PluginContextPrompt.TEXT)
 
     @Test
+    fun `IDE rules ride the system prompt after the plugin context, and the IDE servers ride the mcp config`() {
+        val withIde = opts().copy(indexMcpEnabled = true, ideRules = setOf(IdeRule.INDEX_READ, IdeRule.DEBUGGER_DEBUG))
+        val prompt = SessionLauncher.systemPrompt(withIde)
+        assertTrue(prompt.startsWith(PluginContextPrompt.TEXT))
+        assertTrue(prompt.contains("ide_read_file"))
+        assertFalse(prompt.contains("start_debug_session"), "the Debugger server is off, so its rule is left out")
+        val args = SessionLauncher.buildArgs(withIde, resume = false, mcpConfig = SessionLauncher.mcpConfigJson(withIde))
+        assertEquals(prompt, args[args.indexOf("--append-system-prompt") + 1])
+        assertTrue(args[args.indexOf("--mcp-config") + 1].contains("index-mcp/streamable-http"))
+    }
+
+    @Test
+    fun `no IDE server keeps the system prompt exactly as before`() {
+        assertEquals(PluginContextPrompt.TEXT, SessionLauncher.systemPrompt(opts().copy(ideRules = IdeRule.entries.toSet())))
+    }
+
+    @Test
     fun `minimal options emit the mandatory header and the appended context`() {
         val args = SessionLauncher.buildArgs(opts(), resume = false, mcpConfig = null)
         assertEquals(baseHead + promptTail, args)

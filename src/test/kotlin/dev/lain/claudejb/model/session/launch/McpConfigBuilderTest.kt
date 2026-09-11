@@ -175,6 +175,37 @@ class McpConfigBuilderTest {
     }
 
     @Test
+    fun `the Index and Debugger servers are streamable-http entries on their own ports`() {
+        val out = McpConfigBuilder.mcpConfigJson(
+            ideMcpEnabled = false,
+            transport = "sse",
+            port = 0,
+            customMcpServers = "",
+            hechtcarmelServers = mapOf(IdeServer.INDEX to 29170, IdeServer.DEBUGGER to 29199),
+        )
+        val s = servers(out!!)
+        assertNull(s["jetbrains"])
+        val index = s["index"]!!.jsonObject
+        assertEquals("streamable-http", index["type"]!!.jsonPrimitive.content)
+        assertEquals("http://127.0.0.1:29170/index-mcp/streamable-http", index["url"]!!.jsonPrimitive.content)
+        val debugger = s["debugger"]!!.jsonObject
+        assertEquals("http://127.0.0.1:29199/debugger-mcp/streamable-http", debugger["url"]!!.jsonPrimitive.content)
+    }
+
+    @Test
+    fun `a custom server named like an IDE server wins, as it always did for jetbrains`() {
+        val custom = """{"index":{"type":"sse","url":"http://localhost:1/sse","headers":{}}}"""
+        val out = McpConfigBuilder.mcpConfigJson(
+            ideMcpEnabled = false,
+            transport = "sse",
+            port = 0,
+            customMcpServers = custom,
+            hechtcarmelServers = mapOf(IdeServer.INDEX to 29170),
+        )
+        assertEquals("http://localhost:1/sse", servers(out!!)["index"]!!.jsonObject["url"]!!.jsonPrimitive.content)
+    }
+
+    @Test
     fun `customMcpServersObject returns null for blank input`() {
         assertNull(McpConfigBuilder.customMcpServersObject(""))
         assertNull(McpConfigBuilder.customMcpServersObject("   \n"))

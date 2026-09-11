@@ -201,7 +201,7 @@ class ClaudeSecurityConfigurableHeadlessTest : BasePlatformTestCase() {
             "restoreOpenChatsOnStartup", "reduceMotion", "workloadWindowMinutes",
             "provider", "claudePath", "nodePath", "sourceScript", "envVars",
             "settingSources", "allowedTools", "disallowedTools", "alwaysAllowTools",
-            "ideMcpEnabled", "ideMcpTransport", "ideMcpPort", "customMcpServers", "strictMcpConfig",
+            "ideMcpEnabled", "ideMcpTransport", "ideMcpPort", "customMcpServers", "strictMcpConfig", "ideMcp",
             "maxTurns", "maxBudgetUsd", "fallbackModel", "addDirs", "betas",
             "enableFileCheckpointing", "rewindFallback", "executionTrusted",
             "securityRuleSuspensions", "vulnConsent",

@@ -16,6 +16,12 @@ data class LaunchOptions(
     val ideMcpTransport: String = "sse",
     val ideMcpPort: Int = LaunchDefaults.DEFAULT_IDE_MCP_PORT,
     val customMcpServers: String = "",
+    val indexMcpEnabled: Boolean = false,
+    val indexMcpPort: Int = LaunchDefaults.DEFAULT_INDEX_MCP_PORT,
+    val debuggerMcpEnabled: Boolean = false,
+    val debuggerMcpPort: Int = LaunchDefaults.DEFAULT_DEBUGGER_MCP_PORT,
+    val ideRules: Set<IdeRule> = emptySet(),
+    val knownIdeTools: Set<String> = emptySet(),
     val maxTurns: Int? = null,
     val maxBudgetUsd: Double? = null,
     val fallbackModel: String? = null,
@@ -31,7 +37,12 @@ data class LaunchOptions(
             ideMcpTransport != other.ideMcpTransport ||
             ideMcpPort != other.ideMcpPort ||
             customMcpServers != other.customMcpServers ||
-            strictMcpConfig != other.strictMcpConfig
+            strictMcpConfig != other.strictMcpConfig ||
+            indexMcpEnabled != other.indexMcpEnabled ||
+            indexMcpPort != other.indexMcpPort ||
+            debuggerMcpEnabled != other.debuggerMcpEnabled ||
+            debuggerMcpPort != other.debuggerMcpPort ||
+            ideRules != other.ideRules
 
     companion object {
 
@@ -50,6 +61,13 @@ data class LaunchOptions(
                 ideMcpTransport = s.ideMcpTransport.ifBlank { "sse" },
                 ideMcpPort = s.ideMcpPort.takeIf { it in LaunchDefaults.VALID_PORTS } ?: LaunchDefaults.DEFAULT_IDE_MCP_PORT,
                 customMcpServers = s.customMcpServers,
+                indexMcpEnabled = s.ideMcp.indexEnabled,
+                indexMcpPort = s.ideMcp.indexPort.takeIf { it in LaunchDefaults.VALID_PORTS } ?: LaunchDefaults.DEFAULT_INDEX_MCP_PORT,
+                debuggerMcpEnabled = s.ideMcp.debuggerEnabled,
+                debuggerMcpPort = s.ideMcp.debuggerPort.takeIf { it in LaunchDefaults.VALID_PORTS }
+                    ?: LaunchDefaults.DEFAULT_DEBUGGER_MCP_PORT,
+                ideRules = IdeRule.parse(s.ideMcp.rules),
+                knownIdeTools = s.ideMcp.knownTools.split(',').map { it.trim() }.filter { it.isNotEmpty() }.toSet(),
                 maxTurns = settings.maxTurns,
                 maxBudgetUsd = settings.maxBudgetUsd,
                 fallbackModel = settings.fallbackModel,

@@ -1,17 +1,13 @@
 package dev.lain.claudejb.model.settings
 
-import com.intellij.credentialStore.CredentialAttributes
-import com.intellij.credentialStore.generateServiceName
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.AppExecutorUtil
-import dev.lain.claudejb.model.permission.SensitiveGuard
 import dev.lain.claudejb.model.settings.guard.AlwaysAllowTools
 import dev.lain.claudejb.model.settings.guard.GuardMode
-import dev.lain.claudejb.model.settings.guard.guardMode
 import dev.lain.claudejb.model.settings.legacy.LegacyProjectSettings
 
 @Service(Service.Level.PROJECT)
@@ -114,6 +110,8 @@ class ClaudeSettings(internal val project: Project? = null) {
         @JvmField var betas: String = ""
 
         @JvmField var strictMcpConfig: Boolean = false
+
+        @JvmField var ideMcp: IdeMcpState = IdeMcpState()
     }
 
     val restoreOpenChatsOnStartup: Boolean get() = state.restoreOpenChatsOnStartup
@@ -136,25 +134,9 @@ class ClaudeSettings(internal val project: Project? = null) {
 
     val provider: Provider get() = Provider.fromId(state.provider)
 
-    private fun providerKeyName(provider: Provider) = "providerApiKey:${provider.id}"
+    fun getProviderApiKey(provider: Provider): String = ProviderApiKeys.get(provider)
 
-    private fun providerKeyCredentials(provider: Provider) =
-        CredentialAttributes(generateServiceName("ClaudeCodeNative", providerKeyName(provider)))
-
-    fun getProviderApiKey(provider: Provider): String =
-        runCatching { SecretStore.readCredential(providerKeyName(provider), providerKeyCredentials(provider)) }
-            .getOrNull().orEmpty()
-
-    fun setProviderApiKey(provider: Provider, key: String) {
-        val trimmed = key.trim()
-        runCatching {
-            SecretStore.writeCredential(
-                providerKeyName(provider),
-                providerKeyCredentials(provider),
-                trimmed.ifEmpty { null },
-            )
-        }
-    }
+    fun setProviderApiKey(provider: Provider, key: String) = ProviderApiKeys.set(provider, key)
 
     val anthropicApiKey: String get() = getProviderApiKey(Provider.ANTHROPIC)
 

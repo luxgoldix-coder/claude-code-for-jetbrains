@@ -12,6 +12,7 @@ import dev.lain.claudejb.model.session.launch.LaunchOptions
 import dev.lain.claudejb.model.settings.ClaudeSettings
 import dev.lain.claudejb.view.settings.sections.SettingsAdvancedSection
 import dev.lain.claudejb.view.settings.sections.SettingsExecutableSection
+import dev.lain.claudejb.view.settings.sections.SettingsIdeMcpSection
 import dev.lain.claudejb.view.settings.sections.SettingsMcpSection
 import dev.lain.claudejb.view.settings.sections.SettingsModelSection
 import dev.lain.claudejb.view.settings.sections.SettingsProviderSection
@@ -29,6 +30,7 @@ class ClaudeSettingsConfigurable(private val project: Project) : Configurable {
     private val executableSection = SettingsExecutableSection()
     private val toolsSection = SettingsToolsSection(settings)
     private val mcpSection = SettingsMcpSection()
+    private val ideMcpSection = SettingsIdeMcpSection(PluginInstaller(project), mcpSection.ideMcpCheck)
     private val advancedSection = SettingsAdvancedSection()
     private val transferSection = SettingsTransferSection(project) { reset() }
 
@@ -38,6 +40,7 @@ class ClaudeSettingsConfigurable(private val project: Project) : Configurable {
         executableSection,
         toolsSection,
         mcpSection,
+        ideMcpSection,
         advancedSection,
         transferSection,
     )

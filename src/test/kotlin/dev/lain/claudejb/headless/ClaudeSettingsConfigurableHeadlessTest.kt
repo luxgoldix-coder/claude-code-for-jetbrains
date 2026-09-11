@@ -6,6 +6,7 @@ import dev.lain.claudejb.controller.session.ChatSessionManager
 import dev.lain.claudejb.model.protocol.models.InitializeResponse
 import dev.lain.claudejb.model.protocol.models.ModelInfo
 import dev.lain.claudejb.model.settings.ClaudeSettings
+import dev.lain.claudejb.model.settings.IdeMcpState
 import dev.lain.claudejb.model.settings.SecretStore
 import dev.lain.claudejb.model.settings.SettingsStore
 import dev.lain.claudejb.view.settings.ClaudeSettingsConfigurable
@@ -233,6 +234,7 @@ class ClaudeSettingsConfigurableHeadlessTest : BasePlatformTestCase() {
         addDirs = "/tmp/a\n/tmp/b"
         betas = "beta-one"
         strictMcpConfig = true
+        ideMcp = IdeMcpState(indexEnabled = true, indexPort = 29175, debuggerPort = 29199, rules = "index.read,common.agents")
         enableFileCheckpointing = false
         rewindFallback = "never"
         sensitiveExtraGlobs = "**/secret.env"
@@ -245,7 +247,7 @@ class ClaudeSettingsConfigurableHeadlessTest : BasePlatformTestCase() {
             "provider",
             "claudePath", "nodePath", "sourceScript", "envVars",
             "settingSources", "allowedTools", "disallowedTools", "alwaysAllowTools",
-            "ideMcpEnabled", "ideMcpTransport", "ideMcpPort", "customMcpServers", "strictMcpConfig",
+            "ideMcpEnabled", "ideMcpTransport", "ideMcpPort", "customMcpServers", "strictMcpConfig", "ideMcp",
             "maxTurns", "maxBudgetUsd", "fallbackModel", "addDirs", "betas",
         )
 
