@@ -196,9 +196,14 @@ object ToolInputScanner {
         val value = declared.groupValues[2]
         bindings[name] = value
         if (name.uppercase() in EXECUTION_CONTROLLING) {
-            value.split(':').filterTo(tokens) { PATH_SHAPED.containsMatchIn(it) }
+            pathListEntries(value).filterTo(tokens) { PATH_SHAPED.containsMatchIn(it) }
         }
     }
+
+    private val DRIVE_ENTRY = Regex("""^[A-Za-z]:""")
+
+    private fun pathListEntries(value: String): List<String> =
+        value.split(';').flatMap { entry -> if (DRIVE_ENTRY.containsMatchIn(entry)) listOf(entry) else entry.split(':') }
 
     private fun emitPathShaped(token: String, tokens: MutableList<String>) {
         val assigned = token.indexOf('=')

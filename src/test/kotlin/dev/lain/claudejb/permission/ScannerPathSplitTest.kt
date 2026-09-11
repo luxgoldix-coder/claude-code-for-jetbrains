@@ -22,8 +22,16 @@ class ScannerPathSplitTest : GuardProbe(
     }
 
     @Test
-    fun `the same shape with the directory inside the project is allowed`() {
+    fun `a drive letter inside a PATH entry is not a separator`() {
+        val cmd = "set PATH=C:/build/bin;%PATH% & git status"
+        assertEquals(null, rule(bash(cmd)), why(bash(cmd)))
+        assertEquals(Verdict.ALLOW, v(bash(cmd)))
+    }
+
+    @Test
+    fun `the same shape with backslashes and the directory inside the project is allowed`() {
         val cmd = """set "PATH=C:\build\bin;%PATH%" & git status"""
+        assertEquals(null, rule(bash(cmd)), why(bash(cmd)))
         assertEquals(Verdict.ALLOW, v(bash(cmd)))
     }
 
