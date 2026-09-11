@@ -155,6 +155,11 @@ class JcefBridgeTest {
     }
 
     @Test
+    fun `parse mcpRefresh asks for the servers again`() {
+        assertEquals(Msg.McpRefresh, JcefBridge.parse("""{"type":"mcpRefresh"}"""))
+    }
+
+    @Test
     fun `parse mcpToggle carries name and enabled flag`() {
         val on = JcefBridge.parse("""{"type":"mcpToggle","name":"srv","enabled":true}""") as Msg.McpToggle
         assertEquals("srv", on.name)

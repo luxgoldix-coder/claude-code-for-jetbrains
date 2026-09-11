@@ -88,6 +88,7 @@ sealed interface Msg {
     object PasteClipboard : Attachments
     data class Attach(val name: String, val mediaType: String, val base64: String) : Attachments
 
+    object McpRefresh : SessionControl
     data class McpReconnect(val name: String) : SessionControl
     data class McpToggle(val name: String, val enabled: Boolean) : SessionControl
     data class StopTask(val taskId: String) : SessionControl

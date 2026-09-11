@@ -61,10 +61,32 @@
     return out;
   }
 
+  function refreshTools(): HTMLElement {
+    return h(
+      'div',
+      { class: 'mcp-tools' },
+      h('span', {
+        class: 'btn',
+        attrs: { role: 'button', tabindex: '0', title: 'Ask the binary for the servers it sees now' },
+        text: 'Refresh',
+        on: {
+          click: function (ev: Event) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            send({ type: 'mcpRefresh' });
+          },
+        },
+      })
+    );
+  }
+
   function buildMcpCard(payload: unknown): HTMLElement | null {
+    if (!payload || typeof payload !== 'object') return null;
     const servers = mcpServersFrom(payload);
-    if (!servers.length) return null;
-    const rows: HTMLElement[] = [];
+    const rows: HTMLElement[] = [refreshTools()];
+    if (!servers.length) {
+      rows.push(h('div', { class: 'mcp-empty', text: 'The binary reports no MCP server for this session.' }));
+    }
     for (let i = 0; i < servers.length; i++) {
       const srv = servers[i];
       const statusLower = (srv.status || '').toLowerCase();

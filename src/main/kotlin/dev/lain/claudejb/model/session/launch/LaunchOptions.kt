@@ -26,6 +26,13 @@ data class LaunchOptions(
     val fork: Boolean = false,
 ) {
 
+    fun mcpDiffers(other: LaunchOptions): Boolean =
+        ideMcpEnabled != other.ideMcpEnabled ||
+            ideMcpTransport != other.ideMcpTransport ||
+            ideMcpPort != other.ideMcpPort ||
+            customMcpServers != other.customMcpServers ||
+            strictMcpConfig != other.strictMcpConfig
+
     companion object {
 
         fun from(settings: ClaudeSettings): LaunchOptions {

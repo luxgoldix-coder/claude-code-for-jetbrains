@@ -51,6 +51,22 @@ describe('dashboard — MCP servers card', () => {
     expect(disabledToggle.getAttribute('aria-checked')).toBe('false');
   });
 
+  it('the card carries a Refresh control that asks the host for the servers again', () => {
+    const sent = [];
+    win.CC.send = (m) => sent.push(m);
+    openDashboard(win);
+    win.document.querySelector('.mcp-tools .btn').click();
+    expect(sent).toEqual([{ type: 'mcpRefresh' }]);
+  });
+
+  it('the card stays on screen with Refresh when the binary reports no server', () => {
+    win.cc.mcp({ servers: [] });
+    openDashboard(win);
+    expect(win.document.querySelector('.mcp-tools .btn')).not.toBeNull();
+    expect(win.document.querySelectorAll('.mcp-row').length).toBe(0);
+    expect(win.document.querySelector('.mcp-empty')).not.toBeNull();
+  });
+
   it('clicking Reconnect sends an mcpReconnect message for that server', () => {
     const sent = [];
     win.CC.send = (m) => sent.push(m);

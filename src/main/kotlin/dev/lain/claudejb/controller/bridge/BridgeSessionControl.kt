@@ -28,6 +28,8 @@ internal class BridgeSessionControl(private val panel: JcefChatPanel) {
 
             is Msg.Onboarding -> panel.onboarding.handle(m)
 
+            Msg.McpRefresh -> panel.feed.requestMcp()
+
             is Msg.McpReconnect -> {
                 session.queries.reconnectMcp(m.name)
                 panel.feed.requestMcp()

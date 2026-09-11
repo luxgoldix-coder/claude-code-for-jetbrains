@@ -110,6 +110,8 @@ class SessionLiveSettings(
     }
 
     fun adopt(next: LaunchOptions) {
+        val mcpChanged = session.launch.mcpDiffers(next)
+        val thinkingChanged = session.launch.thinkingTokens != next.thinkingTokens
         changeModel(next.model, persist = false)
         changeEffort(next.effort, persist = false)
         changePermissionMode(next.permissionMode)
@@ -123,5 +125,9 @@ class SessionLiveSettings(
             sessionId = live.sessionId,
         )
         fireState()
+        if (mcpChanged && !thinkingChanged && session.isRunning()) {
+            session.systemNotice("MCP servers changed — restarting session.")
+            session.restart(resume = true)
+        }
     }
 }

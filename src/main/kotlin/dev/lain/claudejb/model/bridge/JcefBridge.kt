@@ -123,6 +123,7 @@ object JcefBridge {
     }
 
     private fun parseSessionControls(type: String, f: Fields): Msg? = when (type) {
+        "mcpRefresh" -> Msg.McpRefresh
         "mcpReconnect" -> Msg.McpReconnect(f.text("name"))
         "mcpToggle" -> Msg.McpToggle(f.text("name"), f.bool("enabled"))
         "stopTask" -> Msg.StopTask(f.text("taskId"))
