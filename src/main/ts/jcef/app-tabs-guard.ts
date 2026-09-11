@@ -1,13 +1,13 @@
 (function () {
   'use strict';
 
-  var CC = window.CC || (window.CC = {});
-  var T = (CC.tabbar = CC.tabbar || {});
+  const CC = (window.CC = window.CC || ({} as CcShared));
+  const T = (CC.tabbar = CC.tabbar || ({} as TabbarNs));
 
-  var SEP = String.fromCharCode(31);
+  const SEP = String.fromCharCode(31);
 
-  function drawnSignature() {
-    var parts = T.state.chats.map(function (chat) {
+  function drawnSignature(): string {
+    const parts = T.state.chats.map(function (chat) {
       return [chat.id, chat.title, !!chat.selected, !!chat.attention].join(SEP);
     });
     parts.push(T.selected ? T.selected.kind + SEP + T.selected.id : '');
@@ -23,8 +23,8 @@
     return parts.join(SEP);
   }
 
-  function entry(w) {
-    var n = w.node;
+  function entry(w: TabWork): string {
+    const n = w.node;
     return [
       w.kind,
       w.id,

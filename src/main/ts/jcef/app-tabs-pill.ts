@@ -1,17 +1,17 @@
 (function () {
   'use strict';
 
-  var CC = window.CC || (window.CC = {});
-  var T = (CC.tabbar = CC.tabbar || {});
-  var h = CC.h;
+  const CC = (window.CC = window.CC || ({} as CcShared));
+  const T = (CC.tabbar = CC.tabbar || ({} as TabbarNs));
+  const h = CC.h;
 
-  function pill(opts) {
-    var kids = [];
+  function pill(opts: TabPillOptions): HTMLElement {
+    const kids: HTMLElement[] = [];
     if (opts.status) {
       kids.push(h('span', { class: 'pill-dot ' + opts.status, attrs: { 'aria-hidden': 'true' } }));
     }
     kids.push(h('span', { class: 'pill-label', text: opts.label }));
-    var btn = h(
+    const btn = h(
       'button',
       {
         class: 'pill' + (opts.selected ? ' selected' : ''),
@@ -26,7 +26,7 @@
       },
       kids
     );
-    var wrap = h(
+    const wrap = h(
       'div',
       {
         class:
@@ -35,15 +35,16 @@
       btn
     );
     if (opts.onClose) {
-      var close = h('button', {
+      const onClose = opts.onClose;
+      const close = h('button', {
         class: 'pill-x',
         text: '×',
         attrs: { type: 'button', 'aria-label': 'Close ' + opts.label, title: 'Close' },
         on: {
-          click: function (ev) {
+          click: function (ev: Event) {
             ev.preventDefault();
             ev.stopPropagation();
-            opts.onClose();
+            onClose();
           },
         },
       });

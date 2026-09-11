@@ -1,11 +1,18 @@
 (function () {
   'use strict';
 
-  var CC = window.CC || (window.CC = {});
-  var T = (CC.tabbar = CC.tabbar || {});
+  const CC = (window.CC = window.CC || ({} as CcShared));
+  const T = (CC.tabbar = CC.tabbar || ({} as TabbarNs));
 
-  function send(msg) {
-    var fn = (window.CC || {}).send;
+  interface WalkEntry {
+    id: string;
+    node: TabNode;
+    depth: number;
+    root: string | null;
+  }
+
+  function send(msg: unknown): void {
+    const fn = (window.CC || ({} as CcShared)).send;
     if (typeof fn === 'function') fn(msg);
   }
 
@@ -13,25 +20,25 @@
 
   T.selected = null;
 
-  function bar() {
+  function bar(): HTMLElement | null {
     return document.getElementById('tabsbar');
   }
 
-  function nodeById(id) {
-    for (var i = 0; i < T.state.tree.length; i++) {
+  function nodeById(id: string): TabNode | null {
+    for (let i = 0; i < T.state.tree.length; i++) {
       if (T.state.tree[i] && T.state.tree[i].id === id) return T.state.tree[i];
     }
     return null;
   }
 
-  function taskById(id) {
-    for (var i = 0; i < T.state.tasks.length; i++) {
+  function taskById(id: string): TabNode | null {
+    for (let i = 0; i < T.state.tasks.length; i++) {
       if (T.state.tasks[i] && T.state.tasks[i].id === id) return T.state.tasks[i];
     }
     return null;
   }
 
-  function pruneSelection() {
+  function pruneSelection(): void {
     if (!T.selected) return;
     if (T.selected.kind === 'agent') {
       if (!nodeById(T.selected.id)) T.selected = null;
@@ -40,31 +47,32 @@
     }
   }
 
-  function isSelected(kind, id) {
+  function isSelected(kind: string, id: string): boolean {
     return !!T.selected && T.selected.kind === kind && T.selected.id === id;
   }
 
-  function walkTree() {
-    var known = Object.create(null);
-    var kids = Object.create(null);
+  function walkTree(): WalkEntry[] {
+    const known: Record<string, TabNode> = Object.create(null);
+    const kids: Record<string, TabNode[]> = Object.create(null);
     T.state.tree.forEach(function (n) {
       if (n && n.id) known[n.id] = n;
     });
     T.state.tree.forEach(function (n) {
       if (!n || !n.id) return;
-      var parent = n.parent == null || !known[n.parent] ? '' : n.parent;
+      const parent = n.parent == null || !known[n.parent] ? '' : n.parent;
       (kids[parent] = kids[parent] || []).push(n);
     });
 
-    var out = [];
-    var seen = Object.create(null);
-    function walk(id, depth, root) {
+    const out: WalkEntry[] = [];
+    const seen: Record<string, boolean> = Object.create(null);
+    function walk(id: string, depth: number, root: string | null): void {
       (kids[id] || []).forEach(function (n) {
-        if (seen[n.id]) return;
-        seen[n.id] = true;
-        var branch = depth === 1 ? n.id : root;
-        out.push({ id: n.id, node: n, depth: depth, root: branch });
-        walk(n.id, depth + 1, branch);
+        const nid = n.id as string;
+        if (seen[nid]) return;
+        seen[nid] = true;
+        const branch = depth === 1 ? nid : root;
+        out.push({ id: nid, node: n, depth: depth, root: branch });
+        walk(nid, depth + 1, branch);
       });
     }
     walk('', 1, null);
@@ -76,13 +84,13 @@
     return out;
   }
 
-  function chatWork() {
-    var all = walkTree();
-    var branched = Object.create(null);
+  function chatWork(): TabWork[] {
+    const all = walkTree();
+    const branched: Record<string, boolean> = Object.create(null);
     all.forEach(function (e) {
-      if (e.depth > 1) branched[e.root] = true;
+      if (e.depth > 1 && e.root != null) branched[e.root] = true;
     });
-    var out = [];
+    const out: TabWork[] = [];
     all.forEach(function (e) {
       if (e.depth !== 1) return;
       out.push({ kind: 'agent', id: e.id, node: e.node, depth: 1, hasKids: !!branched[e.id] });
@@ -93,38 +101,38 @@
     return out;
   }
 
-  function openBranches() {
+  function openBranches(): TabBranch[] {
     if (!T.selected || T.selected.kind !== 'agent') return [];
-    var all = walkTree();
-    var byId = Object.create(null);
+    const all = walkTree();
+    const byId: Record<string, WalkEntry> = Object.create(null);
     all.forEach(function (e) {
       byId[e.id] = e;
     });
-    var here = byId[T.selected.id];
+    const here = byId[T.selected.id];
     if (!here) return [];
 
-    var path = [];
-    var seen = Object.create(null);
-    var cur = here;
+    const path: WalkEntry[] = [];
+    const seen: Record<string, boolean> = Object.create(null);
+    let cur: WalkEntry | null = here;
     while (cur && !seen[cur.id]) {
       seen[cur.id] = true;
       path.unshift(cur);
-      cur = cur.node.parent != null ? byId[cur.node.parent] : null;
+      cur = cur.node.parent != null ? byId[cur.node.parent] || null : null;
     }
 
-    var kidsOf = Object.create(null);
+    const kidsOf: Record<string, WalkEntry[]> = Object.create(null);
     all.forEach(function (e) {
-      var parent = e.node.parent != null && byId[e.node.parent] ? e.node.parent : '';
+      const parent = e.node.parent != null && byId[e.node.parent] ? e.node.parent : '';
       (kidsOf[parent] = kidsOf[parent] || []).push(e);
     });
 
-    var rows = [];
+    const rows: TabBranch[] = [];
     path.forEach(function (e) {
-      var kids = kidsOf[e.id] || [];
+      const kids = kidsOf[e.id] || [];
       if (!kids.length) return;
       rows.push({
         rootId: e.id,
-        rootLabel: e.node.label || 'Agent',
+        rootLabel: (e.node.label as string) || 'Agent',
         items: kids.map(function (k) {
           return {
             kind: 'agent',

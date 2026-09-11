@@ -1,12 +1,12 @@
 (function () {
   'use strict';
 
-  var CC = window.CC || (window.CC = {});
-  var T = (CC.tabbar = CC.tabbar || {});
+  const CC = (window.CC = window.CC || ({} as CcShared));
+  const T = (CC.tabbar = CC.tabbar || ({} as TabbarNs));
 
-  var DRAG_SLOP = 4;
+  const DRAG_SLOP = 4;
 
-  function scrollLeftTo(el, x) {
+  function scrollLeftTo(el: HTMLElement, x: number): void {
     if (typeof el.scrollTo === 'function') {
       el.scrollTo({ left: x, behavior: 'instant' });
     } else {
@@ -14,18 +14,18 @@
     }
   }
 
-  var drag = null;
-  var moved = false;
+  let drag: { el: HTMLElement; x: number; scroll: number } | null = null;
+  let moved = false;
 
-  function dragToScroll(el) {
-    el.addEventListener('mousedown', function (ev) {
+  function dragToScroll(el: HTMLElement): void {
+    el.addEventListener('mousedown', function (ev: MouseEvent) {
       if (ev.button !== 0) return;
       drag = { el: el, x: ev.clientX, scroll: el.scrollLeft };
       moved = false;
     });
     el.addEventListener(
       'click',
-      function (ev) {
+      function (ev: Event) {
         if (!moved) return;
         moved = false;
         ev.stopPropagation();
@@ -35,9 +35,9 @@
     );
   }
 
-  document.addEventListener('mousemove', function (ev) {
+  document.addEventListener('mousemove', function (ev: MouseEvent) {
     if (!drag) return;
-    var dx = ev.clientX - drag.x;
+    const dx = ev.clientX - drag.x;
     if (!moved && Math.abs(dx) < DRAG_SLOP) return;
     moved = true;
     drag.el.classList.add('dragging');
@@ -50,20 +50,20 @@
     drag = null;
   });
 
-  function wheelToScroll(capsule) {
-    capsule.addEventListener('wheel', function (ev) {
-      var delta = Math.abs(ev.deltaY) > Math.abs(ev.deltaX) ? ev.deltaY : ev.deltaX;
+  function wheelToScroll(capsule: HTMLElement): void {
+    capsule.addEventListener('wheel', function (ev: WheelEvent) {
+      const delta = Math.abs(ev.deltaY) > Math.abs(ev.deltaX) ? ev.deltaY : ev.deltaX;
       if (!delta) return;
-      var before = capsule.scrollLeft;
+      const before = capsule.scrollLeft;
       scrollLeftTo(capsule, before + delta);
       if (capsule.scrollLeft !== before) ev.preventDefault();
     });
   }
 
-  function keepFocusVisible(capsule) {
-    capsule.addEventListener('focusin', function (ev) {
-      if (ev.target && ev.target.scrollIntoView)
-        ev.target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  function keepFocusVisible(capsule: HTMLElement): void {
+    capsule.addEventListener('focusin', function (ev: FocusEvent) {
+      const target = ev.target as HTMLElement | null;
+      if (target && target.scrollIntoView) target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     });
   }
 

@@ -1,24 +1,24 @@
 (function () {
   'use strict';
 
-  var c = window.cc || (window.cc = {});
-  var CC = window.CC || {};
-  var T = (CC.tabbar = CC.tabbar || {});
-  var h = CC.h;
+  const c = (window.cc = window.cc || {});
+  const CC = (window.CC = window.CC || ({} as CcShared));
+  const T = (CC.tabbar = CC.tabbar || ({} as TabbarNs));
+  const h = CC.h;
 
-  function showChat() {
+  function showChat(): void {
     T.selected = null;
     T.send({ type: 'selectAgent', agentId: '' });
     render();
   }
 
-  function showAgent(agentId) {
+  function showAgent(agentId: string): void {
     T.selected = { kind: 'agent', id: agentId };
     T.send({ type: 'selectAgent', agentId: agentId });
     render();
   }
 
-  function showTask(taskId) {
+  function showTask(taskId: string): void {
     T.selected = { kind: 'task', id: taskId };
     T.send({ type: 'revealBackgroundTask', taskId: taskId });
     render();
@@ -28,12 +28,12 @@
   T.showAgent = showAgent;
   T.showTask = showTask;
 
-  function subtabPill(w, expanded) {
-    var node = w.node;
-    var isAgent = w.kind === 'agent';
-    var name = node.label || (isAgent ? 'Agent' : node.type || 'background');
-    var status = node.status || null;
-    var open = T.isSelected(w.kind, w.id);
+  function subtabPill(w: TabWork, expanded: boolean | null): HTMLElement {
+    const node = w.node;
+    const isAgent = w.kind === 'agent';
+    const name = (node.label as string) || (isAgent ? 'Agent' : (node.type as string) || 'background');
+    const status = (node.status as string) || null;
+    const open = T.isSelected(w.kind, w.id);
     return T.pill({
       label: isAgent ? name : CC.diagramShown(w.kind, w.depth, name),
       title: CC.diagramLabel(w.kind, w.depth, name) + (status ? '  ·  ' + status : ''),
@@ -54,23 +54,23 @@
     });
   }
 
-  function selectedChatId() {
-    for (var i = 0; i < T.state.chats.length; i++) {
+  function selectedChatId(): unknown {
+    for (let i = 0; i < T.state.chats.length; i++) {
       if (T.state.chats[i] && T.state.chats[i].selected) return T.state.chats[i].id;
     }
     return null;
   }
 
-  var centred = Object.create(null);
+  const centred: Record<string, unknown> = Object.create(null);
 
-  function ownsARow(branches, agentId) {
-    for (var i = 0; i < branches.length; i++) {
+  function ownsARow(branches: TabBranch[], agentId: string): boolean {
+    for (let i = 0; i < branches.length; i++) {
       if (branches[i].rootId === agentId) return true;
     }
     return false;
   }
 
-  function wireRow(capsule, priorScroll, slot, aimedAt) {
+  function wireRow(capsule: HTMLElement, priorScroll: number, slot: string, aimedAt: unknown): void {
     T.wheelToScroll(capsule);
     T.dragToScroll(capsule);
     T.keepFocusVisible(capsule);
@@ -78,34 +78,34 @@
     if (centred[slot] === aimedAt) return;
     centred[slot] = aimedAt;
     requestAnimationFrame(function () {
-      var open = capsule.querySelector('.pill-wrap.selected');
+      const open = capsule.querySelector('.pill-wrap.selected');
       if (open && open.scrollIntoView) open.scrollIntoView({ block: 'nearest', inline: 'center' });
     });
   }
 
-  function render() {
-    var host = T.bar();
-    if (!host) return;
+  function render(): void {
+    const bar = T.bar();
+    if (!bar) return;
     T.pruneSelection();
-    if (T.drawnSignature() === T.drawn && host.querySelector('.tab-row')) return;
-    var rows = host.querySelector('.tab-rows');
+    if (T.drawnSignature() === T.drawn && bar.querySelector('.tab-row')) return;
+    let rows = bar.querySelector<HTMLElement>('.tab-rows');
     if (!rows) {
       rows = h('div', { class: 'tab-rows' });
-      host.insertBefore(rows, host.firstChild);
+      bar.insertBefore(rows, bar.firstChild);
     }
-    var priorCapsule = rows.querySelector('.tab-capsule');
-    var priorScroll = priorCapsule ? priorCapsule.scrollLeft : 0;
-    var priorSubs = rows.querySelector('.subtab-capsule');
-    var priorSubScroll = priorSubs ? priorSubs.scrollLeft : 0;
-    var priorBranchScroll = Object.create(null);
-    Array.prototype.forEach.call(rows.querySelectorAll('.branch-capsule'), function (el) {
-      var owner = el.getAttribute('data-branch');
+    const priorCapsule = rows.querySelector('.tab-capsule');
+    const priorScroll = priorCapsule ? priorCapsule.scrollLeft : 0;
+    const priorSubs = rows.querySelector('.subtab-capsule');
+    const priorSubScroll = priorSubs ? priorSubs.scrollLeft : 0;
+    const priorBranchScroll: Record<string, number> = Object.create(null);
+    rows.querySelectorAll('.branch-capsule').forEach(function (el) {
+      const owner = el.getAttribute('data-branch');
       if (owner) priorBranchScroll[owner] = el.scrollLeft;
     });
     while (rows.firstChild) rows.removeChild(rows.firstChild);
-    host = rows;
+    const host = rows;
 
-    var chatPills = T.state.chats.map(function (chat) {
+    const chatPills = T.state.chats.map(function (chat) {
       return T.pill({
         label: chat.title,
         selected: !!chat.selected,
@@ -120,15 +120,15 @@
       });
     });
     if (chatPills.length) {
-      var capsule = h('div', { class: 'tab-capsule' }, chatPills);
+      const capsule = h('div', { class: 'tab-capsule' }, chatPills);
       host.appendChild(h('div', { class: 'tab-row' }, capsule));
       wireRow(capsule, priorScroll, 'chat', selectedChatId());
     }
 
-    var branches = T.openBranches();
-    var work = T.chatWork();
+    const branches = T.openBranches();
+    const work = T.chatWork();
     if (work.length) {
-      var subPills = [
+      const subPills = [
         T.pill({
           label: 'Chat',
           title: "This chat's own transcript",
@@ -137,19 +137,19 @@
         }),
       ];
       work.forEach(function (w) {
-        var expandable = w.kind === 'agent' && w.hasKids;
+        const expandable = w.kind === 'agent' && w.hasKids;
         subPills.push(subtabPill(w, expandable ? ownsARow(branches, w.id) : null));
       });
-      var subs = h('div', { class: 'tab-capsule subtab-capsule' }, subPills);
+      const subs = h('div', { class: 'tab-capsule subtab-capsule' }, subPills);
       host.appendChild(h('div', { class: 'tab-row' }, subs));
       wireRow(subs, priorSubScroll, 'sub', T.selected ? T.selected.kind + ':' + T.selected.id : '');
     }
 
     branches.forEach(function (branch) {
-      var branchPills = branch.items.map(function (w) {
+      const branchPills = branch.items.map(function (w) {
         return subtabPill(w, w.hasKids ? ownsARow(branches, w.id) : null);
       });
-      var kids = h(
+      const kids = h(
         'div',
         {
           class: 'tab-capsule subtab-capsule branch-capsule',
@@ -166,32 +166,32 @@
       );
     });
 
-    T.bar().hidden = !chatPills.length && !work.length;
+    bar.hidden = !chatPills.length && !work.length;
 
     T.drawn = T.drawnSignature();
   }
 
-  c.tabs = function (payload) {
-    var p = payload || {};
-    T.state.chats = Array.isArray(p.chats) ? p.chats : [];
-    T.state.tree = Array.isArray(p.tree) ? p.tree : [];
-    T.state.tasks = Array.isArray(p.tasks) ? p.tasks : [];
+  c.tabs = function (payload?: unknown): void {
+    const p = (payload || {}) as { chats?: unknown; tree?: unknown; tasks?: unknown };
+    T.state.chats = Array.isArray(p.chats) ? (p.chats as TabChat[]) : [];
+    T.state.tree = Array.isArray(p.tree) ? (p.tree as TabNode[]) : [];
+    T.state.tasks = Array.isArray(p.tasks) ? (p.tasks as TabNode[]) : [];
     render();
   };
 
-  c.revealAgentTab = function (agentId) {
+  c.revealAgentTab = function (agentId?: unknown): void {
     if (!agentId) return;
-    T.selected = { kind: 'agent', id: agentId };
+    T.selected = { kind: 'agent', id: String(agentId) };
     render();
   };
 
-  c.revealTaskTab = function (taskId) {
+  c.revealTaskTab = function (taskId?: unknown): void {
     if (!taskId) return;
-    T.selected = { kind: 'task', id: taskId };
+    T.selected = { kind: 'task', id: String(taskId) };
     render();
   };
 
-  c.clearAgentSelection = function () {
+  c.clearAgentSelection = function (): void {
     T.selected = null;
     render();
   };
