@@ -3,6 +3,7 @@ package dev.lain.claudejb.ui
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import dev.lain.claudejb.permission.SecurityRule
+import dev.lain.claudejb.permission.blockedWhy
 
 internal object GuardWhitelistPrompt {
 

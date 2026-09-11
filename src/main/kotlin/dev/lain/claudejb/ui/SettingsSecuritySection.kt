@@ -6,6 +6,7 @@ import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.Panel
 import dev.lain.claudejb.permission.SecurityCategory
 import dev.lain.claudejb.permission.SecurityRule
+import dev.lain.claudejb.permission.hint
 import dev.lain.claudejb.settings.ClaudeSettings
 import dev.lain.claudejb.settings.GuardMode
 import dev.lain.claudejb.settings.SecuritySuspensions

@@ -1,6 +1,7 @@
 package dev.lain.claudejb.ui
 
 import dev.lain.claudejb.permission.SecurityRule
+import dev.lain.claudejb.permission.blockedWhy
 import dev.lain.claudejb.settings.GuardAlert
 
 internal object GuardPromptedActions {
