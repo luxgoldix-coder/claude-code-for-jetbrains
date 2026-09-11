@@ -100,7 +100,7 @@
     if (reported[key] || reportedCount >= MAX_REPORTED) return;
     reported[key] = true;
     reportedCount++;
-    CC.send({ type: 'diagnostics', report: 'uncaught ' + what + ': ' + text });
+    CC.send({ type: 'diag', report: 'uncaught ' + what + ': ' + text });
   }
   window.addEventListener('error', function (ev: ErrorEvent) {
     reportUncaught('error', ev.error || ev.message);
@@ -128,6 +128,6 @@
     for (let i = 0; i < expected.length; i++) {
       if (typeof (window.cc || {})[expected[i]] !== 'function') missing.push('cc.' + expected[i]);
     }
-    if (missing.length) CC.send({ type: 'diagnostics', report: 'uncaught missing: ' + missing.join(', ') });
+    if (missing.length) CC.send({ type: 'diag', report: 'uncaught missing: ' + missing.join(', ') });
   };
 })();
