@@ -2,9 +2,9 @@ package dev.lain.claudejb.headless
 
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import dev.lain.claudejb.protocol.InitializeResponse
 import dev.lain.claudejb.protocol.ModelInfo
 import dev.lain.claudejb.session.ChatSessionManager
-import dev.lain.claudejb.session.ClaudeSession
 import dev.lain.claudejb.settings.ClaudeSettings
 import dev.lain.claudejb.settings.SecretStore
 import dev.lain.claudejb.settings.SettingsStore
@@ -104,8 +104,7 @@ class ClaudeSettingsConfigurableHeadlessTest : BasePlatformTestCase() {
         val settings = ClaudeSettings.getInstance(project)
         settings.state.model = "some-unlisted-model"
         val session = ChatSessionManager.getInstance(project).activeOrCreate()
-        ClaudeSession::class.java.getDeclaredField("models").apply { isAccessible = true }
-            .set(session, listOf(ModelInfo("haiku"), ModelInfo("sonnet")))
+        session.catalog.adopt(InitializeResponse(models = listOf(ModelInfo("haiku"), ModelInfo("sonnet"))))
         val c = newConfigurable()
         try {
             c.createComponent()
@@ -126,8 +125,7 @@ class ClaudeSettingsConfigurableHeadlessTest : BasePlatformTestCase() {
         val c = newConfigurable()
         try {
             c.createComponent()
-            ClaudeSession::class.java.getDeclaredField("models").apply { isAccessible = true }
-                .set(session, listOf(ModelInfo("haiku"), ModelInfo("sonnet")))
+            session.catalog.adopt(InitializeResponse(models = listOf(ModelInfo("haiku"), ModelInfo("sonnet"))))
             SettingsModelSection::class.java.getDeclaredMethod("rebuildModelCombo")
                 .apply { isAccessible = true }.invoke(modelSectionOf(c))
             assertEquals("some-unlisted-model", modelComboOf(c).editor.item)

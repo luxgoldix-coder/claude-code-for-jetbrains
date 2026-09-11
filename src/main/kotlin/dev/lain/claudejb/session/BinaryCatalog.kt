@@ -42,7 +42,7 @@ class BinaryCatalog(
 
     fun request() = s.queries.ask(Asks.INITIALIZE) { info -> info?.let(::adopt) }
 
-    private fun adopt(info: InitializeResponse) {
+    internal fun adopt(info: InitializeResponse) {
         commands = info.commands
         models = info.models
         agents = info.agents
