@@ -1,0 +1,139 @@
+(function () {
+  'use strict';
+
+  const CC = (window.CC = window.CC || ({} as CcShared));
+  const TX = (CC.transcript = CC.transcript || ({} as TranscriptNs));
+
+  const el = TX.el;
+  const toolCards = TX.toolCards;
+
+  const MAX_JSON_CHARS = 200000;
+
+  function prettyJson(text: string): string | null {
+    if (!text || text.length > MAX_JSON_CHARS) {
+      return null;
+    }
+    const s = text.trim();
+    const head = s.charAt(0);
+    const tail = s.charAt(s.length - 1);
+    if ((head !== '{' || tail !== '}') && (head !== '[' || tail !== ']')) {
+      return null;
+    }
+    try {
+      return JSON.stringify(JSON.parse(s), null, 2);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function decorate(codeEl: HTMLElement, language: string | null): void {
+    if (typeof CC.decorateOneCodeBlock !== 'function') return;
+    if (language) codeEl.className = 'language-' + language;
+    CC.decorateOneCodeBlock(codeEl);
+  }
+
+  TX.routeToolOutput = function (entry: TranscriptEntry, cards?: Map<string, RowEl>): boolean {
+    const known = cards || toolCards;
+    const tid = entry.toolUseId;
+    if (!tid) {
+      return false;
+    }
+    const card = known.get(tid);
+    if (!card) {
+      return false;
+    }
+    const out = card.__outNode || card.querySelector<HTMLElement>('.tool-out');
+    if (!out) {
+      return false;
+    }
+    const pid = 'to-' + entry.id;
+    let block = out.querySelector<HTMLElement>('[data-out-id="' + pid + '"]');
+    if (!block) {
+      block = el('pre', {});
+      block.setAttribute('data-out-id', pid);
+      block.appendChild(el('code', {}));
+      out.appendChild(block);
+    }
+    const codeEl = block.querySelector<HTMLElement>('code');
+    if (codeEl) {
+      const tags = ' ' + (entry.meta || '') + ' ';
+      const fileLang = typeof CC.languageForPath === 'function' ? CC.languageForPath(card.__filePath) : null;
+      const raw = entry.text == null ? '' : String(entry.text);
+      if (entry.meta === 'diff') {
+        renderDiff(codeEl, raw, fileLang);
+        block.classList.add('diff');
+        block.classList.remove('command');
+        block.classList.remove('flow');
+      } else if (tags.indexOf(' command ') >= 0) {
+        block.classList.remove('diff');
+        block.classList.remove('flow');
+        block.classList.add('command');
+        codeEl.textContent = raw;
+        if (typeof CC.decorateOneCodeBlock === 'function') {
+          CC.decorateOneCodeBlock(codeEl);
+          const langLabel = block.querySelector('.code-lang');
+          if (langLabel) {
+            langLabel.textContent = 'shell';
+          }
+        }
+      } else {
+        block.classList.remove('diff');
+        block.classList.remove('command');
+        const json = prettyJson(raw);
+        codeEl.textContent = json == null ? raw : json;
+        if (card.__filePath) {
+          block.classList.remove('flow');
+          decorate(codeEl, fileLang);
+        } else {
+          block.classList.add('flow');
+          if (json != null) decorate(codeEl, 'json');
+        }
+      }
+    }
+    return true;
+  };
+
+  function renderDiff(codeEl: HTMLElement, text: string, lang: string | null): void {
+    codeEl.innerHTML = '';
+    const lines = String(text).split('\n');
+    const highlighter = window.hljs;
+    const canHighlight = !!(
+      lang &&
+      highlighter &&
+      typeof highlighter.getLanguage === 'function' &&
+      highlighter.getLanguage(lang) &&
+      typeof highlighter.highlight === 'function'
+    );
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const c0 = line.charAt(0);
+      const isHunk = line.indexOf('@@') === 0;
+      let cls = 'dl-ctx';
+      if (isHunk) {
+        cls = 'dl-hunk';
+      } else if (c0 === '+') {
+        cls = 'dl-add';
+      } else if (c0 === '-') {
+        cls = 'dl-del';
+      }
+      const span = el('span', { class: 'diff-line ' + cls });
+      const trailingNl = i < lines.length - 1;
+      let highlighted = false;
+      if (!isHunk && canHighlight && highlighter && lang && line.length > 0) {
+        try {
+          const hi = highlighter.highlight(line.slice(1), { language: lang, ignoreIllegals: true }).value;
+          span.appendChild(document.createTextNode(c0));
+          span.insertAdjacentHTML('beforeend', hi);
+          if (trailingNl) {
+            span.appendChild(document.createTextNode('\n'));
+          }
+          highlighted = true;
+        } catch (e) {}
+      }
+      if (!highlighted) {
+        span.textContent = trailingNl ? line + '\n' : line;
+      }
+      codeEl.appendChild(span);
+    }
+  }
+})();
