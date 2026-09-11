@@ -1,6 +1,7 @@
 package dev.lain.claudejb.model.mcp
 
 import dev.lain.claudejb.model.mcp.toon.Toon
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.JsonObject
@@ -85,14 +86,17 @@ class MetaTools(private val catalog: ToolCatalog, private val gate: ToolGate, pr
         gate.denial(tool.spec, arguments)?.let { return ToolResult.error(it) }
         val args = arguments["args"]?.let { it as? JsonObject } ?: JsonObject(emptyMap())
         val toolUseId = (meta[OwnTools.TOOL_USE_ID_KEY] as? JsonPrimitive)?.content
-        val result = try {
-            withTimeout(tool.spec.timeoutMillis) { tool.run(ToolArgs(args, toolUseId)) }
-        } catch (e: ToolException) {
-            ToolResult.error(e.message ?: "tool failed")
-        } catch (e: TimeoutCancellationException) {
-            ToolResult.error(overrun(name, tool.spec.timeoutMillis, e))
-        }
+        val result = runCatching { withTimeout(tool.spec.timeoutMillis) { tool.run(ToolArgs(args, toolUseId)) } }
+            .getOrElse { failure(name, tool.spec.timeoutMillis, it) }
         return ToolResult(budget.fit(result.text), result.isError)
+    }
+
+    private fun failure(name: String, timeoutMillis: Long, cause: Throwable): ToolResult = when (cause) {
+        is ToolException -> ToolResult.error(cause.message ?: "tool failed")
+        is TimeoutCancellationException -> ToolResult.error(overrun(name, timeoutMillis, cause))
+        is CancellationException -> throw cause
+        is LinkageError -> ToolResult.error("$name needs an API this IDE build does not have: ${cause.message}")
+        else -> ToolResult.error("$name failed: ${cause::class.simpleName}: ${cause.message}")
     }
 
     private fun overrun(name: String, timeoutMillis: Long, cause: TimeoutCancellationException): String =

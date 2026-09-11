@@ -92,6 +92,19 @@ class ToolModelTest {
     }
 
     @Test
+    fun `a tool that blows up with anything but a cancellation answers in band, so the request never hangs`() = runBlocking {
+        val missing = Tool(ToolSpec("missing", "")) { throw NoSuchMethodError("GitFileUtils.addPaths(...)") }
+        val broken = Tool(ToolSpec("broken", "")) { throw IllegalStateException("no document") }
+        val meta = MetaTools(ToolCatalog(listOf(ToolDomain("d", "", listOf(missing, broken)))), { _, _ -> null }, OutputBudget())
+        val api = meta.call("run", parse("""{"tool":"missing"}"""))!!
+        assertTrue(api.isError)
+        assertTrue(api.text.contains("missing needs an API this IDE build does not have: GitFileUtils.addPaths(...)")) { api.text }
+        val bug = meta.call("run", parse("""{"tool":"broken"}"""))!!
+        assertTrue(bug.isError)
+        assertTrue(bug.text.contains("broken failed: IllegalStateException: no document")) { bug.text }
+    }
+
+    @Test
     fun `errors are TOON too`() {
         val error = ToolResult.error("no such file")
         assertTrue(error.isError)
