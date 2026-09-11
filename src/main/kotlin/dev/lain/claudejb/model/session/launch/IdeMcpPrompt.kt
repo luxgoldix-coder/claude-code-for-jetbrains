@@ -52,8 +52,8 @@ object IdeMcpPrompt {
             "evaluate_expression, not prints; stop_debug_session when done.",
         IdeRule.DEBUGGER_TESTS to "A failing test: start_debug_session on its configuration, set_breakpoint at the " +
             "assertion; no guessing from the trace.",
-        IdeRule.DEBUGGER_CONFIGS to "A command you repeat becomes a run configuration in .idea/runConfigurations " +
-            "(name Tool: <x>), run by execute_run_configuration.",
+        IdeRule.DEBUGGER_CONFIGS to "No run configuration for a task: create one in .idea/runConfigurations " +
+            "(name Tool: <x>), run it by execute_run_configuration.",
         IdeRule.JETBRAINS_PATCH to "Multi-file changes: one apply_patch.",
         IdeRule.JETBRAINS_PROBLEMS to "get_file_problems and lint_files after editing.",
         IdeRule.JETBRAINS_RUN to "build_project and execute_run_configuration replace shell builds; " +
