@@ -62,9 +62,9 @@ internal class TerminalTools(private val project: Project, scope: CoroutineScope
 
     private fun handler(command: String, directory: String): ColoredProcessHandler {
         val words = if (SystemInfo.isWindows) {
-            listOf("cmd.exe", "/c", command)
+            listOf("powershell.exe", "-NoLogo", "-NoProfile", "-NonInteractive", "-Command", command)
         } else {
-            listOf(System.getenv("SHELL") ?: "/bin/sh", "-c", command)
+            listOf(System.getenv("SHELL") ?: "/bin/bash", "-c", command)
         }
         val commandLine = GeneralCommandLine(words).withWorkingDirectory(Path.of(directory))
         return try {
@@ -132,10 +132,11 @@ internal class TerminalTools(private val project: Project, scope: CoroutineScope
 
         val SHELL = ToolSpec(
             "shell",
-            "Runs a shell command in a tab of the IDE's Terminal tool window and returns its exit code and the end of its " +
-                "output. Output streams to the chat while it runs; status running means call again with job.",
+            "Runs a command line in the user's shell (bash or the login shell; PowerShell on Windows) inside a tab of the " +
+                "IDE's Terminal tool window, and returns its exit code and the end of its output. This replaces Bash. " +
+                "Output streams to the chat while it runs; status running means call again with job.",
             listOf(
-                Param("command", "The command line, run by the user's shell (not needed with job)", required = false),
+                Param("command", "The command line, as typed at the prompt (not needed with job)", required = false),
                 Param("cwd", "Working directory, relative to the project root (default: the project root)", required = false),
                 Jobs.WAIT,
                 OutputTail.TAIL,

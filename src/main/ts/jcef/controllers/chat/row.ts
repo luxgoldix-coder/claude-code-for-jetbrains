@@ -38,12 +38,19 @@
     return rec;
   }
 
+  const OWN_RUN = /^mcp__[a-z]+__run$/;
+
+  function commandLabel(entry: TranscriptEntry): string {
+    const meta = entry.meta == null ? '' : String(entry.meta);
+    return meta && !OWN_RUN.test(meta) ? meta : entry.text || '';
+  }
+
   function bodyKey(rec: RowRec, entry: TranscriptEntry): string {
     if (rec.speaker === 'TOOL' && entry.title) {
       return 't:' + entry.title;
     }
     if (rec.speaker === 'TOOL' && entry.command) {
-      return 'c:' + (entry.meta || entry.text);
+      return 'c:' + commandLabel(entry);
     }
     if (rec.speaker === 'TOOL' && entry.filePath) {
       return 'f:' + entry.filePath + '\n' + entry.text;
@@ -55,7 +62,7 @@
     if (rec.speaker === 'TOOL' && entry.title) {
       setBody(rec, entry.title);
     } else if (rec.speaker === 'TOOL' && entry.command) {
-      setBody(rec, entry.meta || entry.text);
+      setBody(rec, commandLabel(entry));
     } else if (rec.speaker === 'TOOL' && entry.filePath) {
       TX.renderToolLabel(rec.bodyNode, entry.text, entry.filePath);
     } else {

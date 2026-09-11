@@ -292,6 +292,21 @@ describe('transcript — the executed command renders as its own always-visible 
     expect(sent.some((m) => m.type === 'copy' && m.text === 'echo hi')).toBe(true);
   });
 
+  it('an own shell card keeps its human title while a native Bash card is labelled by its tool name', () => {
+    const win = loadFrontend(['app-transcript.js']);
+    win.cc.batch([
+      row(20, 0, 'TOOL', 'Bash(echo hi)', { meta: 'Bash', toolUseId: 'tu-bash', command: 'echo hi' }),
+      row(21, 1, 'TOOL', 'run ▸ shell', {
+        meta: 'mcp__run__run',
+        toolUseId: 'tu-shell',
+        command: 'git status',
+      }),
+    ]);
+    const names = Array.from(win.document.querySelectorAll('.tool .name')).map((n) => n.textContent);
+    expect(names).toEqual(['Bash', 'run ▸ shell']);
+    expect(win.document.querySelectorAll('.tool.cmd-tool').length).toBe(2);
+  });
+
   it('a tool without entry.command (e.g. Read) gets no command-src block, no cmd-tool class, full label', () => {
     const win = loadFrontend(['app-transcript.js']);
     win.cc.batch([
