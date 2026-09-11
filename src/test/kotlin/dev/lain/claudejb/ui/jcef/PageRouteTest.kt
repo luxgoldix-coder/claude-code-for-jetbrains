@@ -1,61 +1,50 @@
 package dev.lain.claudejb.ui.jcef
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.io.File
 
 class PageRouteTest {
 
     @Test
-    fun `the ladder runs scheme then loopback then inline`() {
-        assertEquals(PageRoute.LOOPBACK, nextPageRoute(PageRoute.SCHEME, loopbackBound = false))
-        assertEquals(PageRoute.INLINE, nextPageRoute(PageRoute.LOOPBACK, loopbackBound = false))
+    fun `the ladder is scheme, then loopback, then nothing`() {
+        assertEquals(PageRoute.LOOPBACK, nextPageRoute(PageRoute.SCHEME))
+        assertNull(nextPageRoute(PageRoute.LOOPBACK))
     }
 
     @Test
-    fun `the notice is the last rung, and only when a port is actually being served`() {
-        assertEquals(PageRoute.NOTICE, nextPageRoute(PageRoute.INLINE, loopbackBound = true))
-        assertNull(
-            nextPageRoute(PageRoute.INLINE, loopbackBound = false),
-            "with nothing bound the notice has no port to name, so there is nothing to show",
-        )
+    fun `there are exactly two rungs, both of them URL loads`() {
+        assertEquals(listOf("SCHEME", "LOOPBACK"), PageRoute.entries.map { it.name }) {
+            "A rung delivered through loadHTML navigates to file:///jbcefbrowser/…, which the host's own " +
+                "navigation guard refuses; a watchdog that falls onto it leaves the page never running."
+        }
     }
 
     @Test
-    fun `the notice is terminal`() {
-        assertNull(nextPageRoute(PageRoute.NOTICE, loopbackBound = true))
-        assertNull(nextPageRoute(PageRoute.NOTICE, loopbackBound = false))
+    fun `no rung is delivered through loadHTML, which the navigation guard refuses`() {
+        val delivery = source("PageDelivery.kt").readText()
+        assertFalse(delivery.contains("loadHTML(")) {
+            "PageDelivery navigates through loadHTML. isOwnPageUrl only admits the scheme page and the loopback " +
+                "URL, so that load is cancelled before it starts."
+        }
     }
 
     @Test
-    fun `every step lands on a later rung than the one it came from`() {
+    fun `every step lands on a later rung than the one it came from, and the ladder ends`() {
         for (from in PageRoute.entries) {
-            for (bound in listOf(true, false)) {
-                val next = nextPageRoute(from, bound) ?: continue
-                assertTrue(next.ordinal > from.ordinal, "$from (bound=$bound) went back to $next")
-            }
+            val visited = generateSequence(from) { nextPageRoute(it) }.toList()
+            assertEquals(visited.distinct(), visited, "the ladder from $from delivered a rung twice: $visited")
+            assertTrue(visited.size <= PageRoute.entries.size, "the ladder from $from ran longer than there are rungs")
+            visited.zipWithNext().forEach { (a, b) -> assertTrue(b.ordinal > a.ordinal, "$a went back to $b") }
         }
     }
 
-    private fun rungsDeliveredFrom(start: PageRoute, bound: Boolean): List<PageRoute> =
-        generateSequence(start) { nextPageRoute(it, bound) }.toList()
-
-    @Test
-    fun `the ladder ends from any starting point, and visits nothing twice`() {
-        for (start in PageRoute.entries) {
-            for (bound in listOf(true, false)) {
-                val visited = rungsDeliveredFrom(start, bound)
-                assertEquals(
-                    visited.distinct(),
-                    visited,
-                    "the ladder from $start (bound=$bound) delivered a rung twice: $visited",
-                )
-                assertTrue(
-                    visited.size <= PageRoute.entries.size,
-                    "the ladder from $start (bound=$bound) ran longer than there are rungs: $visited",
-                )
-            }
-        }
+    private fun source(name: String): File {
+        val path = "src/main/kotlin/dev/lain/claudejb/ui/jcef/$name"
+        return sequenceOf(File(path), File("../$path")).firstOrNull { it.isFile }
+            ?: error("could not locate $path from ${File("").absolutePath}")
     }
 }

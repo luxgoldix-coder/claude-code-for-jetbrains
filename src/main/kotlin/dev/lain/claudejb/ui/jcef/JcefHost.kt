@@ -31,7 +31,6 @@ class JcefHost(
     val supported: Boolean = JBCefApp.isSupported()
 
     private val browser: JBCefBrowser?
-    private val jsQuery: JBCefJSQuery?
 
     private var ready: Boolean = false
 
@@ -56,7 +55,6 @@ class JcefHost(
     init {
         if (!supported) {
             browser = null
-            jsQuery = null
             component = JBLabel(
                 "Claude Code needs JCEF — enable `ide.browser.jcef.enabled` in the Registry and restart.",
             ).apply {
@@ -73,13 +71,14 @@ class JcefHost(
                 parentDisposable,
                 Disposable {
                     disposed = true
+                    deferredAlarm.cancelAllRequests()
+                    deferred.clear()
                     delivery?.stopLoopback()
                 },
             )
 
             val base: JBCefBrowserBase = b
             val query = JBCefJSQuery.create(base)
-            jsQuery = query
             Disposer.register(parentDisposable, query)
             query.addHandler { request ->
                 ApplicationManager.getApplication().invokeLater { onMessage(request) }
@@ -105,6 +104,7 @@ class JcefHost(
     fun exec(js: String) {
         val b = browser ?: return
         edtNow {
+            if (disposed) return@edtNow
             if (ready) {
                 executeNow(b, js)
             } else {
@@ -118,7 +118,7 @@ class JcefHost(
             val payload = runCatching(build)
                 .onFailure { log.warn("Claude Code: $method could not be answered", it) }
                 .getOrNull() ?: return@executeOnPooledThread
-            if (!disposed) exec("$method && $method($payload)")
+            exec("$method && $method($payload)")
         }
     }
 
@@ -161,16 +161,6 @@ class JcefHost(
         return runCatching { b.cefBrowser.uiComponent }.getOrNull() as? JComponent
     }
 
-    fun dispose() {
-        edtNow {
-            deferredAlarm.cancelAllRequests()
-            deferred.clear()
-        }
-        delivery?.stopLoopback()
-        jsQuery?.let { Disposer.dispose(it) }
-        browser?.let { Disposer.dispose(it) }
-    }
-
     private class ReadyBlock(val block: () -> Unit)
 
     private fun flushDeferred() {
@@ -196,6 +186,7 @@ class JcefHost(
                 ) {
                     if (frame != null && !frame.isMain) return
                     mainFrameLoadFailed = false
+                    delivery?.pageLoadStarted()
                 }
 
                 override fun onLoadError(

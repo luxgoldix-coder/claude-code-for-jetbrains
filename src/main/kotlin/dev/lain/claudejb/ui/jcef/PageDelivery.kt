@@ -30,16 +30,20 @@ internal class PageDelivery(
 
     fun isOwnPage(url: String?): Boolean = isOwnPageUrl(url, SchemePageServer.PAGE_URL, loopback?.url)
 
+    fun pageLoadStarted() = edtNow { if (route != null) arm(READY_WATCHDOG_MS) }
+
+    fun relaxWatchdog() = arm(SCRIPTS_WATCHDOG_MS)
+
     fun cancelWatchdog() = readyWatchdog.cancelAllRequests()
 
     fun stopLoopback() {
         loopback?.stop()
     }
 
-    fun relaxWatchdog() {
+    private fun arm(delayMs: Int) {
         if (webReady()) return
         readyWatchdog.cancelAllRequests()
-        readyWatchdog.addRequest({ if (!webReady()) promote() }, SCRIPTS_WATCHDOG_MS)
+        readyWatchdog.addRequest({ if (!webReady()) promote() }, delayMs)
     }
 
     private fun startRoute(schemeAvailable: Boolean): PageRoute =
@@ -47,31 +51,22 @@ internal class PageDelivery(
 
     private fun deliver(next: PageRoute) {
         route = next
-        if (next != PageRoute.NOTICE) armWatchdog()
         when (next) {
             PageRoute.SCHEME -> browser.loadURL(SchemePageServer.PAGE_URL)
             PageRoute.LOOPBACK -> serveOverLoopback()
-            PageRoute.INLINE -> browser.loadHTML(page.html)
-            PageRoute.NOTICE -> loopback?.let { browser.loadHTML(RemoteDevNotice.html(it.port)) }
         }
-    }
-
-    private fun armWatchdog() {
-        if (webReady()) return
-        readyWatchdog.cancelAllRequests()
-        readyWatchdog.addRequest({ if (!webReady()) promote() }, READY_WATCHDOG_MS)
     }
 
     private fun promote() {
         val current = route ?: return
-        val next = nextPageRoute(current, loopbackBound = loopback != null)
+        val next = nextPageRoute(current)
         if (next == null) {
             log.warn("Claude Code chat did not come up over $current and there is no route left to try")
             return
         }
         onRedeliver()
         log.warn("Claude Code chat did not come up over $current — delivering it over $next instead")
-        if (next == PageRoute.LOOPBACK) provenRoute = PageRoute.LOOPBACK
+        provenRoute = next
         deliver(next)
     }
 

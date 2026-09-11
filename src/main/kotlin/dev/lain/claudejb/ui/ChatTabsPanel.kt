@@ -110,19 +110,22 @@ internal class ChatTabsPanel : JBPanel<ChatTabsPanel>(BorderLayout()), Disposabl
 
     fun close(tab: ChatTab) {
         if (!tabs.remove(tab)) return
-        if (selectedTab === tab) {
-            selectedTab = null
-            tabs.firstOrNull()?.let { select(it) } ?: pushChats()
-        } else {
-            pushChats()
+        try {
+            if (selectedTab === tab) {
+                selectedTab = null
+                tabs.firstOrNull()?.let { select(it) } ?: pushChats()
+            } else {
+                pushChats()
+            }
+            tab.component.isVisible = false
+            onClosed(tab)
+            content.remove(tab.component)
+            tab.disposer?.let { Disposer.dispose(it) }
+            content.revalidate()
+            content.repaint()
+        } finally {
+            replaceLastChat()
         }
-        tab.component.isVisible = false
-        onClosed(tab)
-        content.remove(tab.component)
-        tab.disposer?.let { Disposer.dispose(it) }
-        content.revalidate()
-        content.repaint()
-        replaceLastChat()
     }
 
     private fun replaceLastChat() {

@@ -1,12 +1,10 @@
 package dev.lain.claudejb.ui.jcef
 
-internal enum class PageRoute { SCHEME, LOOPBACK, INLINE, NOTICE }
+internal enum class PageRoute { SCHEME, LOOPBACK }
 
-internal fun nextPageRoute(current: PageRoute, loopbackBound: Boolean): PageRoute? = when (current) {
+internal fun nextPageRoute(current: PageRoute): PageRoute? = when (current) {
     PageRoute.SCHEME -> PageRoute.LOOPBACK
-    PageRoute.LOOPBACK -> PageRoute.INLINE
-    PageRoute.INLINE -> PageRoute.NOTICE.takeIf { loopbackBound }
-    PageRoute.NOTICE -> null
+    PageRoute.LOOPBACK -> null
 }
 
 internal fun isOwnPageUrl(url: String?, pageUrl: String, loopbackUrl: String?): Boolean {

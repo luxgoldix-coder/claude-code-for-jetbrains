@@ -47,6 +47,31 @@ class PageStateRecoveryContractTest {
     }
 
     @Test
+    fun `the ready watchdog is armed when the browser starts loading, not when the page is handed over`() {
+        val deliver = bodyOf(source("ui/jcef/PageDelivery.kt").readLines(), "private fun deliver(")
+        assertTrue(deliver.none { it.contains("armWatchdog(") }) {
+            "deliver() arms the ready watchdog before the browser exists. JBCefOsrComponent.addNotify creates the " +
+                "browser, and a chat opened into a component not yet on screen — the replacement for a closed " +
+                "last tab — spends the whole grace period before its first navigation can start, then falls off " +
+                "the ladder with the page never run.\n" + deliver.joinToString("\n")
+        }
+        val start = bodyOf(source("ui/jcef/JcefHost.kt").readLines(), "override fun onLoadStart(")
+        assertTrue(start.any { it.contains("pageLoadStarted(") }) {
+            "onLoadStart no longer tells the delivery that the browser began loading, so nothing arms the " +
+                "watchdog at all and a rung that hangs is never left.\n" + start.joinToString("\n")
+        }
+    }
+
+    @Test
+    fun `a disposed host runs nothing in its browser`() {
+        val exec = bodyOf(source("ui/jcef/JcefHost.kt").readLines(), "fun exec(")
+        assertTrue(exec.any { it.contains("disposed") }) {
+            "exec no longer checks disposed. A pooled payload that finishes after the tab closed then executes " +
+                "JavaScript in a browser that is being torn down.\n" + exec.joinToString("\n")
+        }
+    }
+
+    @Test
     fun `the Ready message re-pushes the tab bar, like everything else the page owes`() {
         val lines = source("ui/BridgeLifecycle.kt").readLines()
         val start = lines.indexOfFirst { it.contains("Msg.Ready ->") }
@@ -73,6 +98,15 @@ class PageStateRecoveryContractTest {
         assertEquals(listOf("ChatAgentTabs.kt"), emitters) {
             "window.cc.tabs is emitted from more than one place: $emitters"
         }
+    }
+
+    private fun bodyOf(lines: List<String>, signature: String): List<String> {
+        val from = lines.indexOfFirst { it.trimStart().startsWith(signature) }
+        assertTrue(from >= 0) { "no `$signature` declared" }
+        val indent = lines[from].takeWhile { it == ' ' }
+        val length = lines.drop(from + 1).indexOfFirst { it == "$indent}" }
+        assertTrue(length >= 0) { "`$signature` has no closing brace at its own indent" }
+        return lines.subList(from, from + 2 + length)
     }
 
     private fun source(relative: String) = File(mainRoot(), "dev/lain/claudejb/$relative").also {
