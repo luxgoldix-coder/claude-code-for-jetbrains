@@ -28,7 +28,6 @@ sealed interface Msg {
 
     data class Send(val text: String, val scope: String = "") : Prompting
     data class Interrupt(val scope: String = "") : Prompting
-    object CycleMode : Prompting
     data class RemoveQueued(val index: Int) : Prompting
     data class Copy(val text: String) : Prompting
 

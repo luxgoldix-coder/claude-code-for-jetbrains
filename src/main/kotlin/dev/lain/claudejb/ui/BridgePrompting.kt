@@ -16,8 +16,6 @@ internal class BridgePrompting(private val panel: JcefChatPanel) {
             is Msg.Interrupt ->
                 if (m.scope == JcefBridge.SCOPE_GIT) panel.gitChat.interrupt() else session.turnControl.interrupt()
 
-            Msg.CycleMode -> session.settings.cyclePermissionMode()
-
             is Msg.RemoveQueued -> session.prompts.remove(m.index)
 
             is Msg.Copy -> CopyPasteManager.getInstance().setContents(StringSelection(m.text))

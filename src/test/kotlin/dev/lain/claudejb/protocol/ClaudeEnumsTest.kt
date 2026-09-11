@@ -12,7 +12,6 @@ class ClaudeEnumsTest {
             listOf("default", "acceptEdits", "plan", "bypassPermissions", "dontAsk", "auto"),
             PermissionMode.entries.map { it.wire },
         )
-        assertEquals(listOf("default", "acceptEdits", "plan"), PermissionMode.CYCLE.map { it.wire })
     }
 
     @Test

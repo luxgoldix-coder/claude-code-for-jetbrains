@@ -50,7 +50,6 @@ object JcefBridge {
     private fun parseComposer(type: String, f: Fields): Msg? = when (type) {
         "send" -> Msg.Send(f.text("text"), f.text("scope"))
         "interrupt" -> Msg.Interrupt(f.text("scope"))
-        "cycleMode" -> Msg.CycleMode
         "ready" -> Msg.Ready
         "diag" -> Msg.Diagnostics(f.text("report"))
         "copy" -> Msg.Copy(f.text("text"))

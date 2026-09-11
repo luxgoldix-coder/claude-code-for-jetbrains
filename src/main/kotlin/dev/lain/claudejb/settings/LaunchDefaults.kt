@@ -29,8 +29,6 @@ object LaunchDefaults {
 
     const val THINKING_ON = 1
 
-    val PERMISSION_MODES_CYCLE = PermissionMode.CYCLE.map { it.wire }
-
     val PERMISSION_MODES = PermissionMode.entries.map { it.wire }
 
     val EFFORT_LEVELS = EffortLevel.entries.map { it.wire }

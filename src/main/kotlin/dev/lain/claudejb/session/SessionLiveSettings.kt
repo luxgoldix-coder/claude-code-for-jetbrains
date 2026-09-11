@@ -120,10 +120,4 @@ class SessionLiveSettings(
         )
         fireState()
     }
-
-    fun cyclePermissionMode() {
-        val order = LaunchDefaults.PERMISSION_MODES_CYCLE
-        val idx = order.indexOf(session.launch.permissionMode).let { if (it < 0) 0 else it }
-        changePermissionMode(order[(idx + 1) % order.size])
-    }
 }

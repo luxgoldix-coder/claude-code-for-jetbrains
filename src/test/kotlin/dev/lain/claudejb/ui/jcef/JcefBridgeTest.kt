@@ -14,8 +14,8 @@ class JcefBridgeTest {
     @Test
     fun `parse simple verbs`() {
         assertTrue(JcefBridge.parse("""{"type":"interrupt"}""") is Msg.Interrupt)
-        assertTrue(JcefBridge.parse("""{"type":"cycleMode"}""") is Msg.CycleMode)
         assertTrue(JcefBridge.parse("""{"type":"ready"}""") is Msg.Ready)
+        assertTrue(JcefBridge.parse("""{"type":"cycleMode"}""") is Msg.Unknown)
     }
 
     @Test

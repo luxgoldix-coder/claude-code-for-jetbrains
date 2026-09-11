@@ -13,8 +13,6 @@ enum class PermissionMode(val wire: String, val label: String) {
         fun from(wire: String?): PermissionMode? = entries.firstOrNull { it.wire == wire }
 
         fun labelFor(wire: String?): String = from(wire)?.label ?: wire.orEmpty()
-
-        val CYCLE: List<PermissionMode> = listOf(DEFAULT, ACCEPT_EDITS, PLAN)
     }
 }
 
