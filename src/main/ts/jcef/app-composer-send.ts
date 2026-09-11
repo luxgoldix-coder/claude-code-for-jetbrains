@@ -46,11 +46,6 @@
         }
         return;
       }
-      if (e.key === 'Tab' && e.shiftKey) {
-        e.preventDefault();
-        send({ type: 'cycleMode' });
-        return;
-      }
       if (e.key === 'Tab' && !e.shiftKey && ghostText && input.value === '') {
         e.preventDefault();
         input.value = ghostText;

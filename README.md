@@ -195,7 +195,6 @@ Reasoning ("Thought process") is collapsed by default.
 |---|---|
 | `Enter` | Send |
 | `Shift+Enter` | New line |
-| `Shift+Tab` | Cycle permission mode (Ask each time → Accept edits → Plan) |
 | `Tab` (empty composer) | Put the suggested next prompt into the field — it is not sent, you still press `Enter` |
 | `Esc` | Close an open chip menu; otherwise interrupt the running turn |
 | `Ctrl/Cmd+F` | Find in transcript (`Enter` / `Shift+Enter` walk the hits, `Esc` closes) |
@@ -264,7 +263,7 @@ The mode chip decides how often you are asked:
 | **Bypass permissions** | No cards, except where the security lock demands one |
 | **Don't ask** · **Auto** | The binary's own additional modes, available from the chip menu |
 
-`Shift+Tab` cycles the first three, matching the CLI. Whatever the mode, the
+The mode chip under the prompt switches between them. Whatever the mode, the
 [security lock](#security) is evaluated **first** and cannot be switched off — at most, a rule you
 disable in Settings turns an automatic block into a card you must answer.
 
