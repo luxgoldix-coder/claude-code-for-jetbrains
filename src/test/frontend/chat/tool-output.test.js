@@ -180,6 +180,51 @@ describe('tool output — what wraps and what must not', () => {
   });
 });
 
+describe('tool output — live lines pushed while an own tool runs', () => {
+  it('renders as pre.live under the card, and a second push replaces the text in place', () => {
+    const win = loadFrontend(['app-transcript.js']);
+    win.cc.batch([
+      row(350, 0, 'TOOL', 'run ▸ build', { meta: 'mcp__run__run', toolUseId: 'tu-live', state: 'LOADING' }),
+      row(351, 1, 'TOOL_OUTPUT', '> Task :compileKotlin', { meta: 'live', toolUseId: 'tu-live' }),
+    ]);
+
+    const block = outBlock(win, 351);
+    expect(block.tagName).toBe('PRE');
+    expect(block.classList.contains('live')).toBe(true);
+    expect(block.querySelector('code').textContent).toBe('> Task :compileKotlin');
+
+    win.cc.batch([
+      row(351, 1, 'TOOL_OUTPUT', '> Task :compileKotlin\n> Task :compileTestKotlin', {
+        meta: 'live',
+        toolUseId: 'tu-live',
+      }),
+    ]);
+
+    const card = win.document.querySelector('.tool');
+    expect(card.querySelectorAll('.tool-out pre').length).toBe(1);
+    expect(outBlock(win, 351).querySelector('code').textContent).toBe(
+      '> Task :compileKotlin\n> Task :compileTestKotlin'
+    );
+    expect(outBlock(win, 351).classList.contains('live')).toBe(true);
+  });
+
+  it('the final result lands as its own block after the live one, which keeps its text', () => {
+    const win = loadFrontend(['app-transcript.js']);
+    win.cc.batch([
+      row(352, 0, 'TOOL', 'run ▸ build', { meta: 'mcp__run__run', toolUseId: 'tu-live2' }),
+      row(353, 1, 'TOOL_OUTPUT', 'BUILD SUCCESSFUL', { meta: 'live', toolUseId: 'tu-live2' }),
+      row(354, 2, 'TOOL_OUTPUT', '{"errors":0}', { meta: 'toon', toolUseId: 'tu-live2' }),
+    ]);
+
+    const out = win.document.querySelector('.tool .tool-out');
+    const blocks = out.querySelectorAll('[data-out-id]');
+    expect(blocks.length).toBe(2);
+    expect(blocks[0].classList.contains('live')).toBe(true);
+    expect(blocks[0].textContent).toContain('BUILD SUCCESSFUL');
+    expect(blocks[1].classList.contains('toon')).toBe(true);
+  });
+});
+
 describe('tool output — the message a call SENDS is shown without expanding the card', () => {
   const withMessage = (win, id, message) =>
     win.cc.batch([

@@ -85,6 +85,13 @@
             langLabel.textContent = 'shell';
           }
         }
+      } else if (entry.meta === 'live') {
+        block.classList.remove('diff');
+        block.classList.remove('command');
+        block.classList.add('flow');
+        block.classList.add('live');
+        codeEl.textContent = raw;
+        block.scrollTop = block.scrollHeight;
       } else {
         block.classList.remove('diff');
         block.classList.remove('command');

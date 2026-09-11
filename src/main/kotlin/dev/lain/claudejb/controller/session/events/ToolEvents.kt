@@ -1,20 +1,40 @@
 package dev.lain.claudejb.controller.session.events
 
+import dev.lain.claudejb.controller.mcp.ToolOutput
+import dev.lain.claudejb.controller.mcp.ToolOutputListener
 import dev.lain.claudejb.controller.session.ClaudeSession
 import dev.lain.claudejb.model.diff.DiffPresenter
 import dev.lain.claudejb.model.mcp.OwnTools
 import dev.lain.claudejb.model.permission.scan.ToolInputScanner
 import dev.lain.claudejb.model.protocol.ClaudeEvent
 import dev.lain.claudejb.model.session.agents.AgentStatus
+import dev.lain.claudejb.model.session.transcript.LiveLines
 import dev.lain.claudejb.model.session.transcript.Speaker
 import dev.lain.claudejb.model.session.transcript.ToolNaming
 import dev.lain.claudejb.model.session.transcript.ToolState
+import dev.lain.claudejb.model.session.transcript.TranscriptEntry
 
 class ToolEvents(
     private val s: ClaudeSession,
     private val edt: (() -> Unit) -> Unit,
     private val fireState: () -> Unit,
 ) {
+
+    private val live = HashMap<String, Pair<TranscriptEntry, LiveLines>>()
+
+    init {
+        s.project.messageBus.connect(s).subscribe(
+            ToolOutput.TOPIC,
+            ToolOutputListener { toolUseId, line -> edt { onLiveLine(toolUseId, line) } },
+        )
+    }
+
+    private fun onLiveLine(toolUseId: String, line: String) {
+        if (!s.transcript.knowsTool(toolUseId)) return
+        val (entry, ring) = live.getOrPut(toolUseId) { s.transcript.addToolOutput(toolUseId, "", meta = LIVE) to LiveLines() }
+        ring.add(line)
+        s.transcript.replaceText(entry, ring.render())
+    }
 
     fun onToolUse(event: ClaudeEvent.ToolUse) = edt {
         if (event.parentToolUseId != null) {
@@ -43,6 +63,7 @@ class ToolEvents(
     }
 
     fun onToolResult(event: ClaudeEvent.ToolResult) = edt {
+        live.remove(event.toolUseId)
         if (s.runningAgents.nodes.values.none { it.meta.toolUseId == event.toolUseId }) {
             s.transcript.setToolState(event.toolUseId, if (event.isError) ToolState.ERROR else ToolState.FINISHED)
         }
@@ -89,6 +110,7 @@ class ToolEvents(
 
     private companion object {
         const val TOON = "toon"
+        const val LIVE = "live"
     }
 
     fun labelAgentCards() {
