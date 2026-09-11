@@ -78,7 +78,8 @@ class McpServer(
             ?: return JsonRpc.error(request.id, JsonRpc.INVALID_PARAMS, "tools/call needs a name")
         val arguments = request.params["arguments"]?.let { it as? JsonObject } ?: JsonObject(emptyMap())
         val outcome = try {
-            meta.call(name, arguments) ?: return JsonRpc.error(request.id, JsonRpc.INVALID_PARAMS, "Unknown tool: $name")
+            meta.call(name, arguments, JsonRpc.meta(request.params))
+                ?: return JsonRpc.error(request.id, JsonRpc.INVALID_PARAMS, "Unknown tool: $name")
         } catch (e: ToolException) {
             ToolResult.error(e.message ?: "invalid arguments")
         }

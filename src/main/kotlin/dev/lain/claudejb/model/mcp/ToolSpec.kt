@@ -11,6 +11,7 @@ data class ToolSpec(
     val description: String,
     val params: List<Param> = emptyList(),
     val mutates: Boolean = false,
+    val timeoutMillis: Long = DEFAULT_TIMEOUT_MILLIS,
 ) {
     val inputSchema: JsonObject
         get() = buildJsonObject {
@@ -32,6 +33,10 @@ data class ToolSpec(
             )
             put("required", buildJsonArray { params.filter { it.required }.forEach { add(JsonPrimitive(it.name)) } })
         }
+
+    companion object {
+        const val DEFAULT_TIMEOUT_MILLIS = 120_000L
+    }
 }
 
 data class Param(val name: String, val description: String, val type: String = "string", val required: Boolean = true)

@@ -2,28 +2,39 @@ package dev.lain.claudejb.controller.mcp
 
 import com.intellij.openapi.project.Project
 import dev.lain.claudejb.controller.mcp.tools.code.DiagnosticsTools
+import dev.lain.claudejb.controller.mcp.tools.code.EditTools
+import dev.lain.claudejb.controller.mcp.tools.code.EditorTools
+import dev.lain.claudejb.controller.mcp.tools.code.FormatTools
+import dev.lain.claudejb.controller.mcp.tools.code.HierarchyTools
 import dev.lain.claudejb.controller.mcp.tools.code.InspectTools
 import dev.lain.claudejb.controller.mcp.tools.code.NavigateTools
 import dev.lain.claudejb.controller.mcp.tools.code.OutlineTools
 import dev.lain.claudejb.controller.mcp.tools.code.ReadTools
+import dev.lain.claudejb.controller.mcp.tools.code.RefactorTools
 import dev.lain.claudejb.controller.mcp.tools.code.SearchTools
 import dev.lain.claudejb.model.mcp.ToolCatalog
 import dev.lain.claudejb.model.mcp.ToolDomain
 import dev.lain.claudejb.model.session.launch.IdeServer
+import kotlinx.coroutines.CoroutineScope
 
 internal object IdeToolCatalog {
 
-    private val DOMAINS: Map<IdeServer, List<(Project) -> ToolDomain>> = mapOf(
+    private val DOMAINS: Map<IdeServer, List<(Project, CoroutineScope) -> ToolDomain>> = mapOf(
         IdeServer.CODE to listOf(
-            { ReadTools(it).domain() },
-            { SearchTools(it).domain() },
-            { NavigateTools(it).domain() },
-            { OutlineTools(it).domain() },
-            { DiagnosticsTools(it).domain() },
-            { InspectTools(it).domain() },
+            { p, _ -> ReadTools(p).domain() },
+            { p, _ -> SearchTools(p).domain() },
+            { p, _ -> NavigateTools(p).domain() },
+            { p, _ -> OutlineTools(p).domain() },
+            { p, _ -> DiagnosticsTools(p).domain() },
+            { p, _ -> InspectTools(p).domain() },
+            { p, _ -> EditTools(p).domain() },
+            { p, _ -> RefactorTools(p).domain() },
+            { p, _ -> FormatTools(p).domain() },
+            { p, _ -> EditorTools(p).domain() },
+            { p, _ -> HierarchyTools(p).domain() },
         ),
     )
 
-    fun catalog(server: IdeServer, project: Project): ToolCatalog =
-        ToolCatalog(DOMAINS[server].orEmpty().map { it(project) })
+    fun catalog(server: IdeServer, project: Project, scope: CoroutineScope): ToolCatalog =
+        ToolCatalog(DOMAINS[server].orEmpty().map { it(project, scope) })
 }

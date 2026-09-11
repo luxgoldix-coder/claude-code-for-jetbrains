@@ -13,13 +13,11 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -107,11 +105,7 @@ internal class ServerEndpoint(
             inFlight.incrementAndGet()
             jobs[key] = scope.launch {
                 try {
-                    withTimeout(TOOL_TIMEOUT_MILLIS) { mcp.handle(message) }?.let { send(it) }
-                } catch (e: TimeoutCancellationException) {
-                    log.warn("${server.key}: ${request.method} timed out", e)
-                    val late = "${request.method} did not finish within ${TOOL_TIMEOUT_MILLIS / 1000}s"
-                    send(JsonRpc.error(request.id, JsonRpc.INTERNAL_ERROR, late))
+                    mcp.handle(message)?.let { send(it) }
                 } finally {
                     inFlight.decrementAndGet()
                     jobs.remove(key)
@@ -138,7 +132,6 @@ internal class ServerEndpoint(
 
     companion object {
         const val QUEUE_DEPTH = 16
-        const val TOOL_TIMEOUT_MILLIS = 120_000L
         const val REJECTED = "request rejected"
         private const val CANCELLED = "notifications/cancelled"
     }

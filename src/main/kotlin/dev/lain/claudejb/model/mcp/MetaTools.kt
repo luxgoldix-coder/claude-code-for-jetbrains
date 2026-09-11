@@ -1,7 +1,10 @@
 package dev.lain.claudejb.model.mcp
 
 import dev.lain.claudejb.model.mcp.toon.Toon
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -14,10 +17,10 @@ class MetaTools(private val catalog: ToolCatalog, private val gate: ToolGate, pr
 
     val specs: List<ToolSpec> = listOf(DOMAINS, TOOLS, RUN)
 
-    suspend fun call(name: String, arguments: JsonObject): ToolResult? = when (name) {
+    suspend fun call(name: String, arguments: JsonObject, meta: JsonObject = EMPTY): ToolResult? = when (name) {
         DOMAINS.name -> domains()
         TOOLS.name -> tools(ToolArgs(arguments))
-        RUN.name -> run(arguments)
+        RUN.name -> run(arguments, meta)
         else -> null
     }
 
@@ -76,18 +79,24 @@ class MetaTools(private val catalog: ToolCatalog, private val gate: ToolGate, pr
         )
     }
 
-    private suspend fun run(arguments: JsonObject): ToolResult {
+    private suspend fun run(arguments: JsonObject, meta: JsonObject): ToolResult {
         val name = ToolArgs(arguments).string("tool")
         val tool = catalog.tool(name) ?: return ToolResult.error("unknown tool $name; call domains() then tools(domain)")
         gate.denial(tool.spec, arguments)?.let { return ToolResult.error(it) }
         val args = arguments["args"]?.let { it as? JsonObject } ?: JsonObject(emptyMap())
+        val toolUseId = (meta[OwnTools.TOOL_USE_ID_KEY] as? JsonPrimitive)?.content
         val result = try {
-            tool.run(ToolArgs(args))
+            withTimeout(tool.spec.timeoutMillis) { tool.run(ToolArgs(args, toolUseId)) }
         } catch (e: ToolException) {
             ToolResult.error(e.message ?: "tool failed")
+        } catch (e: TimeoutCancellationException) {
+            ToolResult.error(overrun(name, tool.spec.timeoutMillis, e))
         }
         return ToolResult(budget.fit(result.text), result.isError)
     }
+
+    private fun overrun(name: String, timeoutMillis: Long, cause: TimeoutCancellationException): String =
+        "$name did not finish within ${timeoutMillis / MILLIS} s (${cause.message}); narrow the request, or cancel and retry"
 
     companion object {
 
@@ -108,6 +117,9 @@ class MetaTools(private val catalog: ToolCatalog, private val gate: ToolGate, pr
             ),
             mutates = true,
         )
+
+        private val EMPTY = JsonObject(emptyMap())
+        private const val MILLIS = 1000L
 
         const val PRIMER =
             "# TOON: key: value | key[N]: a,b | key[N]{f1,f2}: then one row per line | quotes only when needed\n" +

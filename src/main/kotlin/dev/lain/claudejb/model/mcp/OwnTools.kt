@@ -11,6 +11,8 @@ object OwnTools {
 
     class Call(val server: String, val meta: String, val argument: String?)
 
+    const val TOOL_USE_ID_KEY = "claudecode/toolUseId"
+
     private val META_TOOL = Regex("^mcp__([a-z]+)__(domains|tools|run)$")
 
     fun parse(toolName: String, input: JsonObject): Call? {

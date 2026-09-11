@@ -35,8 +35,8 @@ class PackageDependencyContractTest {
             .filter { it.from != null && it.to != null && it.to != it.from && it.to !in ALLOWED.getValue(it.from) }
             .map { "${it.file.relativeTo(MainSources.root(SOURCE_ROOT))}: ${it.from} -> ${it.to}" }
         assertEquals(emptyList<String>(), offenders) {
-            "A layer reaches above itself. model/ never imports controller/ or view/, controller/session opens " +
-                "diff editors and nothing else of view/, and the wire and the guard stay below everything: the " +
+            "A layer reaches above itself. model/ never imports controller/ or view/, controller/session and " +
+                "controller/mcp open diff editors and nothing else of view/, and the wire and the guard stay below everything: the " +
                 "direction is the architecture."
         }
     }
@@ -109,7 +109,7 @@ class PackageDependencyContractTest {
             UTIL to setOf(),
             PROTOCOL to setOf(UTIL),
             MCP to setOf(UTIL),
-            C_MCP to MODEL,
+            C_MCP to MODEL + setOf(C_GIT, V_DIFF),
             DIFF to setOf(PROTOCOL, UTIL),
             CONTEXT to setOf(DIFF, PROTOCOL, UTIL),
             GIT to setOf(DIFF, UTIL),

@@ -1,7 +1,9 @@
 package dev.lain.claudejb.view.payload.chat
 
+import dev.lain.claudejb.model.mcp.OwnTools
 import dev.lain.claudejb.model.permission.vocab.SecurityRule
 import dev.lain.claudejb.model.session.transcript.EntryDTO
+import dev.lain.claudejb.model.session.transcript.Speaker
 import dev.lain.claudejb.model.session.transcript.TranscriptEntry
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -31,9 +33,13 @@ object JcefTranscriptPayload {
         e.bypassAction?.let { put("bypassAction", it) }
         put("state", e.toolState.name)
         put("elapsed", e.elapsedSeconds)
-        if (e.speaker.name == "TOOL" && e.toolUseId != null && e.meta in REVIEWABLE_TOOLS) {
-            put("reviewable", true)
-        }
+        cardFlags(e)
+    }
+
+    private fun kotlinx.serialization.json.JsonObjectBuilder.cardFlags(e: TranscriptEntry) {
+        if (e.speaker != Speaker.TOOL) return
+        if (OwnTools.isOwn(e.meta)) put("open", true)
+        if (e.toolUseId != null && e.meta in REVIEWABLE_TOOLS) put("reviewable", true)
     }
 
     private val REVIEWABLE_TOOLS = setOf("Edit", "Write", "MultiEdit")

@@ -4,7 +4,7 @@ import com.intellij.find.FindModel
 import com.intellij.find.impl.FindInProjectUtil
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -36,7 +36,7 @@ internal class SearchTools(private val project: Project, private val io: Corouti
     fun domain(): ToolDomain = ToolDomain(
         "search",
         "Text and file search over the project's content roots",
-        listOf(Tool(SEARCH_TEXT, ::searchText), Tool(FIND_FILES, ::findFiles)),
+        listOf(Tool(SEARCH_TEXT, ::searchText), Tool(FIND_FILES, ::findFiles), Tool(LIST_DIRECTORY, ::listDirectory)),
     )
 
     private suspend fun searchText(args: ToolArgs): ToolResult {
@@ -53,9 +53,11 @@ internal class SearchTools(private val project: Project, private val io: Corouti
         val hits = ArrayList<UsageInfo>()
         withContext(io) {
             try {
-                FindInProjectUtil.findUsages(model, project, EmptyProgressIndicator(), PRESENTATION, emptySet()) { info ->
-                    hits += info
-                    hits.size < max
+                coroutineToIndicator { indicator ->
+                    FindInProjectUtil.findUsages(model, project, indicator, PRESENTATION, emptySet()) { info ->
+                        hits += info
+                        hits.size < max
+                    }
                 }
             } catch (e: IndexNotReadyException) {
                 throw ToolException("the IDE is still indexing; retry in a moment", e)
@@ -114,6 +116,38 @@ internal class SearchTools(private val project: Project, private val io: Corouti
         return out.sorted()
     }
 
+    private suspend fun listDirectory(args: ToolArgs): ToolResult {
+        val path = args.optionalString("path") ?: "."
+        val depth = args.int("depth", 1)
+        val max = args.int("max", DEFAULT_MAX)
+        if (depth < 1 || max < 1) throw ToolException("depth and max start at 1")
+        val rows = readAction {
+            val root = ReadTools.resolveDirectory(project, path)
+            ArrayList<JsonObject>().also { walk(root, depth, ProjectFileIndex.getInstance(project), it, max) }
+        }
+        return ToolResult.toon(
+            buildJsonObject {
+                put("path", path)
+                put("count", rows.size)
+                put("truncated", rows.size >= max)
+                put("entries", buildJsonArray { rows.forEach { add(it) } })
+            },
+        )
+    }
+
+    private fun walk(dir: VirtualFile, depth: Int, index: ProjectFileIndex, out: MutableList<JsonObject>, max: Int) {
+        val children = dir.children.filterNot(index::isExcluded).sortedWith(compareBy({ !it.isDirectory }, { it.name }))
+        for (child in children) {
+            if (out.size >= max) return
+            out += buildJsonObject {
+                put("path", relative(child))
+                put("kind", if (child.isDirectory) "dir" else "file")
+                put("size", if (child.isDirectory) 0L else child.length)
+            }
+            if (child.isDirectory && depth > 1) walk(child, depth - 1, index, out, max)
+        }
+    }
+
     private fun relative(file: VirtualFile): String = Locations.relative(project, file)
 
     companion object {
@@ -139,6 +173,18 @@ internal class SearchTools(private val project: Project, private val io: Corouti
             listOf(
                 Param("name", "Exact file name, or a glob on the file name"),
                 Param("max", "Maximum files to return (default $DEFAULT_MAX)", type = "integer", required = false),
+            ),
+        )
+
+        val LIST_DIRECTORY = ToolSpec(
+            "list_directory",
+            "Lists a directory as the project tree shows it, excluded and ignored entries left out: one row per entry " +
+                "with path, kind (dir or file) and size, directories first. Use it to see the shape of a directory; " +
+                "to find a file by name use find_files.",
+            listOf(
+                Param("path", "Directory, absolute or relative to the project root (default: the project root)", required = false),
+                Param("depth", "How many levels to descend (default 1)", type = "integer", required = false),
+                Param("max", "Maximum entries to return (default $DEFAULT_MAX)", type = "integer", required = false),
             ),
         )
     }

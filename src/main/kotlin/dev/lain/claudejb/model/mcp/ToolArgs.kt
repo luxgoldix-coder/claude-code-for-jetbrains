@@ -1,13 +1,21 @@
 package dev.lain.claudejb.model.mcp
 
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
 class ToolException(message: String, cause: Throwable? = null) : RuntimeException(message, cause)
 
-class ToolArgs(val json: JsonObject) {
+class ToolArgs(val json: JsonObject, val toolUseId: String? = null) {
 
     fun string(key: String): String = optionalString(key) ?: throw ToolException("missing argument: $key")
+
+    fun strings(key: String): List<String> {
+        val value = json[key] ?: return emptyList()
+        val items = (value as? JsonArray)?.map { (it as? JsonPrimitive)?.takeIf { p -> p.isString }?.content }
+        if (items == null || items.any { it == null }) throw ToolException("argument $key must be an array of strings")
+        return items.filterNotNull()
+    }
 
     fun optionalString(key: String): String? {
         val value = json[key] ?: return null

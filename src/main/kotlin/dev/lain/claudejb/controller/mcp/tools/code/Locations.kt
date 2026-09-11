@@ -3,6 +3,7 @@ package dev.lain.claudejb.controller.mcp.tools.code
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
@@ -16,6 +17,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import java.nio.file.Path
 
 internal class Located(val psiFile: PsiFile, val document: Document, val offset: Int)
 
@@ -30,6 +32,19 @@ internal object Locations {
     fun relative(project: Project, file: VirtualFile): String {
         val base = project.basePath ?: return file.path
         return file.path.removePrefix("$base/")
+    }
+
+    fun kind(value: Any): String = value.javaClass.simpleName.removePrefix("Psi").removePrefix("Kt").removeSuffix("Impl")
+
+    fun absolute(project: Project, path: String): Path {
+        val base = project.basePath ?: throw ToolException("this project has no directory on disk")
+        return Path.of(path).let { if (it.isAbsolute) it else Path.of(base).resolve(it) }.normalize()
+    }
+
+    fun file(project: Project, path: String): VirtualFile {
+        val file = LocalFileSystem.getInstance().findFileByNioFile(absolute(project, path)) ?: throw ToolException("no such path: " + path)
+        if (file.isDirectory) throw ToolException(path + " is a directory")
+        return file
     }
 
     fun lineText(document: Document, line: Int): String =

@@ -69,7 +69,7 @@ internal class OutlineTools(private val project: Project) {
         presentation.locationString?.takeIf { it.isNotBlank() }?.let { put("detail", it) }
         val value = (element as? StructureViewTreeElement)?.value as? PsiElement
         if (value != null) {
-            put("kind", kind(value))
+            put("kind", Locations.kind(value))
             put("line", line(value))
         }
         val nested = children(element, depth)
@@ -81,7 +81,7 @@ internal class OutlineTools(private val project: Project) {
         ToolResult.toon(
             buildJsonObject {
                 put("name", (declaration as? PsiNamedElement)?.name ?: declaration.text.take(SIGNATURE_CHARS))
-                put("kind", kind(declaration))
+                put("kind", Locations.kind(declaration))
                 put("signature", signature(declaration))
                 (declaration as? NavigationItem)?.presentation?.let { presentation ->
                     presentation.presentableText?.let { put("presentation", it) }
@@ -103,8 +103,6 @@ internal class OutlineTools(private val project: Project) {
         val document = element.containingFile?.viewProvider?.document ?: return 0
         return document.getLineNumber(element.textOffset.coerceIn(0, document.textLength)) + 1
     }
-
-    private fun kind(value: Any): String = value.javaClass.simpleName.removePrefix("Psi").removePrefix("Kt").removeSuffix("Impl")
 
     companion object {
 

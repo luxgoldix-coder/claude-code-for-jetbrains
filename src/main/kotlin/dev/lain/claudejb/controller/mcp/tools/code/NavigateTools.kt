@@ -77,7 +77,7 @@ internal class NavigateTools(private val project: Project) {
         val target = resolved(args)
         ToolResult.toon(
             buildJsonObject {
-                put("kind", kind(target))
+                put("kind", Locations.kind(target))
                 place(project, target)
             },
         )
@@ -102,7 +102,7 @@ internal class NavigateTools(private val project: Project) {
             val rows = ArrayList<JsonObject>()
             DefinitionsScopedSearch.search(resolved(args)).forEach { element ->
                 rows += buildJsonObject {
-                    put("kind", kind(element))
+                    put("kind", Locations.kind(element))
                     place(project, element)
                 }
                 rows.size < max
@@ -116,12 +116,10 @@ internal class NavigateTools(private val project: Project) {
 
     private fun symbolRow(item: NavigationItem): JsonObject = buildJsonObject {
         put("name", item.name ?: "")
-        put("kind", kind(item))
+        put("kind", Locations.kind(item))
         place(project, item as PsiElement, withText = false)
         put("in", item.presentation?.locationString ?: "")
     }
-
-    private fun kind(value: Any): String = value.javaClass.simpleName.removePrefix("Psi").removePrefix("Kt").removeSuffix("Impl")
 
     private fun contributors(): List<ChooseByNameContributorEx> =
         (ChooseByNameContributor.CLASS_EP_NAME.extensionList + ChooseByNameContributor.SYMBOL_EP_NAME.extensionList)

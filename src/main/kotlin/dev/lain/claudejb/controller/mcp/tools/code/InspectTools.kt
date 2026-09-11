@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemDescriptorUtil
 import com.intellij.codeInspection.ex.InspectionToolWrapper
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.profile.codeInspection.InspectionProfileManager
@@ -74,7 +75,7 @@ internal class InspectTools(private val project: Project, private val io: Corout
             withContext(io) {
                 for (tool in tools) {
                     if (rows.size >= max) break
-                    val problems = run(psiFile, tool, context)
+                    val problems = coroutineToIndicator { _ -> run(psiFile, tool, context) }
                     rows += readAction { problems.take(max - rows.size).map { row(tool, it) } }
                 }
             }
