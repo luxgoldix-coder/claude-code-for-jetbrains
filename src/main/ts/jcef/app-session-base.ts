@@ -1,36 +1,34 @@
 (function () {
   'use strict';
 
-  var CC = window.CC || (window.CC = {});
-  var D = (CC.dash = CC.dash || {});
+  const CC = (window.CC = window.CC || ({} as CcShared));
+  const D = (CC.dash = CC.dash || ({} as DashNs));
 
-  function core() {
+  function core(): CcShared | null {
     return window.CC || null;
   }
-  function conversation() {
-    var c = core();
+  function conversation(): HTMLElement | null {
+    const c = core();
     return (c && c.els && c.els.conversation) || document.getElementById('conversation') || null;
   }
-  function appRoot() {
-    var c = core();
+  function appRoot(): HTMLElement | null {
+    const c = core();
     return (c && c.els && c.els.app) || document.getElementById('app') || document.body || null;
   }
-  function h() {
-    var c = core();
-    if (c && typeof c.h === 'function') return c.h.apply(c, arguments);
-    return null;
+  function h(tag: string, props?: HProps | null, ...children: Child[]): HTMLElement {
+    return CC.h(tag, props || null, ...children);
   }
-  function send(obj) {
-    var c = core();
+  function send(obj: unknown): void {
+    const c = core();
     if (c && typeof c.send === 'function') c.send(obj);
   }
 
-  function num(v) {
+  function num(v: unknown): number | null {
     return typeof v === 'number' && isFinite(v) ? v : null;
   }
 
-  function fmtInt(v) {
-    var n = num(v);
+  function fmtInt(v: unknown): string | null {
+    const n = num(v);
     if (n == null) return null;
     try {
       return Math.round(n).toLocaleString();
@@ -39,13 +37,13 @@
     }
   }
 
-  function fmtUsd(v) {
-    var n = num(v);
+  function fmtUsd(v: unknown): string | null {
+    const n = num(v);
     if (n == null) return null;
     return '$' + n.toFixed(n < 1 ? 4 : 2);
   }
 
-  function statRow(label, value) {
+  function statRow(label: string, value: unknown): HTMLElement | null {
     if (value == null || value === '') return null;
     return h(
       'div',
@@ -55,23 +53,23 @@
     );
   }
 
-  function card(title, body, wide, anchor) {
-    var children = [];
+  function card(title: string, body: unknown, wide?: boolean, anchor?: string): HTMLElement | null {
+    const children: Child[] = [];
     if (Array.isArray(body)) {
-      for (var i = 0; i < body.length; i++) {
-        if (body[i]) children.push(body[i]);
+      for (let i = 0; i < body.length; i++) {
+        if (body[i]) children.push(body[i] as Child);
       }
     } else if (body) {
-      children.push(body);
+      children.push(body as Child);
     }
     if (!children.length) return null;
-    var head = h('div', { class: 'dash-title', text: title });
-    var props = { class: 'dash-card' + (wide ? ' wide' : '') };
+    const head = h('div', { class: 'dash-title', text: title });
+    const props: HProps = { class: 'dash-card' + (wide ? ' wide' : '') };
     props.attrs = { 'data-card': anchor || slug(title) };
     return h('div', props, head, children);
   }
 
-  function slug(title) {
+  function slug(title: string): string {
     return String(title == null ? 'card' : title)
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')

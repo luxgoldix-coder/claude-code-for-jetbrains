@@ -1,6 +1,4 @@
-const fs = require('node:fs');
-const path = require('node:path');
-const { loadFrontend, readCss, JCEF } = require('./helpers/load');
+const { loadFrontend, readCss, readApp, appModules } = require('./helpers/load');
 
 const GIT = {
   available: true,
@@ -320,7 +318,10 @@ describe('git view', () => {
   });
 
   it('every git- class the view emits has a real CSS rule', () => {
-    const src = fs.readFileSync(path.join(JCEF, 'app-session-git.js'), 'utf8');
+    const src = appModules()
+      .filter((name) => name.startsWith('app-session-git'))
+      .map(readApp)
+      .join('\n');
     const emitted = new Set();
     for (const m of src.matchAll(/class:\s*(["'])([^"']+)\1/g)) {
       for (const c of m[2].split(/\s+/)) {

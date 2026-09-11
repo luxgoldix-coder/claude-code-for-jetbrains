@@ -1,25 +1,26 @@
 (function () {
   'use strict';
 
-  var CC = window.CC || (window.CC = {});
-  var D = (CC.dash = CC.dash || {});
-  var h = D.h;
+  const cc = (window.cc = window.cc || {});
+  const CC = (window.CC = window.CC || ({} as CcShared));
+  const D = (CC.dash = CC.dash || ({} as DashNs));
+  const h = D.h;
 
-  var pane = null;
-  var rowsEl = null;
-  var statusEl = null;
+  let pane: HTMLElement | null = null;
+  let rowsEl: HTMLElement | null = null;
+  let statusEl: HTMLElement | null = null;
 
-  var rows = new Map();
-  var cards = new Map();
+  const rows = new Map<unknown, RowRec>();
+  const cards = new Map<string, RowEl>();
 
-  var last = null;
-  var drawn = false;
+  let last: { rows?: unknown; starting?: boolean } | null = null;
+  let drawn = false;
 
-  function tx() {
+  function tx(): TranscriptNs | null {
     return CC.transcript || null;
   }
 
-  function gitChatPane() {
+  function gitChatPane(): HTMLElement | null {
     if (pane) return pane;
     if (typeof h !== 'function') return null;
 
@@ -39,7 +40,7 @@
     return pane;
   }
 
-  CC.gitChatActive = function () {
+  CC.gitChatActive = function (): boolean {
     return (
       typeof D.gitSubView === 'function' &&
       D.gitSubView() === 'chat' &&
@@ -48,10 +49,10 @@
     );
   };
 
-  function draw() {
+  function draw(): void {
     if (!pane) return;
     drawn = true;
-    var payload = last;
+    const payload = last;
 
     if (!payload) {
       clearRows();
@@ -59,41 +60,41 @@
       return;
     }
 
-    renderRows(Array.isArray(payload.rows) ? payload.rows : []);
+    renderRows(Array.isArray(payload.rows) ? (payload.rows as TranscriptEntry[]) : []);
 
     setStatus(payload.starting ? 'Starting Claude for this repository…' : '');
   }
 
-  function setStatus(text) {
+  function setStatus(text: string): void {
     if (!statusEl) return;
     statusEl.textContent = text;
     statusEl.hidden = !text;
   }
 
-  function clearRows() {
+  function clearRows(): void {
     rows.clear();
     cards.clear();
     if (!rowsEl) return;
     while (rowsEl.firstChild) rowsEl.removeChild(rowsEl.firstChild);
   }
 
-  function renderRows(entries) {
-    var T = tx();
+  function renderRows(entries: TranscriptEntry[]): void {
+    const T = tx();
     if (!rowsEl || !T || typeof T.createRow !== 'function') return;
 
-    var stick = nearBottom();
-    var ordered = [];
-    for (var i = 0; i < entries.length; i++) {
-      var entry = entries[i];
+    const stick = nearBottom();
+    const ordered: HTMLElement[] = [];
+    for (let i = 0; i < entries.length; i++) {
+      const entry = entries[i];
       if (!entry || entry.id == null) continue;
 
       if (entry.speaker === 'TOOL_OUTPUT' && T.routeToolOutput(entry, cards)) continue;
 
-      var rec = rows.get(entry.id);
+      let rec = rows.get(entry.id);
       if (rec && rec.speaker !== entry.speaker) {
         if (rec.el && rec.el.parentNode) rec.el.parentNode.removeChild(rec.el);
         rows.delete(entry.id);
-        rec = null;
+        rec = undefined;
       }
       if (!rec) {
         rec = T.createRow(entry, cards);
@@ -107,35 +108,36 @@
     if (stick) rowsEl.scrollTop = rowsEl.scrollHeight;
   }
 
-  function place(ordered) {
-    for (var i = 0; i < ordered.length; i++) {
+  function place(ordered: HTMLElement[]): void {
+    if (!rowsEl) return;
+    for (let i = 0; i < ordered.length; i++) {
       if (rowsEl.children[i] !== ordered[i]) {
         rowsEl.insertBefore(ordered[i], rowsEl.children[i] || null);
       }
     }
-    while (rowsEl.children.length > ordered.length) {
+    while (rowsEl.children.length > ordered.length && rowsEl.lastChild) {
       rowsEl.removeChild(rowsEl.lastChild);
     }
   }
 
-  var NEAR_BOTTOM = 60;
-  function nearBottom() {
+  const NEAR_BOTTOM = 60;
+  function nearBottom(): boolean {
     if (!rowsEl) return true;
     return rowsEl.scrollHeight - rowsEl.scrollTop - rowsEl.clientHeight <= NEAR_BOTTOM;
   }
 
   D.gitChatPane = gitChatPane;
 
-  D.gitChatShown = function () {
+  D.gitChatShown = function (): void {
     if (!drawn) draw();
   };
 
-  window.cc = window.cc || {};
-  window.cc.gitChat = function (payload) {
-    last = payload && typeof payload === 'object' ? payload : null;
+  cc.gitChat = function (payload?: unknown): void {
+    last =
+      payload && typeof payload === 'object' ? (payload as { rows?: unknown; starting?: boolean }) : null;
     drawn = false;
-    var open = typeof D.gitSubView === 'function' && D.gitSubView() === 'chat';
-    var shown = typeof D.dashboardShown === 'function' && D.dashboardShown();
+    const open = typeof D.gitSubView === 'function' && D.gitSubView() === 'chat';
+    const shown = typeof D.dashboardShown === 'function' && D.dashboardShown();
     if (pane && open && shown) draw();
   };
 })();

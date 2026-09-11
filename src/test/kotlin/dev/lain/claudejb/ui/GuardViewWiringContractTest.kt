@@ -53,7 +53,7 @@ class GuardViewWiringContractTest {
         assertTrue(source("ui/SecurityViews.kt").readText().contains("window.cc.openGuardView")) {
             "nothing on the host side can open the guard view, so the gear entry lands nowhere"
         }
-        assertTrue(File(jcefRoot(), "app-session.js").readText().contains("'guard'")) {
+        assertTrue(File(tsRoot(), "app-session-state.ts").readText().contains("guard: {")) {
             "the dashboard has no guard view for the host to open. A feature whose only door is the gear " +
                 "menu is a feature nobody finds."
         }
@@ -121,7 +121,7 @@ class GuardViewWiringContractTest {
         assertTrue(assembly.contains("\"guard.css\"")) {
             "guard.css is not in PageAssembly.CSS_PARTS, so the view draws unstyled"
         }
-        assertTrue(File(jcefRoot(), "app-session-guard.js").isFile)
+        assertTrue(File(tsRoot(), "app-session-guard.ts").isFile)
         assertTrue(File(jcefRoot(), "css/guard.css").isFile)
     }
 
@@ -144,6 +144,8 @@ class GuardViewWiringContractTest {
     private fun mainRoot(): File = resolve("src/main/kotlin")
 
     private fun jcefRoot(): File = resolve("src/main/resources/jcef")
+
+    private fun tsRoot(): File = resolve("src/main/ts/jcef")
 
     private fun resolve(path: String): File =
         sequenceOf(File(path), File("../$path")).firstOrNull { it.isDirectory }
