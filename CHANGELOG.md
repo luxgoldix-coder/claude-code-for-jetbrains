@@ -52,10 +52,12 @@ traced, and a handful of bugs found on the way are fixed.
   family. The guard's own code is restructured under those tests with no verdict changed.
 - **The guard sees more of Windows.** Writes into the Startup folder and PowerShell profiles are
   judged by their content; `copy`, `move`, `del`, `Set-Content`, `Out-File` and friends count as file
-  writes with no diff; 8.3 short names and NTFS alternate data streams no longer slip past the project
-  boundary; a caret-split command (`p^owershell`) is read as what it runs. And four Windows false
-  positives are gone: `set "X=…"` binds its variable, a PowerShell backtick no longer hides the next
-  token, `PATH` splits on `;`, and a `\\?\C:\` long path inside the project is inside the project.
+  writes with no diff; an 8.3 short name never folds a path inside the project; a caret-split command
+  is read as what it runs; and a raw device is named as a device rather than as a network mount. Four
+  Windows false positives are gone: a `set` assignment binds its variable so a later use is not opaque,
+  a `PATH` prepend is split on `;` with a drive letter not mistaken for a separator, a drive-relative
+  path is judged as outside the project, and a local long-path prefix on a project file is spelling,
+  not a network share.
 - **A link written by the model cannot open a file outside the project.** Markdown in a reply, a tool
   result or an advisory could carry a `jb://open` link to any file under your home; the page now only
   honours the links the host resolved. And *View diff* on a pending card refuses a path outside the
