@@ -27,6 +27,7 @@
 
         const props: HProps = {
           class: 'q-option',
+          attrs: { type: 'button' },
           on: {
             click: function () {
               const arr = selections[qText];

@@ -34,7 +34,7 @@
   };
 
   PM.button = function (props: HProps, onClick: () => void): HTMLElement {
-    const withClick: HProps = { on: { click: onClick } };
+    const withClick: HProps = { attrs: { type: 'button' }, on: { click: onClick } };
     for (const key in props)
       if (Object.prototype.hasOwnProperty.call(props, key)) withClick[key] = props[key];
     return CC.h('button', withClick);
