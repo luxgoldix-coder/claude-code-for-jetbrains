@@ -1,6 +1,7 @@
-package dev.lain.claudejb.context
+package dev.lain.claudejb.controller.context
 
-import dev.lain.claudejb.diff.DiffPresenter
+import dev.lain.claudejb.model.context.ImageAttachments
+import dev.lain.claudejb.model.diff.DiffPresenter
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull

@@ -1,4 +1,4 @@
-package dev.lain.claudejb.git
+package dev.lain.claudejb.model.git
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull

@@ -1,4 +1,4 @@
-package dev.lain.claudejb.process
+package dev.lain.claudejb.controller.process
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -69,8 +69,8 @@ class TerminalApiContractTest {
     @Test
     fun `the launcher asks the platform for exactly the overload this test pins`() {
         val source = sequenceOf(
-            java.io.File("src/main/kotlin/dev/lain/claudejb/process/TerminalLauncher.kt"),
-            java.io.File("../src/main/kotlin/dev/lain/claudejb/process/TerminalLauncher.kt"),
+            java.io.File("src/main/kotlin/dev/lain/claudejb/controller/process/TerminalLauncher.kt"),
+            java.io.File("../src/main/kotlin/dev/lain/claudejb/controller/process/TerminalLauncher.kt"),
         ).first { it.isFile }.readText()
 
         val call = source.substringAfter("getMethod(").substringBefore(")").filterNot { it.isWhitespace() }

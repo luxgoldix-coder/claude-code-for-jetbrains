@@ -1,4 +1,4 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.controller.context
 
 import com.intellij.navigation.ChooseByNameContributor
 import com.intellij.navigation.NavigationItem
@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
-import dev.lain.claudejb.diff.DiffPresenter
+import dev.lain.claudejb.model.diff.DiffPresenter
 import dev.lain.claudejb.util.logger
 import java.io.File
 

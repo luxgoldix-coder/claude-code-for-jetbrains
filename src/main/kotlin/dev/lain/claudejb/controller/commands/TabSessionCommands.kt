@@ -1,21 +1,22 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.controller.commands
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.SimpleListCellRenderer
-import dev.lain.claudejb.session.ChatSessionManager
-import dev.lain.claudejb.session.ClaudeSession
-import dev.lain.claudejb.session.EntryDTO
-import dev.lain.claudejb.session.SessionHistory
-import dev.lain.claudejb.session.SessionListing
-import dev.lain.claudejb.session.SessionRef
-import dev.lain.claudejb.session.SessionStore
-import dev.lain.claudejb.session.SessionTitleReader
-import dev.lain.claudejb.session.SessionTranscriptReader
-import dev.lain.claudejb.settings.ClaudeSettings
+import dev.lain.claudejb.controller.session.ChatSessionManager
+import dev.lain.claudejb.controller.session.ClaudeSession
+import dev.lain.claudejb.controller.session.history.SessionHistory
+import dev.lain.claudejb.model.session.history.SessionListing
+import dev.lain.claudejb.model.session.history.SessionStore
+import dev.lain.claudejb.model.session.history.SessionTitleReader
+import dev.lain.claudejb.model.session.history.SessionTranscriptReader
+import dev.lain.claudejb.model.session.transcript.EntryDTO
+import dev.lain.claudejb.model.session.transcript.SessionRef
+import dev.lain.claudejb.model.settings.ClaudeSettings
 import dev.lain.claudejb.util.edt
+import dev.lain.claudejb.view.window.ChatTabsPanel
 import javax.swing.JList
 
 internal class TabSessionCommands(

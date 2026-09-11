@@ -1,4 +1,6 @@
-package dev.lain.claudejb.settings
+package dev.lain.claudejb.model.settings.guard
+
+import dev.lain.claudejb.model.settings.ClaudeSettings
 
 class AlwaysAllowTools(private val settings: ClaudeSettings) {
 

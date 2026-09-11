@@ -1,4 +1,4 @@
-package dev.lain.claudejb.settings
+package dev.lain.claudejb.model.settings.legacy
 
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.Service
@@ -7,6 +7,9 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.XmlSerializerUtil
+import dev.lain.claudejb.model.settings.ClaudeSettings
+import dev.lain.claudejb.model.settings.SettingsScope
+import dev.lain.claudejb.model.settings.SettingsStore
 import dev.lain.claudejb.util.logger
 import java.nio.file.Files
 import java.nio.file.Paths

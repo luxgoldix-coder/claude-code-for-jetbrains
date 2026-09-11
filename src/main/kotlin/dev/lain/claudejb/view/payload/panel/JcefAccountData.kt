@@ -1,10 +1,10 @@
-package dev.lain.claudejb.ui.jcef
+package dev.lain.claudejb.view.payload.panel
 
-import dev.lain.claudejb.process.AccountProfile
-import dev.lain.claudejb.process.AuthCli
-import dev.lain.claudejb.process.CredentialsVault
-import dev.lain.claudejb.protocol.AccountInfo
-import dev.lain.claudejb.session.ClaudeSession
+import dev.lain.claudejb.controller.process.auth.AccountProfile
+import dev.lain.claudejb.controller.process.auth.AuthCli
+import dev.lain.claudejb.controller.process.credentials.CredentialsVault
+import dev.lain.claudejb.controller.session.ClaudeSession
+import dev.lain.claudejb.model.protocol.models.AccountInfo
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put

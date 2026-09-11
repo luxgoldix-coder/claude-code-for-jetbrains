@@ -1,9 +1,9 @@
-package dev.lain.claudejb.ui.jcef
+package dev.lain.claudejb.view.payload.panel
 
-import dev.lain.claudejb.protocol.ExtraUsage
-import dev.lain.claudejb.protocol.RateLimitInfo
-import dev.lain.claudejb.protocol.UsageReport
-import dev.lain.claudejb.session.ClaudeSession
+import dev.lain.claudejb.controller.session.ClaudeSession
+import dev.lain.claudejb.model.protocol.models.ExtraUsage
+import dev.lain.claudejb.model.protocol.models.RateLimitInfo
+import dev.lain.claudejb.model.protocol.models.UsageReport
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.addJsonObject

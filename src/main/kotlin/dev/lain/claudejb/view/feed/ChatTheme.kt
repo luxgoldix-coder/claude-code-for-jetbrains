@@ -1,4 +1,4 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.view.feed
 
 import com.intellij.util.ui.UIUtil
 import java.awt.Color

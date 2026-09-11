@@ -1,4 +1,4 @@
-package dev.lain.claudejb.process
+package dev.lain.claudejb.controller.process.credentials
 
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -146,11 +146,11 @@ class CredentialsVaultEnvTest {
 
     private fun processSources(): List<File> =
         sequenceOf(
-            File("src/main/kotlin/dev/lain/claudejb/process"),
-            File("../src/main/kotlin/dev/lain/claudejb/process"),
+            File("src/main/kotlin/dev/lain/claudejb/controller/process"),
+            File("../src/main/kotlin/dev/lain/claudejb/controller/process"),
         ).first { it.isDirectory }
-            .listFiles { f: File -> f.isFile && f.extension == "kt" }
-            .orEmpty()
+            .walkTopDown()
+            .filter { it.isFile && it.extension == "kt" }
             .toList()
 
     private companion object {

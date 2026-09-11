@@ -1,5 +1,6 @@
-package dev.lain.claudejb.settings
+package dev.lain.claudejb.model.settings.env
 
+import dev.lain.claudejb.model.settings.ClaudeSettings
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.contentOrNull

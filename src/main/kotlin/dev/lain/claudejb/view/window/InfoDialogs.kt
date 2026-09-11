@@ -1,9 +1,9 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.view.window
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import dev.lain.claudejb.protocol.str
-import dev.lain.claudejb.session.ClaudeSession
+import dev.lain.claudejb.controller.session.ClaudeSession
+import dev.lain.claudejb.model.protocol.str
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 

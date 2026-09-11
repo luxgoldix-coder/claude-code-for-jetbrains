@@ -1,9 +1,9 @@
-package dev.lain.claudejb.ui.jcef
+package dev.lain.claudejb.view.payload.menu
 
-import dev.lain.claudejb.permission.SecurityRule
-import dev.lain.claudejb.protocol.ModelInfo
-import dev.lain.claudejb.settings.ClaudeSettings
-import dev.lain.claudejb.settings.SecuritySuspensions
+import dev.lain.claudejb.model.permission.vocab.SecurityRule
+import dev.lain.claudejb.model.protocol.models.ModelInfo
+import dev.lain.claudejb.model.settings.ClaudeSettings
+import dev.lain.claudejb.model.settings.guard.SecuritySuspensions
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.jsonObject

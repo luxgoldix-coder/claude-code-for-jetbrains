@@ -1,4 +1,4 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.controller.commands
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -6,11 +6,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import dev.lain.claudejb.diff.DiffPresenter
-import dev.lain.claudejb.session.ClaudeSession
-import dev.lain.claudejb.session.WorkspaceDiff
-import dev.lain.claudejb.session.WorkspaceDiffReview
+import dev.lain.claudejb.controller.session.ClaudeSession
+import dev.lain.claudejb.controller.session.control.WorkspaceDiff
+import dev.lain.claudejb.controller.session.diff.WorkspaceDiffReview
+import dev.lain.claudejb.model.diff.DiffPresenter
 import dev.lain.claudejb.util.edt
+import dev.lain.claudejb.view.diff.DiffEditors
+import dev.lain.claudejb.view.window.ChatTabsPanel
 import java.io.File
 
 internal class SessionDiffAction(private val project: Project, private val tabs: ChatTabsPanel) :
@@ -62,11 +64,11 @@ internal class SessionDiffAction(private val project: Project, private val tabs:
             if (proceed != Messages.YES) return
         }
         sides.forEach { side ->
-            DiffPresenter.openTextDiff(
+            DiffEditors.openTextDiff(
                 project = project,
                 path = side.path,
-                base = DiffPresenter.TextSide(WorkspaceDiffReview.baseLabel(side, diff.baseLabel), side.base.orEmpty()),
-                current = DiffPresenter.TextSide("Now: ${File(side.path).name}", side.current),
+                base = DiffEditors.TextSide(WorkspaceDiffReview.baseLabel(side, diff.baseLabel), side.base.orEmpty()),
+                current = DiffEditors.TextSide("Now: ${File(side.path).name}", side.current),
             )
         }
     }

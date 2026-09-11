@@ -1,4 +1,4 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.controller.session.turn
 
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -67,7 +67,7 @@ class SessionTimerContractTest {
 
     private companion object {
 
-        const val POLL_SOURCE_NAME = "PollSchedule.kt"
+        const val POLL_SOURCE_NAME = "turn/PollSchedule.kt"
         const val SESSION_SOURCE_NAME = "SessionLifecycle.kt"
         const val CLOSING_BRACE = "    }"
 
@@ -76,7 +76,7 @@ class SessionTimerContractTest {
         val DECLARATION = Regex("""^\s*(?:private )?val (\w+) = javax\.swing\.Timer\(""")
 
         fun resolve(name: String): File {
-            val path = "src/main/kotlin/dev/lain/claudejb/session/$name"
+            val path = "src/main/kotlin/dev/lain/claudejb/controller/session/$name"
             return sequenceOf(File(path), File("../$path")).firstOrNull { it.isFile }
                 ?: error("could not locate $path from ${File("").absolutePath}")
         }

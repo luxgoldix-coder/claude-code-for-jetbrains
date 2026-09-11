@@ -1,6 +1,6 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.controller.session.control
 
-import dev.lain.claudejb.protocol.ControlProtocol
+import dev.lain.claudejb.model.protocol.control.ControlProtocol
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonObject

@@ -1,13 +1,13 @@
-package dev.lain.claudejb.ui.jcef
+package dev.lain.claudejb.view.payload.menu
 
-import dev.lain.claudejb.permission.SecurityRule
-import dev.lain.claudejb.protocol.EffortLevel
-import dev.lain.claudejb.protocol.PermissionMode
-import dev.lain.claudejb.session.ToolNaming
-import dev.lain.claudejb.settings.ClaudeSettings
-import dev.lain.claudejb.settings.GuardMode
-import dev.lain.claudejb.settings.LaunchDefaults
-import dev.lain.claudejb.settings.SecuritySuspensions
+import dev.lain.claudejb.model.permission.vocab.SecurityRule
+import dev.lain.claudejb.model.protocol.EffortLevel
+import dev.lain.claudejb.model.protocol.PermissionMode
+import dev.lain.claudejb.model.session.transcript.ToolNaming
+import dev.lain.claudejb.model.settings.ClaudeSettings
+import dev.lain.claudejb.model.settings.LaunchDefaults
+import dev.lain.claudejb.model.settings.guard.GuardMode
+import dev.lain.claudejb.model.settings.guard.SecuritySuspensions
 
 internal object JcefSettingsMenu {
 

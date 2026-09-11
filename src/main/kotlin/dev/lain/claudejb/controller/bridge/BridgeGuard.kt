@@ -1,14 +1,17 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.controller.bridge
 
-import dev.lain.claudejb.permission.SecurityRule
-import dev.lain.claudejb.permission.SensitiveGuard
-import dev.lain.claudejb.permission.ToolInputScanner
-import dev.lain.claudejb.settings.ClaudeSettings
-import dev.lain.claudejb.settings.GuardWhitelists
-import dev.lain.claudejb.settings.SecuritySuspensions
-import dev.lain.claudejb.settings.sensitivePolicy
-import dev.lain.claudejb.ui.jcef.Msg
+import dev.lain.claudejb.controller.commands.GuardWhitelistPrompt
+import dev.lain.claudejb.controller.commands.LivePanels
+import dev.lain.claudejb.model.bridge.Msg
+import dev.lain.claudejb.model.permission.SensitiveGuard
+import dev.lain.claudejb.model.permission.scan.ToolInputScanner
+import dev.lain.claudejb.model.permission.vocab.SecurityRule
+import dev.lain.claudejb.model.settings.ClaudeSettings
+import dev.lain.claudejb.model.settings.guard.GuardWhitelists
+import dev.lain.claudejb.model.settings.guard.SecuritySuspensions
+import dev.lain.claudejb.model.settings.guard.sensitivePolicy
 import dev.lain.claudejb.util.thisLogger
+import dev.lain.claudejb.view.window.JcefChatPanel
 
 internal class BridgeGuard(private val panel: JcefChatPanel) {
 

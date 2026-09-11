@@ -1,4 +1,4 @@
-package dev.lain.claudejb.process
+package dev.lain.claudejb.controller.process
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -92,9 +92,9 @@ class EdtProcessTeardownContractTest {
         const val INDENT = "    "
         const val CLOSING_BRACE = "    }"
 
-        val CLAUDE_PROCESS = source("process/ClaudeProcess.kt")
-        val CLAUDE_SESSION = source("session/ClaudeSession.kt")
-        val SESSION_LIFECYCLE = source("session/SessionLifecycle.kt")
+        val CLAUDE_PROCESS = source("controller/process/ClaudeProcess.kt")
+        val CLAUDE_SESSION = source("controller/session/ClaudeSession.kt")
+        val SESSION_LIFECYCLE = source("controller/session/SessionLifecycle.kt")
 
         fun source(name: String): File {
             val path = "src/main/kotlin/dev/lain/claudejb/$name"

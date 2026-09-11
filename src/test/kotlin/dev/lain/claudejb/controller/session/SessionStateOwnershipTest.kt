@@ -1,4 +1,4 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.controller.session
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -35,7 +35,7 @@ class SessionStateOwnershipTest {
 
     @Test
     fun `the guarded list still matches what the session declares as internally settable`() {
-        val source = File("src/main/kotlin/dev/lain/claudejb/session/ClaudeSession.kt").readText()
+        val source = File("src/main/kotlin/dev/lain/claudejb/controller/session/ClaudeSession.kt").readText()
         val declared = Regex("""var (\w+)[^\n]*\n\s*internal set""").findAll(source)
             .map { it.groupValues[1] }
             .toSet()

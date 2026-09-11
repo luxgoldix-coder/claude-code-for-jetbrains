@@ -1,4 +1,4 @@
-package dev.lain.claudejb.protocol
+package dev.lain.claudejb.model.protocol
 
 enum class PermissionMode(val wire: String, val label: String) {
     DEFAULT("default", "Ask each time"),

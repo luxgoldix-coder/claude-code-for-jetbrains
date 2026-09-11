@@ -1,8 +1,8 @@
-package dev.lain.claudejb.ui.jcef
+package dev.lain.claudejb.view.payload.chat
 
-import dev.lain.claudejb.permission.PermissionBroker
-import dev.lain.claudejb.permission.SecurityRule
-import dev.lain.claudejb.session.EntryDTO
+import dev.lain.claudejb.model.permission.broker.PermissionBroker
+import dev.lain.claudejb.model.permission.vocab.SecurityRule
+import dev.lain.claudejb.model.session.transcript.EntryDTO
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue

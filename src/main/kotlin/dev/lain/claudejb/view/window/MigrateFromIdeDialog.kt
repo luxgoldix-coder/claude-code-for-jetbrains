@@ -1,4 +1,4 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.view.window
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
@@ -10,9 +10,10 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.panel
-import dev.lain.claudejb.settings.OtherIdeConfigs
-import dev.lain.claudejb.settings.SettingsScope
-import dev.lain.claudejb.settings.SettingsTransfer
+import dev.lain.claudejb.model.settings.SettingsScope
+import dev.lain.claudejb.model.settings.transfer.OtherIdeConfigs
+import dev.lain.claudejb.model.settings.transfer.SettingsTransfer
+import dev.lain.claudejb.view.settings.labelRenderer
 import javax.swing.JComponent
 
 internal class MigrateFromIdeDialog(private val project: Project) : DialogWrapper(project) {

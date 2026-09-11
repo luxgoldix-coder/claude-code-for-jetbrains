@@ -1,6 +1,6 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.model.session.agents
 
-import dev.lain.claudejb.protocol.MessageParsers
+import dev.lain.claudejb.model.protocol.parse.MessageParsers
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject

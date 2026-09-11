@@ -1,5 +1,6 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.controller.commands
 
+import dev.lain.claudejb.view.window.JcefChatPanel
 import java.util.concurrent.CopyOnWriteArrayList
 
 internal object LivePanels {

@@ -1,5 +1,6 @@
-package dev.lain.claudejb.protocol
+package dev.lain.claudejb.model.protocol.control
 
+import dev.lain.claudejb.model.protocol.ClaudeJson
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive

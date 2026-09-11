@@ -1,4 +1,4 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.view.settings.sections
 
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -10,8 +10,10 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.Panel
-import dev.lain.claudejb.settings.ClaudeSettings
-import dev.lain.claudejb.settings.SettingsTransfer
+import dev.lain.claudejb.model.settings.ClaudeSettings
+import dev.lain.claudejb.model.settings.transfer.SettingsTransfer
+import dev.lain.claudejb.view.settings.SettingsSection
+import dev.lain.claudejb.view.window.MigrateFromIdeDialog
 import java.nio.file.Path
 import javax.swing.JButton
 

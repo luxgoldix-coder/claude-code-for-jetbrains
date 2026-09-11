@@ -1,4 +1,4 @@
-package dev.lain.claudejb.diff
+package dev.lain.claudejb.view.diff
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull

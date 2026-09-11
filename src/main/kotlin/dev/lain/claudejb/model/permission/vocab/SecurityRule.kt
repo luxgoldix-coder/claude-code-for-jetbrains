@@ -1,4 +1,4 @@
-package dev.lain.claudejb.permission
+package dev.lain.claudejb.model.permission.vocab
 
 enum class SecurityRule(
     val category: SecurityCategory,

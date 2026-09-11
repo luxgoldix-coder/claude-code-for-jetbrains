@@ -1,5 +1,9 @@
-package dev.lain.claudejb.settings
+package dev.lain.claudejb.model.settings.transfer
 
+import dev.lain.claudejb.model.settings.ClaudeSettings
+import dev.lain.claudejb.model.settings.SecretStore
+import dev.lain.claudejb.model.settings.SettingsScope
+import dev.lain.claudejb.model.settings.env.UntrustedState
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive

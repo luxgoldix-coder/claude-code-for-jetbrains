@@ -1,6 +1,9 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.model.session.history
 
-import dev.lain.claudejb.permission.ToolInputScanner
+import dev.lain.claudejb.model.permission.scan.ToolInputScanner
+import dev.lain.claudejb.model.session.transcript.EntryDTO
+import dev.lain.claudejb.model.session.transcript.SyntheticUserText
+import dev.lain.claudejb.model.session.transcript.ToolNaming
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement

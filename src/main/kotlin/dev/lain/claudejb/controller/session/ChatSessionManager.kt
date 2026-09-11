@@ -1,9 +1,10 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.controller.session
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import dev.lain.claudejb.controller.session.history.SessionHistory
 import java.util.concurrent.CopyOnWriteArrayList
 
 @Service(Service.Level.PROJECT)

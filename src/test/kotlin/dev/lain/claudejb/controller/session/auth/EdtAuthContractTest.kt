@@ -1,4 +1,4 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.controller.session.auth
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -134,12 +134,12 @@ class EdtAuthContractTest {
         const val CLOSING_BRACE = "    }"
 
         val SESSION_LIFECYCLE = source("SessionLifecycle.kt")
-        val AUTH_GATE = source("AuthGate.kt")
-        val LOGIN_COORDINATOR = source("LoginCoordinator.kt")
-        val SIGN_IN_COMPLETION = source("SignInCompletion.kt")
+        val AUTH_GATE = source("auth/AuthGate.kt")
+        val LOGIN_COORDINATOR = source("auth/LoginCoordinator.kt")
+        val SIGN_IN_COMPLETION = source("auth/SignInCompletion.kt")
 
         fun source(name: String): File {
-            val path = "src/main/kotlin/dev/lain/claudejb/session/$name"
+            val path = "src/main/kotlin/dev/lain/claudejb/controller/session/$name"
             return sequenceOf(File(path), File("../$path")).firstOrNull { it.isFile }
                 ?: error("could not locate $path from ${File("").absolutePath}")
         }

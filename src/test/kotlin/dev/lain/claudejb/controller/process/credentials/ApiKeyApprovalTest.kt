@@ -1,5 +1,6 @@
-package dev.lain.claudejb.process
+package dev.lain.claudejb.controller.process.credentials
 
+import dev.lain.claudejb.controller.process.auth.AccountProfile
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive

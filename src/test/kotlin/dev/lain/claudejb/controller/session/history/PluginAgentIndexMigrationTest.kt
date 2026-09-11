@@ -1,7 +1,9 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.controller.session.history
 
-import dev.lain.claudejb.settings.SecretStore
-import dev.lain.claudejb.settings.SettingsScope
+import dev.lain.claudejb.model.session.agents.AgentMeta
+import dev.lain.claudejb.model.session.agents.AgentNode
+import dev.lain.claudejb.model.settings.SecretStore
+import dev.lain.claudejb.model.settings.SettingsScope
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse

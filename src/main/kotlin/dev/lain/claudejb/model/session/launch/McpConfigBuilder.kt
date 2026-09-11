@@ -1,6 +1,6 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.model.session.launch
 
-import dev.lain.claudejb.protocol.ClaudeJson
+import dev.lain.claudejb.model.protocol.ClaudeJson
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonObject

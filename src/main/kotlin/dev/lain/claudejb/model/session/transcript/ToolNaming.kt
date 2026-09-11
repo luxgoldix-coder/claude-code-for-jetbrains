@@ -1,6 +1,6 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.model.session.transcript
 
-import dev.lain.claudejb.protocol.str
+import dev.lain.claudejb.model.protocol.str
 import kotlinx.serialization.json.JsonObject
 
 object ToolNaming {

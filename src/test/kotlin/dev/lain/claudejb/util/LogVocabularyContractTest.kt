@@ -33,7 +33,7 @@ class LogVocabularyContractTest {
     @Test
     fun `the wire and the guard log nothing, and know no platform`() {
         val offenders = sources
-            .filter { (file, _) -> path(file).startsWith("permission/") || path(file).startsWith("protocol/") }
+            .filter { (file, _) -> path(file).startsWith("model/permission/") || path(file).startsWith("model/protocol/") }
             .filter { (_, code) -> code.contains("import com.intellij") || code.contains("PluginLog") }
             .map { (file, _) -> path(file) }
 
@@ -44,7 +44,7 @@ class LogVocabularyContractTest {
 
     @Test
     fun `the process never logs a preview of a line, because a line can be a prompt`() {
-        val (_, code) = sources.single { (file, _) -> path(file) == "process/ClaudeProcess.kt" }
+        val (_, code) = sources.single { (file, _) -> path(file) == "controller/process/ClaudeProcess.kt" }
 
         assertTrue(!code.contains("line.take(")) { "ClaudeProcess logs part of a stdin or stdout line; log its length and type" }
     }

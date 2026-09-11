@@ -1,13 +1,17 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.controller.bridge
 
 import com.intellij.openapi.options.ShowSettingsUtil
-import dev.lain.claudejb.settings.ClaudeSettings
-import dev.lain.claudejb.settings.LaunchDefaults
-import dev.lain.claudejb.settings.Provider
-import dev.lain.claudejb.ui.jcef.JcefSettingsMenu
-import dev.lain.claudejb.ui.jcef.Msg
-import dev.lain.claudejb.ui.jcef.SettingsMenuApply
+import dev.lain.claudejb.controller.commands.LivePanels
+import dev.lain.claudejb.model.bridge.Msg
+import dev.lain.claudejb.model.settings.ClaudeSettings
+import dev.lain.claudejb.model.settings.LaunchDefaults
+import dev.lain.claudejb.model.settings.Provider
 import dev.lain.claudejb.util.thisLogger
+import dev.lain.claudejb.view.feed.ChatTheme
+import dev.lain.claudejb.view.payload.menu.JcefSettingsMenu
+import dev.lain.claudejb.view.payload.menu.SettingsMenuApply
+import dev.lain.claudejb.view.settings.ClaudeSettingsConfigurable
+import dev.lain.claudejb.view.window.JcefChatPanel
 
 internal class BridgeSettings(private val panel: JcefChatPanel) {
 

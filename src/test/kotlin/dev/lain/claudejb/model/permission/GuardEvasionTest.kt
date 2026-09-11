@@ -1,6 +1,7 @@
-package dev.lain.claudejb.permission
+package dev.lain.claudejb.model.permission
 
-import dev.lain.claudejb.permission.SensitiveGuard.Verdict
+import dev.lain.claudejb.model.permission.SensitiveGuard.Verdict
+import dev.lain.claudejb.model.permission.vocab.SecurityRule
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Test

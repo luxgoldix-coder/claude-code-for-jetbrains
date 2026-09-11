@@ -1,4 +1,4 @@
-package dev.lain.claudejb.settings
+package dev.lain.claudejb.model.settings
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse

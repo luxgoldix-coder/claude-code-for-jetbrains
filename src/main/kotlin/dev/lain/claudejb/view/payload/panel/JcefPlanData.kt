@@ -1,6 +1,6 @@
-package dev.lain.claudejb.ui.jcef
+package dev.lain.claudejb.view.payload.panel
 
-import dev.lain.claudejb.session.PlanInfo
+import dev.lain.claudejb.controller.session.control.PlanInfo
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put

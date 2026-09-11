@@ -1,5 +1,6 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.controller.session.turn
 
+import dev.lain.claudejb.model.session.transcript.TranscriptModel
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test

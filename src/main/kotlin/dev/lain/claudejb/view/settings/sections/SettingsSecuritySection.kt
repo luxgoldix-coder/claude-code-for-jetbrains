@@ -1,15 +1,18 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.view.settings.sections
 
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.Panel
-import dev.lain.claudejb.permission.SecurityCategory
-import dev.lain.claudejb.permission.SecurityRule
-import dev.lain.claudejb.permission.hint
-import dev.lain.claudejb.settings.ClaudeSettings
-import dev.lain.claudejb.settings.GuardMode
-import dev.lain.claudejb.settings.SecuritySuspensions
+import dev.lain.claudejb.model.permission.vocab.SecurityCategory
+import dev.lain.claudejb.model.permission.vocab.SecurityRule
+import dev.lain.claudejb.model.permission.vocab.hint
+import dev.lain.claudejb.model.settings.ClaudeSettings
+import dev.lain.claudejb.model.settings.guard.GuardMode
+import dev.lain.claudejb.model.settings.guard.SecuritySuspensions
+import dev.lain.claudejb.view.settings.SettingsSection
+import dev.lain.claudejb.view.settings.WhitelistTable
+import dev.lain.claudejb.view.settings.labelRenderer
 import javax.swing.JButton
 import javax.swing.JComboBox
 

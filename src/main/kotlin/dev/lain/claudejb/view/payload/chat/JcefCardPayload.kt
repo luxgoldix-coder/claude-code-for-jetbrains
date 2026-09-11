@@ -1,9 +1,9 @@
-package dev.lain.claudejb.ui.jcef
+package dev.lain.claudejb.view.payload.chat
 
-import dev.lain.claudejb.permission.ElicitationCard
-import dev.lain.claudejb.permission.GuardAlert
-import dev.lain.claudejb.permission.PendingPermission
-import dev.lain.claudejb.protocol.AskQuestion
+import dev.lain.claudejb.model.permission.broker.ElicitationCard
+import dev.lain.claudejb.model.permission.broker.GuardAlert
+import dev.lain.claudejb.model.permission.broker.PendingPermission
+import dev.lain.claudejb.model.protocol.models.AskQuestion
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive

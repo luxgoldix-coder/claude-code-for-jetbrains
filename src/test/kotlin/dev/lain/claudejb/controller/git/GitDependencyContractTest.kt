@@ -1,4 +1,4 @@
-package dev.lain.claudejb.git
+package dev.lain.claudejb.controller.git
 
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -51,7 +51,7 @@ class GitDependencyContractTest {
     }
 
     private fun gitPackageSources(): List<File> =
-        main.resolve("kotlin/dev/lain/claudejb/git").listFiles()?.filter { it.isFile && it.extension == "kt" }.orEmpty()
+        main.resolve("kotlin/dev/lain/claudejb/controller/git").walkTopDown().filter { it.isFile && it.extension == "kt" }.toList()
 
     private companion object {
         val DEPENDS = Regex("""<depends[^>]*>Git4Idea</depends>""")

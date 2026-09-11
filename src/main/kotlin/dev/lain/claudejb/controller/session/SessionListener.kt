@@ -1,4 +1,4 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.controller.session
 
 enum class AttentionReason { PERMISSION, TURN_DONE, ERROR, GUARD_BLOCKED }
 

@@ -1,13 +1,16 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.controller.bridge
 
 import com.intellij.openapi.application.ApplicationManager
-import dev.lain.claudejb.diff.DiffPresenter
-import dev.lain.claudejb.diff.EditSnapshot
-import dev.lain.claudejb.permission.PendingPermission
-import dev.lain.claudejb.ui.jcef.JcefTranscriptPayload
-import dev.lain.claudejb.ui.jcef.Msg
+import dev.lain.claudejb.controller.context.LinkResolver
+import dev.lain.claudejb.model.bridge.Msg
+import dev.lain.claudejb.model.diff.DiffPresenter
+import dev.lain.claudejb.model.diff.EditSnapshot
+import dev.lain.claudejb.model.permission.broker.PendingPermission
 import dev.lain.claudejb.util.edt
 import dev.lain.claudejb.util.thisLogger
+import dev.lain.claudejb.view.diff.DiffEditors
+import dev.lain.claudejb.view.payload.chat.JcefTranscriptPayload
+import dev.lain.claudejb.view.window.JcefChatPanel
 
 internal class BridgeDiffs(private val panel: JcefChatPanel) {
 
@@ -19,7 +22,7 @@ internal class BridgeDiffs(private val panel: JcefChatPanel) {
                 ?.let { viewPending(it) }
 
             is Msg.ViewDiffByTool -> snapshotAnywhere(m.toolUseId)
-                ?.let { DiffPresenter.openDiff(panel.project, it.toolName, it.input, it.beforeText) }
+                ?.let { DiffEditors.openDiff(panel.project, it.toolName, it.input, it.beforeText) }
 
             is Msg.RevertEdit -> panel.edits.rewindOrRevert(m.toolUseId)
 
@@ -38,7 +41,7 @@ internal class BridgeDiffs(private val panel: JcefChatPanel) {
                 log.warn("View diff refused: the card names a file outside the project or over the size cap")
                 return@executeOnPooledThread
             }
-            edt(project) { DiffPresenter.openDiff(project, card.toolName, card.input, current) }
+            edt(project) { DiffEditors.openDiff(project, card.toolName, card.input, current) }
         }
     }
 

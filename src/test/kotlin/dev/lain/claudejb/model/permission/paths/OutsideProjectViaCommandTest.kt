@@ -1,6 +1,8 @@
-package dev.lain.claudejb.permission
+package dev.lain.claudejb.model.permission.paths
 
-import dev.lain.claudejb.permission.SensitiveGuard.Verdict
+import dev.lain.claudejb.model.permission.GuardFixture
+import dev.lain.claudejb.model.permission.GuardProbe
+import dev.lain.claudejb.model.permission.SensitiveGuard.Verdict
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 

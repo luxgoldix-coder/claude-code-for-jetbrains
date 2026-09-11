@@ -1,4 +1,4 @@
-package dev.lain.claudejb.protocol
+package dev.lain.claudejb.model.protocol
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull

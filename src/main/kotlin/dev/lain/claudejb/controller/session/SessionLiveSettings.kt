@@ -1,14 +1,18 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.controller.session
 
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
-import dev.lain.claudejb.protocol.ControlProtocol
-import dev.lain.claudejb.settings.ClaudeSettings
-import dev.lain.claudejb.settings.LaunchDefaults
-import dev.lain.claudejb.settings.Provider
+import dev.lain.claudejb.model.protocol.control.ControlProtocol
+import dev.lain.claudejb.model.session.history.LegacyModels
+import dev.lain.claudejb.model.session.launch.LaunchOptions
+import dev.lain.claudejb.model.session.launch.SessionLauncher
+import dev.lain.claudejb.model.session.transcript.Speaker
+import dev.lain.claudejb.model.settings.ClaudeSettings
+import dev.lain.claudejb.model.settings.LaunchDefaults
+import dev.lain.claudejb.model.settings.Provider
 import dev.lain.claudejb.util.PluginIdentity
 
 class SessionLiveSettings(

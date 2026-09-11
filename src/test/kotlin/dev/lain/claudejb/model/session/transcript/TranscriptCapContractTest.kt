@@ -1,4 +1,4 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.model.session.transcript
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -30,6 +30,6 @@ class TranscriptCapContractTest {
             ?: error("could not locate $TRIM_MODULE from ${File("").absolutePath}")
 
     private companion object {
-        const val TRIM_MODULE = "src/main/ts/jcef/transcript/trim.ts"
+        const val TRIM_MODULE = "src/main/ts/jcef/controllers/chat/trim.ts"
     }
 }

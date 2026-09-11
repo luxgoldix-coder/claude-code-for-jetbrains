@@ -1,8 +1,7 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.model.session.launch
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.SystemInfo
-import dev.lain.claudejb.process.PluginContextPrompt
 import dev.lain.claudejb.util.InstalledPlugins
 import dev.lain.claudejb.util.thisLogger
 import java.io.File

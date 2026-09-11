@@ -1,6 +1,7 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.model.session.turn
 
-import dev.lain.claudejb.protocol.ClaudeEvent
+import dev.lain.claudejb.model.protocol.ClaudeEvent
+import dev.lain.claudejb.model.session.transcript.TranscriptReconciler
 
 class StreamBuffer {
 

@@ -1,6 +1,8 @@
-package dev.lain.claudejb.settings
+package dev.lain.claudejb.model.settings.guard
 
-import dev.lain.claudejb.permission.SecurityRule
+import dev.lain.claudejb.model.permission.vocab.SecurityRule
+import dev.lain.claudejb.model.settings.SecretStore
+import dev.lain.claudejb.model.settings.SettingsScope
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -52,7 +54,7 @@ class GuardAlertLogPrivacyTest {
 
     @Test
     fun `nothing in the plugin writes this log to a file`() {
-        val source = java.io.File("src/main/kotlin/dev/lain/claudejb/settings/GuardAlertLog.kt")
+        val source = java.io.File("src/main/kotlin/dev/lain/claudejb/model/settings/guard/GuardAlertLog.kt")
         assertTrue(source.isFile, "the log moved: this contract has to move with it")
         val code = source.readLines()
             .filterNot { it.trim().startsWith("*") || it.trim().startsWith("//") || it.trim().startsWith("/*") }

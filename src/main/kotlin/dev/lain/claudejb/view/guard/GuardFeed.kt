@@ -1,14 +1,16 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.view.guard
 
 import com.intellij.openapi.application.ApplicationManager
-import dev.lain.claudejb.settings.ClaudeSettings
-import dev.lain.claudejb.settings.GuardAlert
-import dev.lain.claudejb.settings.GuardAlertLog
-import dev.lain.claudejb.settings.SecretStore
-import dev.lain.claudejb.settings.SettingsScope
-import dev.lain.claudejb.ui.jcef.JcefGuardData
+import dev.lain.claudejb.controller.commands.GuardPromptedActions
+import dev.lain.claudejb.model.settings.ClaudeSettings
+import dev.lain.claudejb.model.settings.SecretStore
+import dev.lain.claudejb.model.settings.SettingsScope
+import dev.lain.claudejb.model.settings.guard.GuardAlert
+import dev.lain.claudejb.model.settings.guard.GuardAlertLog
 import dev.lain.claudejb.util.edt
 import dev.lain.claudejb.util.logger
+import dev.lain.claudejb.view.guard.JcefGuardData
+import dev.lain.claudejb.view.window.JcefChatPanel
 
 internal class GuardFeed(private val panel: JcefChatPanel) {
 

@@ -1,4 +1,4 @@
-package dev.lain.claudejb.vuln
+package dev.lain.claudejb.model.vuln
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull

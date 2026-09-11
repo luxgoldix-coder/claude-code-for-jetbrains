@@ -1,12 +1,12 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.view.settings
 
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.table.JBTable
-import dev.lain.claudejb.permission.SecurityCategory
-import dev.lain.claudejb.permission.SecurityRule
-import dev.lain.claudejb.settings.ClaudeSettings
-import dev.lain.claudejb.settings.GuardWhitelists
+import dev.lain.claudejb.model.permission.vocab.SecurityCategory
+import dev.lain.claudejb.model.permission.vocab.SecurityRule
+import dev.lain.claudejb.model.settings.ClaudeSettings
+import dev.lain.claudejb.model.settings.guard.GuardWhitelists
 import java.awt.BorderLayout
 import java.awt.FlowLayout
 import javax.swing.DefaultComboBoxModel

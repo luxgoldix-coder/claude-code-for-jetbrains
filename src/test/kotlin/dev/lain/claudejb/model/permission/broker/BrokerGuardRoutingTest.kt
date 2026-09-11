@@ -1,6 +1,8 @@
-package dev.lain.claudejb.permission
+package dev.lain.claudejb.model.permission.broker
 
-import dev.lain.claudejb.protocol.CanUseToolRequest
+import dev.lain.claudejb.model.permission.SensitiveGuard
+import dev.lain.claudejb.model.permission.vocab.SecurityRule
+import dev.lain.claudejb.model.protocol.models.CanUseToolRequest
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import org.junit.jupiter.api.Assertions.assertEquals

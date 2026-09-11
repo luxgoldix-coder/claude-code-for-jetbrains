@@ -1,7 +1,7 @@
-package dev.lain.claudejb.settings
+package dev.lain.claudejb.model.settings.guard
 
-import dev.lain.claudejb.permission.SecurityCategory
-import dev.lain.claudejb.permission.SecurityRule
+import dev.lain.claudejb.model.permission.vocab.SecurityCategory
+import dev.lain.claudejb.model.permission.vocab.SecurityRule
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test

@@ -1,4 +1,4 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.view.window
 
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.Disposable
@@ -7,22 +7,36 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBPanel
-import dev.lain.claudejb.context.Attachment
-import dev.lain.claudejb.git.GitHistoryService
-import dev.lain.claudejb.session.ClaudeSession
-import dev.lain.claudejb.session.SessionListener
-import dev.lain.claudejb.settings.ClaudeSettings
-import dev.lain.claudejb.ui.jcef.JcefBridge
-import dev.lain.claudejb.ui.jcef.JcefCardPayload
-import dev.lain.claudejb.ui.jcef.JcefHost
-import dev.lain.claudejb.ui.jcef.JcefSessionData
-import dev.lain.claudejb.ui.jcef.JcefSettingsMenu
-import dev.lain.claudejb.ui.jcef.JcefState
-import dev.lain.claudejb.ui.jcef.JcefTheme
-import dev.lain.claudejb.ui.jcef.SettingsMenuRows
+import dev.lain.claudejb.controller.bridge.ChatBridgeRouter
+import dev.lain.claudejb.controller.commands.LivePanels
+import dev.lain.claudejb.controller.commands.OnboardingController
+import dev.lain.claudejb.controller.commands.git.GitIntegration
+import dev.lain.claudejb.controller.context.LinkNavigator
+import dev.lain.claudejb.controller.git.GitHistoryService
+import dev.lain.claudejb.controller.session.ClaudeSession
+import dev.lain.claudejb.controller.session.SessionListener
+import dev.lain.claudejb.controller.vuln.VulnService
+import dev.lain.claudejb.model.bridge.JcefBridge
+import dev.lain.claudejb.model.context.Attachment
+import dev.lain.claudejb.model.settings.ClaudeSettings
 import dev.lain.claudejb.util.edt
 import dev.lain.claudejb.util.logger
-import dev.lain.claudejb.vuln.VulnService
+import dev.lain.claudejb.view.feed.AttachmentTray
+import dev.lain.claudejb.view.feed.ChatAgentTabs
+import dev.lain.claudejb.view.feed.ChatEditReview
+import dev.lain.claudejb.view.feed.ChatTheme
+import dev.lain.claudejb.view.feed.ChatTranscriptView
+import dev.lain.claudejb.view.feed.SecurityViews
+import dev.lain.claudejb.view.feed.SessionFeed
+import dev.lain.claudejb.view.git.GitChatFeed
+import dev.lain.claudejb.view.guard.GuardFeed
+import dev.lain.claudejb.view.jcef.JcefHost
+import dev.lain.claudejb.view.log.LogFeed
+import dev.lain.claudejb.view.payload.JcefTheme
+import dev.lain.claudejb.view.payload.chat.JcefCardPayload
+import dev.lain.claudejb.view.payload.chat.JcefState
+import dev.lain.claudejb.view.payload.menu.SettingsMenuRows
+import dev.lain.claudejb.view.payload.panel.JcefSessionData
 import java.awt.BorderLayout
 
 class JcefChatPanel(internal val project: Project, val session: ClaudeSession) :

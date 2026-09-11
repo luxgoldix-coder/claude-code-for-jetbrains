@@ -1,6 +1,6 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.model.session.transcript
 
-import dev.lain.claudejb.protocol.MemoryRecallInfo
+import dev.lain.claudejb.model.protocol.models.MemoryRecallInfo
 
 object MemoryRecallFormatter {
 

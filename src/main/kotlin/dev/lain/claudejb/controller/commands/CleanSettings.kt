@@ -1,12 +1,12 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.controller.commands
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
-import dev.lain.claudejb.permission.SecurityRule
-import dev.lain.claudejb.settings.ClaudeSettings
-import dev.lain.claudejb.settings.GuardAlertLog
-import dev.lain.claudejb.settings.SecretStore
-import dev.lain.claudejb.settings.SecuritySuspensions
+import dev.lain.claudejb.model.permission.vocab.SecurityRule
+import dev.lain.claudejb.model.settings.ClaudeSettings
+import dev.lain.claudejb.model.settings.SecretStore
+import dev.lain.claudejb.model.settings.guard.GuardAlertLog
+import dev.lain.claudejb.model.settings.guard.SecuritySuspensions
 
 internal object CleanSettings {
 

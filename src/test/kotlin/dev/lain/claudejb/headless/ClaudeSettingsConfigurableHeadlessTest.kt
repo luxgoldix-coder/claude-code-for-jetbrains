@@ -2,14 +2,14 @@ package dev.lain.claudejb.headless
 
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import dev.lain.claudejb.protocol.InitializeResponse
-import dev.lain.claudejb.protocol.ModelInfo
-import dev.lain.claudejb.session.ChatSessionManager
-import dev.lain.claudejb.settings.ClaudeSettings
-import dev.lain.claudejb.settings.SecretStore
-import dev.lain.claudejb.settings.SettingsStore
-import dev.lain.claudejb.ui.ClaudeSettingsConfigurable
-import dev.lain.claudejb.ui.SettingsModelSection
+import dev.lain.claudejb.controller.session.ChatSessionManager
+import dev.lain.claudejb.model.protocol.models.InitializeResponse
+import dev.lain.claudejb.model.protocol.models.ModelInfo
+import dev.lain.claudejb.model.settings.ClaudeSettings
+import dev.lain.claudejb.model.settings.SecretStore
+import dev.lain.claudejb.model.settings.SettingsStore
+import dev.lain.claudejb.view.settings.ClaudeSettingsConfigurable
+import dev.lain.claudejb.view.settings.sections.SettingsModelSection
 import javax.swing.JComboBox
 
 class ClaudeSettingsConfigurableHeadlessTest : BasePlatformTestCase() {

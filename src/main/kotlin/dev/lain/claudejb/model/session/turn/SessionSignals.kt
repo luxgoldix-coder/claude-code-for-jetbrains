@@ -1,8 +1,8 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.model.session.turn
 
-import dev.lain.claudejb.protocol.AuthStatusInfo
-import dev.lain.claudejb.protocol.ContextUsage
-import dev.lain.claudejb.protocol.RateLimitInfo
+import dev.lain.claudejb.model.protocol.models.AuthStatusInfo
+import dev.lain.claudejb.model.protocol.models.ContextUsage
+import dev.lain.claudejb.model.protocol.models.RateLimitInfo
 import kotlinx.serialization.json.JsonObject
 
 class SessionSignals {

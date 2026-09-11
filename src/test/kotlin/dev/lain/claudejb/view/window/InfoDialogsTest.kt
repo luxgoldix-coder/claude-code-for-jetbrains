@@ -1,4 +1,4 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.view.window
 
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put

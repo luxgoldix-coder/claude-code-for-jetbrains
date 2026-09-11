@@ -1,4 +1,4 @@
-package dev.lain.claudejb.permission
+package dev.lain.claudejb.model.permission.vocab
 
 enum class SecurityCategory(val label: String) {
     SENSITIVE_DATA("Sensitive data"),

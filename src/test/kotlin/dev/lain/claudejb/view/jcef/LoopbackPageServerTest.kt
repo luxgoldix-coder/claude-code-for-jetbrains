@@ -1,4 +1,4 @@
-package dev.lain.claudejb.ui.jcef
+package dev.lain.claudejb.view.jcef
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse

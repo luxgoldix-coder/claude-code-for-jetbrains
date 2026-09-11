@@ -1,4 +1,7 @@
-package dev.lain.claudejb.permission
+package dev.lain.claudejb.model.permission.paths
+
+import dev.lain.claudejb.model.permission.SensitiveGuard
+import dev.lain.claudejb.model.permission.vocab.SecurityRule
 
 object ForeignTerritory {
 

@@ -1,5 +1,10 @@
-package dev.lain.claudejb.settings
+package dev.lain.claudejb.model.settings.env
 
+import dev.lain.claudejb.model.settings.ClaudeSettings
+import dev.lain.claudejb.model.settings.guard.GuardMode
+import dev.lain.claudejb.model.settings.guard.guardMode
+import dev.lain.claudejb.model.settings.legacy.LegacyPermissionMode
+import dev.lain.claudejb.model.settings.transfer.SettingsTransfer
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue

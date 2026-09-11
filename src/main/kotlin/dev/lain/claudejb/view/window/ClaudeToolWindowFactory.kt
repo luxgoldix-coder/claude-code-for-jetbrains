@@ -1,10 +1,8 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.view.window
 
-import com.intellij.icons.AllIcons
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -15,13 +13,19 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.ContentFactory
-import dev.lain.claudejb.session.AttentionLanding
-import dev.lain.claudejb.session.AttentionReason
-import dev.lain.claudejb.session.ChatSessionManager
-import dev.lain.claudejb.session.ClaudeSession
-import dev.lain.claudejb.session.LaunchOptions
-import dev.lain.claudejb.session.SessionListener
-import dev.lain.claudejb.settings.ClaudeSettings
+import dev.lain.claudejb.controller.commands.SessionDiffAction
+import dev.lain.claudejb.controller.commands.TabSessionCommands
+import dev.lain.claudejb.controller.commands.git.GitContextActions
+import dev.lain.claudejb.controller.commands.git.GitIdeMenu
+import dev.lain.claudejb.controller.commands.git.GitPromptedActions
+import dev.lain.claudejb.controller.session.AttentionLanding
+import dev.lain.claudejb.controller.session.AttentionReason
+import dev.lain.claudejb.controller.session.ChatSessionManager
+import dev.lain.claudejb.controller.session.ClaudeSession
+import dev.lain.claudejb.controller.session.SessionListener
+import dev.lain.claudejb.model.session.launch.LaunchOptions
+import dev.lain.claudejb.model.settings.ClaudeSettings
+import dev.lain.claudejb.view.settings.ClaudeSettingsConfigurable
 import javax.swing.JComponent
 
 class ClaudeToolWindowFactory : ToolWindowFactory, DumbAware {

@@ -2,9 +2,9 @@ package dev.lain.claudejb.headless
 
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import dev.lain.claudejb.session.ChatSessionManager
-import dev.lain.claudejb.ui.ChatTabsPanel
-import dev.lain.claudejb.ui.TabSessionCommands
+import dev.lain.claudejb.controller.commands.TabSessionCommands
+import dev.lain.claudejb.controller.session.ChatSessionManager
+import dev.lain.claudejb.view.window.ChatTabsPanel
 import javax.swing.JPanel
 
 class ChatTabsCloseHeadlessTest : BasePlatformTestCase() {

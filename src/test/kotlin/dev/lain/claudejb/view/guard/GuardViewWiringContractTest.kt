@@ -1,4 +1,4 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.view.guard
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -32,7 +32,7 @@ class GuardViewWiringContractTest {
 
     @Test
     fun `the guard payload is built off the EDT, because reading it goes to the password safe`() {
-        val feed = source("ui/GuardFeed.kt").readText()
+        val feed = source("view/guard/GuardFeed.kt").readText()
 
         assertTrue(feed.contains("executeOnPooledThread")) {
             "GuardFeed reads the alert log on whatever thread asked for it. That read decodes the whole " +
@@ -45,15 +45,15 @@ class GuardViewWiringContractTest {
 
     @Test
     fun `the gear menu reaches the guard view, and so does the chat's own view row`() {
-        val factory = source("ui/ClaudeToolWindowFactory.kt").readText()
+        val factory = source("view/window/ClaudeToolWindowFactory.kt").readText()
 
         assertTrue(factory.contains("showGuardView")) {
             "the tool window's gear has no entry for the guard log"
         }
-        assertTrue(source("ui/SecurityViews.kt").readText().contains("window.cc.openGuardView")) {
+        assertTrue(source("view/feed/SecurityViews.kt").readText().contains("window.cc.openGuardView")) {
             "nothing on the host side can open the guard view, so the gear entry lands nowhere"
         }
-        assertTrue(File(tsRoot(), "dashboard/state.ts").readText().contains("guard: {")) {
+        assertTrue(File(tsRoot(), "models/panel/state.ts").readText().contains("guard: {")) {
             "the dashboard has no guard view for the host to open. A feature whose only door is the gear " +
                 "menu is a feature nobody finds."
         }
@@ -61,7 +61,7 @@ class GuardViewWiringContractTest {
 
     @Test
     fun `opening the view refreshes it first, so it never opens on a stale read`() {
-        val lines = source("ui/SecurityViews.kt").readLines()
+        val lines = source("view/feed/SecurityViews.kt").readLines()
         val start = lines.indexOfFirst { it.contains("fun openGuardView()") }
         assertTrue(start >= 0) { "SecurityViews no longer opens the guard view" }
         val body = lines.drop(start).take(BODY_LINES)
@@ -75,8 +75,8 @@ class GuardViewWiringContractTest {
 
     @Test
     fun `both guard messages are parsed and both are dispatched`() {
-        val bridge = source("ui/jcef/JcefBridge.kt").readText()
-        val handler = source("ui/BridgeGuard.kt").readText()
+        val bridge = source("model/bridge/JcefBridge.kt").readText()
+        val handler = source("controller/bridge/BridgeGuard.kt").readText()
 
         listOf("\"guardLog\"", "\"guardExplain\"").forEach {
             assertTrue(bridge.contains(it)) { "JcefBridge does not parse $it" }
@@ -87,7 +87,7 @@ class GuardViewWiringContractTest {
 
     @Test
     fun `the question goes through the side-question path and never through the chat send`() {
-        val feed = source("ui/GuardFeed.kt").readText()
+        val feed = source("view/guard/GuardFeed.kt").readText()
 
         assertTrue(feed.contains("sendSideQuestion")) {
             "asking why a call was blocked is a question, not a turn of work"
@@ -99,7 +99,7 @@ class GuardViewWiringContractTest {
 
     @Test
     fun `the alert tally is actually fed, or the dropped-alert alarm can never fire`() {
-        val session = source("session/SessionGuard.kt").readLines()
+        val session = source("controller/session/guard/SessionGuard.kt").readLines()
         val start = session.indexOfFirst { it.contains("private fun recordAlert(") }
         assertTrue(start >= 0) { "SessionGuard no longer records guard alerts" }
         val body = session.drop(start).take(BODY_LINES)
@@ -113,20 +113,20 @@ class GuardViewWiringContractTest {
 
     @Test
     fun `the module and the stylesheet are declared, or the page silently does not serve them`() {
-        val assembly = source("ui/jcef/PageAssembly.kt").readText()
+        val assembly = source("view/jcef/PageAssembly.kt").readText()
 
-        assertTrue(assembly.contains("\"dashboard/guard/guard.js\"")) {
-            "dashboard/guard/guard.js is not in PageAssembly.appNames, so it is not served and cc.guard does not exist"
+        assertTrue(assembly.contains("\"views/guard/guard.js\"")) {
+            "views/guard/guard.js is not in PageAssembly.appNames, so it is not served and cc.guard does not exist"
         }
-        assertTrue(assembly.contains("\"guard-log.css\"")) {
-            "guard-log.css is not in PageAssembly.CSS_PARTS, so the view draws unstyled"
+        assertTrue(assembly.contains("\"views/guard/log.css\"")) {
+            "views/guard/log.css is not in PageAssembly.CSS_PARTS, so the view draws unstyled"
         }
-        assertTrue(File(tsRoot(), "dashboard/guard/guard.ts").isFile)
-        assertTrue(File(jcefRoot(), "css/guard-log.css").isFile)
+        assertTrue(File(tsRoot(), "views/guard/guard.ts").isFile)
+        assertTrue(File(jcefRoot(), "css/views/guard/log.css").isFile)
     }
 
     private fun readyBranch(): List<String> {
-        val lines = source("ui/BridgeLifecycle.kt").readLines()
+        val lines = source("controller/bridge/BridgeLifecycle.kt").readLines()
         val start = lines.indexOfFirst { it.contains("Msg.Ready ->") }
         assertTrue(start >= 0) { "BridgeLifecycle no longer handles Msg.Ready" }
         val length = lines.drop(start + 1).indexOfFirst { it == "            }" }

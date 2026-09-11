@@ -1,11 +1,12 @@
-package dev.lain.claudejb.ui.jcef
+package dev.lain.claudejb.view.payload.chat
 
-import dev.lain.claudejb.protocol.RateLimitInfo
-import dev.lain.claudejb.protocol.UsageReport
-import dev.lain.claudejb.session.ClaudeSession
-import dev.lain.claudejb.session.StatusLineFormatter
-import dev.lain.claudejb.settings.ClaudeSettings
-import dev.lain.claudejb.settings.guardSuspended
+import dev.lain.claudejb.controller.session.ClaudeSession
+import dev.lain.claudejb.model.protocol.models.RateLimitInfo
+import dev.lain.claudejb.model.protocol.models.UsageReport
+import dev.lain.claudejb.model.session.transcript.StatusLineFormatter
+import dev.lain.claudejb.model.settings.ClaudeSettings
+import dev.lain.claudejb.model.settings.guard.guardSuspended
+import dev.lain.claudejb.view.payload.composer.JcefComposerOptions
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.addJsonObject
 import kotlinx.serialization.json.buildJsonArray
@@ -126,7 +127,7 @@ object JcefState {
             put(
                 "installMethods",
                 buildJsonArray {
-                    dev.lain.claudejb.process.BinaryInstall.methods().forEach { m ->
+                    dev.lain.claudejb.controller.process.BinaryInstall.methods().forEach { m ->
                         addJsonObject {
                             put("id", m.id)
                             put("label", m.label)

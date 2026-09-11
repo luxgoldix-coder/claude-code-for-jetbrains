@@ -1,15 +1,17 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.view.feed
 
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.wm.ToolWindowManager
-import dev.lain.claudejb.session.PluginAgentIndex
-import dev.lain.claudejb.settings.ClaudeSettings
-import dev.lain.claudejb.ui.jcef.JcefBridge
-import dev.lain.claudejb.ui.jcef.JcefTabsData
-import dev.lain.claudejb.ui.jcef.Msg
+import dev.lain.claudejb.controller.session.history.PluginAgentIndex
+import dev.lain.claudejb.model.bridge.JcefBridge
+import dev.lain.claudejb.model.bridge.Msg
+import dev.lain.claudejb.model.settings.ClaudeSettings
 import dev.lain.claudejb.util.logger
+import dev.lain.claudejb.view.payload.chat.JcefTabsData
+import dev.lain.claudejb.view.window.ClaudeToolWindowFactory
+import dev.lain.claudejb.view.window.JcefChatPanel
 
 internal class ChatAgentTabs(private val panel: JcefChatPanel) {
 
@@ -55,7 +57,7 @@ internal class ChatAgentTabs(private val panel: JcefChatPanel) {
         render()
         val fresh = freshlyAdmitted
             .filterNot { it in hiddenAgents }
-            .filter { session.runningAgents.nodes[it]?.status == dev.lain.claudejb.session.AgentStatus.RUNNING }
+            .filter { session.runningAgents.nodes[it]?.status == dev.lain.claudejb.model.session.agents.AgentStatus.RUNNING }
         if (fresh.isEmpty()) return
         notifyAgentsSpawned(fresh)
     }

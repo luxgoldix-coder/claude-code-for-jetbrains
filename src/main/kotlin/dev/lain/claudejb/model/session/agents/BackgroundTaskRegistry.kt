@@ -1,8 +1,8 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.model.session.agents
 
-import dev.lain.claudejb.protocol.BackgroundTaskInfo
-import dev.lain.claudejb.protocol.ClaudeEvent
-import dev.lain.claudejb.settings.WorkloadWindow
+import dev.lain.claudejb.model.protocol.ClaudeEvent
+import dev.lain.claudejb.model.protocol.models.BackgroundTaskInfo
+import dev.lain.claudejb.model.settings.WorkloadWindow
 import java.util.concurrent.ConcurrentHashMap
 
 class BackgroundTaskRegistry(

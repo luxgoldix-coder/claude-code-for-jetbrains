@@ -1,10 +1,12 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.view.settings.sections
 
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.Panel
-import dev.lain.claudejb.settings.ClaudeSettings
-import dev.lain.claudejb.settings.GuardAlertLog
+import dev.lain.claudejb.model.settings.ClaudeSettings
+import dev.lain.claudejb.model.settings.guard.GuardAlertLog
+import dev.lain.claudejb.view.settings.SettingsSection
+import dev.lain.claudejb.view.settings.labelRenderer
 import javax.swing.DefaultComboBoxModel
 
 internal class SettingsGuardLogSection : SettingsSection {

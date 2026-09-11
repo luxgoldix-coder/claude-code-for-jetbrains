@@ -1,5 +1,7 @@
-package dev.lain.claudejb.protocol
+package dev.lain.claudejb.model.protocol.parse
 
+import dev.lain.claudejb.model.protocol.ClaudeEvent
+import dev.lain.claudejb.model.protocol.models.RateLimitInfo
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertInstanceOf

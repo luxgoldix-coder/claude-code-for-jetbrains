@@ -1,5 +1,7 @@
-package dev.lain.claudejb.permission
+package dev.lain.claudejb.model.permission
 
+import dev.lain.claudejb.model.permission.paths.CredentialPaths
+import dev.lain.claudejb.model.permission.vocab.SecurityRule
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put

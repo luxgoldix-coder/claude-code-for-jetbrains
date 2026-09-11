@@ -1,4 +1,4 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.view.log
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -19,7 +19,7 @@ class LogViewWiringContractTest {
 
     @Test
     fun `the log payload is built off the EDT and drawn on it`() {
-        val feed = source("ui/LogFeed.kt").readText()
+        val feed = source("view/log/LogFeed.kt").readText()
 
         assertTrue(feed.contains("executeOnPooledThread")) {
             "LogFeed reads the ring and builds the report on whatever thread asked; that is the EDT when the page asks."
@@ -30,8 +30,8 @@ class LogViewWiringContractTest {
 
     @Test
     fun `the three log messages are parsed and all three are dispatched`() {
-        val bridge = source("ui/jcef/JcefBridge.kt").readText()
-        val handler = source("ui/BridgeLog.kt").readText()
+        val bridge = source("model/bridge/JcefBridge.kt").readText()
+        val handler = source("controller/bridge/BridgeLog.kt").readText()
 
         listOf("\"logLines\"", "\"logDebug\"", "\"logCopy\"").forEach {
             assertTrue(bridge.contains(it)) { "JcefBridge does not parse $it" }
@@ -43,22 +43,22 @@ class LogViewWiringContractTest {
 
     @Test
     fun `the page's own console reaches the log the view reads`() {
-        assertTrue(source("ui/jcef/JcefHost.kt").readText().contains("onConsoleMessage")) {
+        assertTrue(source("view/jcef/JcefHost.kt").readText().contains("onConsoleMessage")) {
             "a CSP rejection or a script error in the page never reaches the ring, so the Log view cannot show it"
         }
     }
 
     @Test
     fun `the modules and the stylesheet are declared, or the page silently does not serve them`() {
-        val assembly = source("ui/jcef/PageAssembly.kt").readText()
+        val assembly = source("view/jcef/PageAssembly.kt").readText()
 
-        listOf("dashboard/log/base.js", "dashboard/log/entries.js", "dashboard/log/log.js").forEach {
+        listOf("models/log/state.js", "views/log/entries.js", "controllers/log/log.js").forEach {
             assertTrue(assembly.contains("\"$it\"")) { "$it is not in PageAssembly.appNames, so it is not served" }
             assertTrue(File(tsRoot(), it.replace(".js", ".ts")).isFile) { "$it has no source" }
         }
-        assertTrue(assembly.contains("\"log-view.css\"")) { "log-view.css is not in PageAssembly.CSS_PARTS" }
-        assertTrue(File(jcefRoot(), "css/log-view.css").isFile)
-        assertTrue(File(tsRoot(), "dashboard/state.ts").readText().contains("log: {")) {
+        assertTrue(assembly.contains("\"views/log/view.css\"")) { "views/log/view.css is not in PageAssembly.CSS_PARTS" }
+        assertTrue(File(jcefRoot(), "css/views/log/view.css").isFile)
+        assertTrue(File(tsRoot(), "models/panel/state.ts").readText().contains("log: {")) {
             "the dashboard has no log view for the button to open"
         }
     }

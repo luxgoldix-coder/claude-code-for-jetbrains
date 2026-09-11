@@ -1,6 +1,5 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.model.session.launch
 
-import dev.lain.claudejb.process.PluginContextPrompt
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue

@@ -1,4 +1,4 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.view.window
 
 import dev.lain.claudejb.MainSources
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -9,7 +9,7 @@ class ToolWindowWiringContractTest {
 
     @Test
     fun `the strip is resolved by type, never by which content is selected`() {
-        val body = bodyOf(codeOf("ui/ClaudeToolWindowFactory.kt"), "private fun tabsPanel(")
+        val body = bodyOf(codeOf("view/window/ClaudeToolWindowFactory.kt"), "private fun tabsPanel(")
 
         assertTrue(body.none { it.contains("selectedContent") }) {
             "tabsPanel() is back to reading the SELECTED content. There is one content and it is the strip, " +
@@ -23,7 +23,7 @@ class ToolWindowWiringContractTest {
 
     @Test
     fun `the tab commands are published before anything is restored`() {
-        val code = codeOf("ui/ClaudeToolWindowFactory.kt")
+        val code = codeOf("view/window/ClaudeToolWindowFactory.kt")
         val published = code.indexOfFirst { it.contains("tabs.commands = commands") }
         val restored = code.indexOfFirst { it.contains("restoreOrCreate()") }
 
@@ -40,7 +40,7 @@ class ToolWindowWiringContractTest {
 
     @Test
     fun `a new chat is shown only once its page can draw`() {
-        val code = codeOf("ui/ClaudeToolWindowFactory.kt")
+        val code = codeOf("view/window/ClaudeToolWindowFactory.kt")
         val open = code.indexOfFirst { it.contains("private fun openChat(") }
         assertTrue(open >= 0) { "ClaudeToolWindowFactory no longer has an openChat" }
 
@@ -58,7 +58,7 @@ class ToolWindowWiringContractTest {
 
     @Test
     fun `the wait for the page is bounded, and the deadline runs the block`() {
-        val code = codeOf("ui/jcef/JcefHost.kt")
+        val code = codeOf("view/jcef/JcefHost.kt")
         val signature = code.firstOrNull { it.contains("fun whenWebReady(") }
 
         assertTrue(signature != null) { "JcefHost no longer offers whenWebReady — see ClaudeToolWindowFactory.openChat" }
@@ -99,7 +99,7 @@ class ToolWindowWiringContractTest {
 
     @Test
     fun `the strip has no second view of a chat, and the close handler has nothing to ask`() {
-        val strip = codeOf("ui/ChatTabsPanel.kt")
+        val strip = codeOf("view/window/ChatTabsPanel.kt")
         val revived = strip.filter { it.contains("isPinnedView") || it.contains("pinnedAgent") || it.contains("fun pin(") }
         assertTrue(revived.isEmpty()) {
             "ChatTabsPanel can hold a second view of a chat again:\n" + revived.joinToString("\n") +
@@ -107,7 +107,7 @@ class ToolWindowWiringContractTest {
                 "unconditional `closed` handler is safe only in the absence of."
         }
 
-        val handler = codeOf("ui/ClaudeToolWindowFactory.kt").filter { it.contains("closed = { tab") }
+        val handler = codeOf("view/window/ClaudeToolWindowFactory.kt").filter { it.contains("closed = { tab") }
         assertTrue(handler.size == 1) { "no single `closed = { tab …` in the factory: $handler" }
         assertTrue(handler.single().contains("manager.remove")) {
             "the tool window's close handler no longer removes the session: `${handler.single()}`"

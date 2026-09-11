@@ -1,4 +1,4 @@
-package dev.lain.claudejb.settings
+package dev.lain.claudejb.model.settings
 
 import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials

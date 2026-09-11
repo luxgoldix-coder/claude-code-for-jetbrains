@@ -1,7 +1,9 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.controller.bridge
 
-import dev.lain.claudejb.ui.jcef.Msg
+import dev.lain.claudejb.model.bridge.Msg
 import dev.lain.claudejb.util.thisLogger
+import dev.lain.claudejb.view.window.ChatTabsPanel
+import dev.lain.claudejb.view.window.JcefChatPanel
 
 internal class BridgeNavigation(private val panel: JcefChatPanel) {
 

@@ -1,5 +1,6 @@
-package dev.lain.claudejb.protocol
+package dev.lain.claudejb.model.protocol.models
 
+import dev.lain.claudejb.model.protocol.ClaudeJson
 import kotlinx.serialization.json.JsonObject
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue

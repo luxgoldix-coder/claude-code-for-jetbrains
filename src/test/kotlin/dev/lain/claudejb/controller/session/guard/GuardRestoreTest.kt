@@ -1,8 +1,9 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.controller.session.guard
 
-import dev.lain.claudejb.permission.PermissionBroker
-import dev.lain.claudejb.permission.SecurityRule
-import dev.lain.claudejb.settings.GuardAlert
+import dev.lain.claudejb.model.permission.broker.PermissionBroker
+import dev.lain.claudejb.model.permission.vocab.SecurityRule
+import dev.lain.claudejb.model.session.transcript.EntryDTO
+import dev.lain.claudejb.model.settings.guard.GuardAlert
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue

@@ -1,6 +1,7 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.model.session.history
 
 import com.intellij.openapi.project.Project
+import dev.lain.claudejb.model.session.transcript.SessionRef
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive

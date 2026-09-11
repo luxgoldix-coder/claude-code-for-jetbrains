@@ -1,6 +1,6 @@
-package dev.lain.claudejb.ui.jcef
+package dev.lain.claudejb.view.payload
 
-import dev.lain.claudejb.session.AgentStatus
+import dev.lain.claudejb.model.session.agents.AgentStatus
 
 internal object JcefStatus {
 

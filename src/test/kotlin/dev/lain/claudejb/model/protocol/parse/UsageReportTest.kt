@@ -1,5 +1,8 @@
-package dev.lain.claudejb.protocol
+package dev.lain.claudejb.model.protocol.parse
 
+import dev.lain.claudejb.model.protocol.models.RateLimitInfo
+import dev.lain.claudejb.model.protocol.models.UsageReport
+import dev.lain.claudejb.model.protocol.models.UsageWindow
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive

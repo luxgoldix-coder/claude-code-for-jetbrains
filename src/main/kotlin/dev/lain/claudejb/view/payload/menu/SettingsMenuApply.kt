@@ -1,7 +1,7 @@
-package dev.lain.claudejb.ui.jcef
+package dev.lain.claudejb.view.payload.menu
 
-import dev.lain.claudejb.session.ClaudeSession
-import dev.lain.claudejb.session.SessionLiveSettings
+import dev.lain.claudejb.controller.session.ClaudeSession
+import dev.lain.claudejb.controller.session.SessionLiveSettings
 
 internal object SettingsMenuApply {
 

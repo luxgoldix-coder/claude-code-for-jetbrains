@@ -1,10 +1,11 @@
-package dev.lain.claudejb.ui.jcef
+package dev.lain.claudejb.view.git
 
-import dev.lain.claudejb.git.GitCommitInfo
-import dev.lain.claudejb.git.GitRefInfo
-import dev.lain.claudejb.git.GitRefKind
-import dev.lain.claudejb.session.AgentStatus
-import dev.lain.claudejb.ui.GitActionCatalog
+import dev.lain.claudejb.controller.commands.git.GitActionCatalog
+import dev.lain.claudejb.model.git.GitCommitInfo
+import dev.lain.claudejb.model.git.GitRefInfo
+import dev.lain.claudejb.model.git.GitRefKind
+import dev.lain.claudejb.model.session.agents.AgentStatus
+import dev.lain.claudejb.view.payload.JcefStatus
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.boolean

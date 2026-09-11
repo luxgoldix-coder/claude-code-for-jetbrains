@@ -1,5 +1,6 @@
-package dev.lain.claudejb.process
+package dev.lain.claudejb.controller.process
 
+import dev.lain.claudejb.controller.process.credentials.CredentialsVault
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.io.File

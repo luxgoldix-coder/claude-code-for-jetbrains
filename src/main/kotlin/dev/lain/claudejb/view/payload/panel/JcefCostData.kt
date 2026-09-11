@@ -1,7 +1,7 @@
-package dev.lain.claudejb.ui.jcef
+package dev.lain.claudejb.view.payload.panel
 
-import dev.lain.claudejb.protocol.SessionCostUsage
-import dev.lain.claudejb.session.ClaudeSession
+import dev.lain.claudejb.controller.session.ClaudeSession
+import dev.lain.claudejb.model.protocol.models.SessionCostUsage
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.addJsonObject
@@ -55,7 +55,7 @@ internal object JcefCostData {
     private fun decodeApiUsage(raw: JsonObject): SessionCostUsage? {
         val block = (raw["apiUsage"] ?: raw["api_usage"]) as? JsonObject ?: return null
         return runCatching {
-            dev.lain.claudejb.protocol.ClaudeJson.decodeFromJsonElement(SessionCostUsage.serializer(), block)
+            dev.lain.claudejb.model.protocol.ClaudeJson.decodeFromJsonElement(SessionCostUsage.serializer(), block)
         }.getOrNull()
     }
 

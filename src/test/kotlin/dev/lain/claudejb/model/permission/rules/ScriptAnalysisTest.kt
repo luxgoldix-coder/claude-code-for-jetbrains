@@ -1,13 +1,15 @@
-package dev.lain.claudejb.permission
+package dev.lain.claudejb.model.permission.rules
 
-import dev.lain.claudejb.permission.GuardFixture.bash
-import dev.lain.claudejb.permission.GuardReasonWords.CREDENTIAL_SURFACE
-import dev.lain.claudejb.permission.GuardReasonWords.DESTRUCTIVE
-import dev.lain.claudejb.permission.GuardReasonWords.EXPOSE_SECRETS
-import dev.lain.claudejb.permission.GuardReasonWords.INTRUSION
-import dev.lain.claudejb.permission.GuardReasonWords.NESTED
-import dev.lain.claudejb.permission.GuardReasonWords.UNREADABLE
-import dev.lain.claudejb.permission.SensitiveGuard.Verdict
+import dev.lain.claudejb.model.permission.GuardFixture.bash
+import dev.lain.claudejb.model.permission.SensitiveGuard
+import dev.lain.claudejb.model.permission.SensitiveGuard.Verdict
+import dev.lain.claudejb.model.permission.paths.CredentialPaths
+import dev.lain.claudejb.model.permission.vocab.GuardReasonWords.CREDENTIAL_SURFACE
+import dev.lain.claudejb.model.permission.vocab.GuardReasonWords.DESTRUCTIVE
+import dev.lain.claudejb.model.permission.vocab.GuardReasonWords.EXPOSE_SECRETS
+import dev.lain.claudejb.model.permission.vocab.GuardReasonWords.INTRUSION
+import dev.lain.claudejb.model.permission.vocab.GuardReasonWords.NESTED
+import dev.lain.claudejb.model.permission.vocab.GuardReasonWords.UNREADABLE
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test

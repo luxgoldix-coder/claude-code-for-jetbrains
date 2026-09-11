@@ -1,8 +1,8 @@
-package dev.lain.claudejb.ui.jcef
+package dev.lain.claudejb.view.payload.chat
 
-import dev.lain.claudejb.permission.SecurityRule
-import dev.lain.claudejb.session.EntryDTO
-import dev.lain.claudejb.session.TranscriptEntry
+import dev.lain.claudejb.model.permission.vocab.SecurityRule
+import dev.lain.claudejb.model.session.transcript.EntryDTO
+import dev.lain.claudejb.model.session.transcript.TranscriptEntry
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonArray
@@ -94,7 +94,7 @@ object JcefTranscriptPayload {
         else -> "FINISHED"
     }
 
-    fun linksJson(rowId: Long, resolved: List<dev.lain.claudejb.ui.LinkResolver.Resolved>): String =
+    fun linksJson(rowId: Long, resolved: List<dev.lain.claudejb.controller.context.LinkResolver.Resolved>): String =
         buildJsonObject {
             put("rowId", rowId)
             put(

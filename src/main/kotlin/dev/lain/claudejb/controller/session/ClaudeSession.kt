@@ -1,10 +1,38 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.controller.session
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import dev.lain.claudejb.context.Attachment
-import dev.lain.claudejb.protocol.ClaudeEvent
+import dev.lain.claudejb.controller.session.auth.LoginCoordinator
+import dev.lain.claudejb.controller.session.control.RemoteControl
+import dev.lain.claudejb.controller.session.control.SessionControlClient
+import dev.lain.claudejb.controller.session.control.SessionQueries
+import dev.lain.claudejb.controller.session.diff.DiffLifecycleManager
+import dev.lain.claudejb.controller.session.diff.RollbackManager
+import dev.lain.claudejb.controller.session.events.HookActivityNarrator
+import dev.lain.claudejb.controller.session.events.NoticeNarrator
+import dev.lain.claudejb.controller.session.events.SessionEventRouter
+import dev.lain.claudejb.controller.session.guard.PermissionCardManager
+import dev.lain.claudejb.controller.session.guard.SessionCards
+import dev.lain.claudejb.controller.session.guard.SessionGuard
+import dev.lain.claudejb.controller.session.history.AgentScanner
+import dev.lain.claudejb.controller.session.turn.PollSchedule
+import dev.lain.claudejb.controller.session.turn.PromptComposer
+import dev.lain.claudejb.controller.session.turn.PromptQueue
+import dev.lain.claudejb.controller.session.turn.QuotaWarnings
+import dev.lain.claudejb.controller.session.turn.TurnControl
+import dev.lain.claudejb.model.context.Attachment
+import dev.lain.claudejb.model.protocol.ClaudeEvent
+import dev.lain.claudejb.model.session.agents.AgentRegistry
+import dev.lain.claudejb.model.session.agents.BackgroundTaskRegistry
+import dev.lain.claudejb.model.session.agents.TaskTracker
+import dev.lain.claudejb.model.session.history.SessionStore
+import dev.lain.claudejb.model.session.launch.LaunchOptions
+import dev.lain.claudejb.model.session.transcript.Speaker
+import dev.lain.claudejb.model.session.transcript.TranscriptModel
+import dev.lain.claudejb.model.session.transcript.TranscriptReconciler
+import dev.lain.claudejb.model.session.turn.SessionSignals
+import dev.lain.claudejb.model.session.turn.TokenAccountant
+import dev.lain.claudejb.model.session.turn.TurnState
 import dev.lain.claudejb.util.edt
 import dev.lain.claudejb.util.thisLogger
 import java.util.concurrent.CopyOnWriteArrayList
@@ -96,19 +124,6 @@ class ClaudeSession(
         return runningAgents.nodes.values.firstOrNull { it.meta.toolUseId == tool }?.agentId
     }
 
-    private val stream = StreamBuffer()
-
-    internal fun flushDeltas() {
-        val drained = stream.drain() ?: return
-        val apply = {
-            for ((isThinking, text) in drained.runs) {
-                if (isThinking) reconciler.appendThinking(text) else reconciler.appendAssistant(text)
-            }
-            drained.usage?.let { tokens.onLiveUsage(it[0], it[1], it[2], it[3]) }
-        }
-        if (ApplicationManager.getApplication().isDispatchThread) apply() else edt { apply() }
-    }
-
     val catalog = BinaryCatalog(this, ::fireMetadata)
 
     val remote = RemoteControl(queries, transcript, ::fireState)
@@ -141,13 +156,9 @@ class ClaudeSession(
         fireAttention = ::fireAttention,
     )
 
-    internal val toolEvents = ToolEvents(this, ::edt, ::fireState)
-    private val taskEvents = TaskEvents(this, ::edt, ::fireState)
-    private val signalEvents = SignalEvents(this, ::edt, ::fireState, ::fireMetadata)
-    private val controlEvents = ControlEvents(this, ::edt)
-    internal val conversation = ConversationEvents(this, project, ::edt, ::fireState, ::fireAttention)
+    internal val events = SessionEventRouter(this, ::edt, ::fireState, ::fireMetadata, ::fireAttention, notices)
 
-    val lifecycle = SessionLifecycle(this, project, ::edt, ::fireState, ::fireAttention, ::onEvent)
+    val lifecycle = SessionLifecycle(this, project, ::edt, ::fireState, ::fireAttention, events::onEvent)
 
     fun addListener(listener: SessionListener) {
         listeners.add(listener)
@@ -196,26 +207,11 @@ class ClaudeSession(
 
     @org.jetbrains.annotations.TestOnly
     fun handleEventForTest(event: ClaudeEvent) {
-        onEvent(event)
-        flushDeltas()
+        events.onEvent(event)
+        events.flushDeltas()
     }
 
-    private fun onEvent(event: ClaudeEvent) {
-        if (event is ClaudeEvent.Stream) {
-            stream.buffer(event)
-            return
-        }
-        flushDeltas()
-        when (event) {
-            is ClaudeEvent.Conversation -> conversation.onConversation(event)
-            is ClaudeEvent.Control -> controlEvents.onControl(event)
-            is ClaudeEvent.Task -> taskEvents.onTask(event)
-            is ClaudeEvent.SessionSignal -> signalEvents.onSessionSignal(event)
-            is ClaudeEvent.HookTelemetry -> controlEvents.onHookTelemetry(event)
-            is ClaudeEvent.Notice -> notices.onNotice(event)
-            is ClaudeEvent.Stream -> {}
-        }
-    }
+    internal fun flushDeltas() = events.flushDeltas()
 
     internal fun write(line: String): Boolean = lifecycle.write(line)
 

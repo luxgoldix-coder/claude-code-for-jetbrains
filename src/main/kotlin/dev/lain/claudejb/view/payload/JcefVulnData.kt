@@ -1,13 +1,13 @@
-package dev.lain.claudejb.ui.jcef
+package dev.lain.claudejb.view.payload
 
-import dev.lain.claudejb.session.AgentStatus
-import dev.lain.claudejb.vuln.ScanSilence
-import dev.lain.claudejb.vuln.VulnComponent
-import dev.lain.claudejb.vuln.VulnDisclosure
-import dev.lain.claudejb.vuln.VulnFinding
-import dev.lain.claudejb.vuln.VulnReport
-import dev.lain.claudejb.vuln.VulnSnapshot
-import dev.lain.claudejb.vuln.VulnViewState
+import dev.lain.claudejb.model.session.agents.AgentStatus
+import dev.lain.claudejb.model.vuln.ScanSilence
+import dev.lain.claudejb.model.vuln.VulnComponent
+import dev.lain.claudejb.model.vuln.VulnDisclosure
+import dev.lain.claudejb.model.vuln.VulnFinding
+import dev.lain.claudejb.model.vuln.VulnReport
+import dev.lain.claudejb.model.vuln.VulnSnapshot
+import dev.lain.claudejb.model.vuln.VulnViewState
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject

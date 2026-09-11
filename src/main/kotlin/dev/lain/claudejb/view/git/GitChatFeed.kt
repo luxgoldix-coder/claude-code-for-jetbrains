@@ -1,7 +1,9 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.view.git
 
-import dev.lain.claudejb.session.ClaudeSession
-import dev.lain.claudejb.ui.jcef.JcefCardPayload
+import dev.lain.claudejb.controller.commands.git.GitChatConversation
+import dev.lain.claudejb.controller.session.ClaudeSession
+import dev.lain.claudejb.view.payload.chat.JcefCardPayload
+import dev.lain.claudejb.view.window.JcefChatPanel
 
 internal class GitChatFeed(
     private val panel: JcefChatPanel,

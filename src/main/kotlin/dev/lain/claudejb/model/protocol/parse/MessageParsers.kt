@@ -1,5 +1,10 @@
-package dev.lain.claudejb.protocol
+package dev.lain.claudejb.model.protocol.parse
 
+import dev.lain.claudejb.model.protocol.ClaudeEvent
+import dev.lain.claudejb.model.protocol.ClaudeJson
+import dev.lain.claudejb.model.protocol.intField
+import dev.lain.claudejb.model.protocol.models.AssistantInner
+import dev.lain.claudejb.model.protocol.str
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive

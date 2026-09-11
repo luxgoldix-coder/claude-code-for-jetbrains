@@ -1,15 +1,18 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.controller.session
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import dev.lain.claudejb.process.ClaudeBinaryLocator
-import dev.lain.claudejb.process.CredentialsVault
-import dev.lain.claudejb.protocol.ClaudeEvent
-import dev.lain.claudejb.settings.ClaudeSettings
-import dev.lain.claudejb.settings.Provider
-import dev.lain.claudejb.settings.RemoteMounts
-import dev.lain.claudejb.settings.SecretStore
-import dev.lain.claudejb.settings.resolveEnv
+import dev.lain.claudejb.controller.process.ClaudeBinaryLocator
+import dev.lain.claudejb.controller.process.credentials.CredentialsVault
+import dev.lain.claudejb.controller.session.auth.AuthGate
+import dev.lain.claudejb.controller.session.auth.Credential
+import dev.lain.claudejb.model.protocol.ClaudeEvent
+import dev.lain.claudejb.model.session.transcript.Speaker
+import dev.lain.claudejb.model.settings.ClaudeSettings
+import dev.lain.claudejb.model.settings.Provider
+import dev.lain.claudejb.model.settings.SecretStore
+import dev.lain.claudejb.model.settings.env.RemoteMounts
+import dev.lain.claudejb.model.settings.env.resolveEnv
 import java.io.File
 
 class SessionLifecycle(
@@ -192,7 +195,7 @@ class SessionLifecycle(
             return
         }
         val env = effectiveLaunchEnv(cachedEnv ?: settings.resolveEnv().also { cachedEnv = it })
-        if (!process.spawn(launchGen, settings, binary, workDir, env, resume)) return
+        if (!process.spawn(launchGen, binary, workDir, env, resume)) return
         s.catalog.request()
         edt {
             ready = true

@@ -1,8 +1,14 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.controller.session
 
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.AppExecutorUtil
-import dev.lain.claudejb.protocol.ControlProtocol
+import dev.lain.claudejb.controller.session.guard.GuardRestore
+import dev.lain.claudejb.controller.session.history.SessionHistory
+import dev.lain.claudejb.model.protocol.control.ControlProtocol
+import dev.lain.claudejb.model.session.history.SessionTitling
+import dev.lain.claudejb.model.session.transcript.EntryDTO
+import dev.lain.claudejb.model.session.transcript.Speaker
+import dev.lain.claudejb.model.session.transcript.ToolState
 
 class SessionPersistence(
     private val s: ClaudeSession,

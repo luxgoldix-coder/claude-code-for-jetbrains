@@ -1,13 +1,13 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.view.feed
 
-import dev.lain.claudejb.session.AttentionLanding
-import dev.lain.claudejb.session.ClaudeSession
-import dev.lain.claudejb.session.EntryDTO
-import dev.lain.claudejb.session.GuardRestore
-import dev.lain.claudejb.session.TranscriptEntry
-import dev.lain.claudejb.session.TranscriptModel
-import dev.lain.claudejb.ui.jcef.JcefBridge
-import dev.lain.claudejb.ui.jcef.JcefTranscriptPayload
+import dev.lain.claudejb.controller.session.AttentionLanding
+import dev.lain.claudejb.controller.session.ClaudeSession
+import dev.lain.claudejb.controller.session.guard.GuardRestore
+import dev.lain.claudejb.model.bridge.JcefBridge
+import dev.lain.claudejb.model.session.transcript.EntryDTO
+import dev.lain.claudejb.model.session.transcript.TranscriptEntry
+import dev.lain.claudejb.model.session.transcript.TranscriptModel
+import dev.lain.claudejb.view.payload.chat.JcefTranscriptPayload
 import javax.swing.Timer
 
 internal class ChatTranscriptView(
@@ -87,11 +87,11 @@ internal class ChatTranscriptView(
         session.runningAgents.nodes.values.forEach { node ->
             val tool = node.meta.toolUseId ?: return@forEach
             node.meta.description?.takeIf { it.isNotBlank() }?.let { titles[tool] = "${node.kindLabel} ($it)" }
-            if (node.status == dev.lain.claudejb.session.AgentStatus.RUNNING) running += tool
+            if (node.status == dev.lain.claudejb.model.session.agents.AgentStatus.RUNNING) running += tool
         }
         val ownerRunning = when (val current = shown) {
             is Shown.Agent -> session.runningAgents.nodes[current.id]?.status ==
-                dev.lain.claudejb.session.AgentStatus.RUNNING
+                dev.lain.claudejb.model.session.agents.AgentStatus.RUNNING
 
             is Shown.Task -> session.backgroundTaskRegistry.all.firstOrNull { it.taskId == current.id }?.running == true
 

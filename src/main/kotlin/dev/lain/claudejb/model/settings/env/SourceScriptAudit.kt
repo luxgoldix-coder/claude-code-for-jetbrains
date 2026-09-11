@@ -1,9 +1,9 @@
-package dev.lain.claudejb.settings
+package dev.lain.claudejb.model.settings.env
 
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
-import dev.lain.claudejb.permission.SensitiveGuard
+import dev.lain.claudejb.model.permission.SensitiveGuard
 import dev.lain.claudejb.util.PluginIdentity
 import dev.lain.claudejb.util.logger
 import kotlinx.serialization.json.buildJsonObject

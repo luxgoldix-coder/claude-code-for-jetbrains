@@ -1,4 +1,4 @@
-package dev.lain.claudejb.settings
+package dev.lain.claudejb.model.settings
 
 enum class Provider(val id: String, val label: String, val baseUrl: String?) {
     ANTHROPIC("anthropic", "Anthropic", null),

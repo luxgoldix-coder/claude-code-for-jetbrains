@@ -1,10 +1,10 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.view.feed
 
-import dev.lain.claudejb.protocol.UsageReport
-import dev.lain.claudejb.protocol.afterResets
-import dev.lain.claudejb.protocol.mergedOver
-import dev.lain.claudejb.session.ClaudeSession
-import dev.lain.claudejb.session.PlanInfo
+import dev.lain.claudejb.controller.session.ClaudeSession
+import dev.lain.claudejb.controller.session.control.PlanInfo
+import dev.lain.claudejb.model.protocol.models.UsageReport
+import dev.lain.claudejb.model.protocol.parse.afterResets
+import dev.lain.claudejb.model.protocol.parse.mergedOver
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
 import javax.swing.Timer

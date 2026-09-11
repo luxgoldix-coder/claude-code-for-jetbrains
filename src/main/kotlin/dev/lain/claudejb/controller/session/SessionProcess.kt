@@ -1,8 +1,10 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.controller.session
 
-import dev.lain.claudejb.process.ClaudeProcess
-import dev.lain.claudejb.protocol.ClaudeEvent
-import dev.lain.claudejb.settings.ClaudeSettings
+import dev.lain.claudejb.controller.process.ClaudeProcess
+import dev.lain.claudejb.model.protocol.ClaudeEvent
+import dev.lain.claudejb.model.session.launch.SessionLauncher
+import dev.lain.claudejb.model.session.transcript.Speaker
+import dev.lain.claudejb.model.settings.ClaudeSettings
 import dev.lain.claudejb.util.thisLogger
 import java.io.File
 
@@ -34,14 +36,7 @@ class SessionProcess(
         process = null
     }
 
-    fun spawn(
-        launchGen: Int,
-        settings: ClaudeSettings,
-        binary: File,
-        workDir: File,
-        env: Map<String, String>,
-        resume: Boolean,
-    ): Boolean {
+    fun spawn(launchGen: Int, binary: File, workDir: File, env: Map<String, String>, resume: Boolean): Boolean {
         if (launchGen != generation) return false
         resumedLaunch = resume
         val opts = s.launch.copy(sessionId = s.sessionId)
@@ -49,7 +44,7 @@ class SessionProcess(
             binary = binary,
             workDir = workDir,
             args = SessionLauncher.buildArgs(opts, resume, SessionLauncher.mcpConfigJson(opts)),
-            nodeOverride = settings.nodePath,
+            nodeOverride = ClaudeSettings.getInstance(s.project).nodePath,
             extraEnv = env,
             onEvent = onEvent,
             onTerminated = { code -> onTerminated(launchGen, code) },

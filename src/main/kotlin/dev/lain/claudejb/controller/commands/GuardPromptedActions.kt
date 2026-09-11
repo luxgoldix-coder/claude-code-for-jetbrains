@@ -1,8 +1,8 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.controller.commands
 
-import dev.lain.claudejb.permission.SecurityRule
-import dev.lain.claudejb.permission.blockedWhy
-import dev.lain.claudejb.settings.GuardAlert
+import dev.lain.claudejb.model.permission.vocab.SecurityRule
+import dev.lain.claudejb.model.permission.vocab.blockedWhy
+import dev.lain.claudejb.model.settings.guard.GuardAlert
 
 internal object GuardPromptedActions {
 

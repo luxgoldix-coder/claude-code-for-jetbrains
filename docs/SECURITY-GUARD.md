@@ -433,7 +433,7 @@ stops or arrives on your screen for a decision. One layer, doing one job properl
 
 ## For contributors
 
-The guard lives in `src/main/kotlin/dev/lain/claudejb/permission/`. `SensitiveGuard.kt` owns the policy
+The guard lives in `src/main/kotlin/dev/lain/claudejb/model/permission/`. `SensitiveGuard.kt` owns the policy
 and the verdict; every rule family is a file of its own.
 
 Adding a rule means adding a file, never a branch in the verdict:

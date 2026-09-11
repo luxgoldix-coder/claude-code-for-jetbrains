@@ -1,4 +1,4 @@
-package dev.lain.claudejb.git
+package dev.lain.claudejb.controller.git
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -8,6 +8,11 @@ import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vfs.VirtualFile
+import dev.lain.claudejb.model.git.GitBranchTopology
+import dev.lain.claudejb.model.git.GitCommitInfo
+import dev.lain.claudejb.model.git.GitLogScope
+import dev.lain.claudejb.model.git.GitRefInfo
+import dev.lain.claudejb.model.git.GitRemoteInfo
 import dev.lain.claudejb.util.logger
 
 @Service(Service.Level.PROJECT)

@@ -1,7 +1,7 @@
-package dev.lain.claudejb.permission
+package dev.lain.claudejb.model.permission
 
-import dev.lain.claudejb.permission.GuardFixture.bash
-import dev.lain.claudejb.permission.SensitiveGuard.Verdict
+import dev.lain.claudejb.model.permission.GuardFixture.bash
+import dev.lain.claudejb.model.permission.SensitiveGuard.Verdict
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Test

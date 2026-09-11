@@ -1,10 +1,11 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.controller.bridge
 
-import dev.lain.claudejb.ui.jcef.JcefVulnData
-import dev.lain.claudejb.ui.jcef.Msg
+import dev.lain.claudejb.controller.vuln.VulnPromptedActions
+import dev.lain.claudejb.controller.vuln.VulnService
+import dev.lain.claudejb.model.bridge.Msg
 import dev.lain.claudejb.util.thisLogger
-import dev.lain.claudejb.vuln.VulnPromptedActions
-import dev.lain.claudejb.vuln.VulnService
+import dev.lain.claudejb.view.payload.JcefVulnData
+import dev.lain.claudejb.view.window.JcefChatPanel
 
 internal class BridgeVuln(private val panel: JcefChatPanel) {
 

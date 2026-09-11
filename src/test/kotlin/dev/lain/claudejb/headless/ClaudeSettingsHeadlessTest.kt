@@ -1,18 +1,18 @@
 package dev.lain.claudejb.headless
 
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import dev.lain.claudejb.permission.SecurityRule
-import dev.lain.claudejb.permission.SensitiveGuard
-import dev.lain.claudejb.settings.ClaudeSettings
-import dev.lain.claudejb.settings.GuardMode
-import dev.lain.claudejb.settings.LaunchDefaults
-import dev.lain.claudejb.settings.SecretStore
-import dev.lain.claudejb.settings.SecuritySuspensions
-import dev.lain.claudejb.settings.SettingsStore
-import dev.lain.claudejb.settings.guardSuspended
-import dev.lain.claudejb.settings.parseEnv
-import dev.lain.claudejb.settings.sensitiveDecision
-import dev.lain.claudejb.settings.sensitivePolicy
+import dev.lain.claudejb.model.permission.SensitiveGuard
+import dev.lain.claudejb.model.permission.vocab.SecurityRule
+import dev.lain.claudejb.model.settings.ClaudeSettings
+import dev.lain.claudejb.model.settings.LaunchDefaults
+import dev.lain.claudejb.model.settings.SecretStore
+import dev.lain.claudejb.model.settings.SettingsStore
+import dev.lain.claudejb.model.settings.env.parseEnv
+import dev.lain.claudejb.model.settings.guard.GuardMode
+import dev.lain.claudejb.model.settings.guard.SecuritySuspensions
+import dev.lain.claudejb.model.settings.guard.guardSuspended
+import dev.lain.claudejb.model.settings.guard.sensitiveDecision
+import dev.lain.claudejb.model.settings.guard.sensitivePolicy
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 

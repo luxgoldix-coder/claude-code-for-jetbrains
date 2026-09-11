@@ -1,4 +1,4 @@
-package dev.lain.claudejb.ui.jcef
+package dev.lain.claudejb.view.jcef
 
 internal enum class PageRoute { SCHEME, LOOPBACK }
 

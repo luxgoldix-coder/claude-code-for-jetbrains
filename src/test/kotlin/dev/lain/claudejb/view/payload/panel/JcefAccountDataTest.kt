@@ -1,8 +1,8 @@
-package dev.lain.claudejb.ui.jcef
+package dev.lain.claudejb.view.payload.panel
 
-import dev.lain.claudejb.process.AccountProfile
-import dev.lain.claudejb.process.AuthCli
-import dev.lain.claudejb.protocol.AccountInfo
+import dev.lain.claudejb.controller.process.auth.AccountProfile
+import dev.lain.claudejb.controller.process.auth.AuthCli
+import dev.lain.claudejb.model.protocol.models.AccountInfo
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull

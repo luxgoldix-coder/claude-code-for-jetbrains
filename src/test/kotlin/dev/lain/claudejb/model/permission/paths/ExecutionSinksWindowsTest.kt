@@ -1,6 +1,9 @@
-package dev.lain.claudejb.permission
+package dev.lain.claudejb.model.permission.paths
 
-import dev.lain.claudejb.permission.SensitiveGuard.Verdict
+import dev.lain.claudejb.model.permission.GuardProbe
+import dev.lain.claudejb.model.permission.SensitiveGuard
+import dev.lain.claudejb.model.permission.SensitiveGuard.Verdict
+import dev.lain.claudejb.model.permission.vocab.SecurityRule
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put

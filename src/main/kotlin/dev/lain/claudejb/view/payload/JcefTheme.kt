@@ -1,4 +1,4 @@
-package dev.lain.claudejb.ui.jcef
+package dev.lain.claudejb.view.payload
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -7,7 +7,7 @@ import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
-import dev.lain.claudejb.ui.ChatTheme
+import dev.lain.claudejb.view.feed.ChatTheme
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put

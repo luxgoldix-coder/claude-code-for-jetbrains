@@ -1,12 +1,12 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.view.feed
 
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import dev.lain.claudejb.context.Attachment
-import dev.lain.claudejb.context.EditorContextProvider
-import dev.lain.claudejb.context.FilePickerHelper
+import dev.lain.claudejb.controller.context.EditorContextProvider
+import dev.lain.claudejb.controller.context.FilePickerHelper
+import dev.lain.claudejb.model.context.Attachment
 import dev.lain.claudejb.util.PluginIdentity
 import dev.lain.claudejb.util.edt
 import kotlinx.serialization.json.JsonArray

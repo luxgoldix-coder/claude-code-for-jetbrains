@@ -1,4 +1,4 @@
-package dev.lain.claudejb.context
+package dev.lain.claudejb.controller.context
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test

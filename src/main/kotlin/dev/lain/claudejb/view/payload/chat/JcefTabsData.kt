@@ -1,9 +1,11 @@
-package dev.lain.claudejb.ui.jcef
+package dev.lain.claudejb.view.payload.chat
 
-import dev.lain.claudejb.session.AgentStatus
-import dev.lain.claudejb.session.BackgroundTaskRegistry
-import dev.lain.claudejb.session.ClaudeSession
-import dev.lain.claudejb.settings.WorkloadWindow
+import dev.lain.claudejb.controller.session.ClaudeSession
+import dev.lain.claudejb.model.session.agents.AgentStatus
+import dev.lain.claudejb.model.session.agents.BackgroundTaskRegistry
+import dev.lain.claudejb.model.settings.WorkloadWindow
+import dev.lain.claudejb.view.payload.JcefStatus
+import dev.lain.claudejb.view.payload.panel.JcefWorkloadData
 import kotlinx.serialization.json.addJsonObject
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject

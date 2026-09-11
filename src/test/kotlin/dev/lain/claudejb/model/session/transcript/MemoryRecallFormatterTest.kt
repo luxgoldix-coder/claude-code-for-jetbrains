@@ -1,7 +1,7 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.model.session.transcript
 
-import dev.lain.claudejb.protocol.MemoryRecallInfo
-import dev.lain.claudejb.protocol.RecalledMemory
+import dev.lain.claudejb.model.protocol.models.MemoryRecallInfo
+import dev.lain.claudejb.model.protocol.models.RecalledMemory
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test

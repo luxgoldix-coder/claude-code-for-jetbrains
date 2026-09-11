@@ -1,14 +1,15 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.view.window
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBPanel
-import dev.lain.claudejb.session.ClaudeSession
-import dev.lain.claudejb.ui.jcef.JcefSessionData
-import dev.lain.claudejb.ui.jcef.JcefTabsData
+import dev.lain.claudejb.controller.commands.TabSessionCommands
+import dev.lain.claudejb.controller.session.ClaudeSession
 import dev.lain.claudejb.util.logger
+import dev.lain.claudejb.view.payload.chat.JcefTabsData
+import dev.lain.claudejb.view.payload.panel.JcefSessionData
 import java.awt.BorderLayout
 import java.awt.CardLayout
 import javax.swing.JComponent

@@ -1,8 +1,8 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.view.feed
 
-import dev.lain.claudejb.session.BackgroundTaskRegistry
-import dev.lain.claudejb.session.ClaudeSession
-import dev.lain.claudejb.session.EntryDTO
+import dev.lain.claudejb.controller.session.ClaudeSession
+import dev.lain.claudejb.model.session.agents.BackgroundTaskRegistry
+import dev.lain.claudejb.model.session.transcript.EntryDTO
 
 internal object BackgroundTaskView {
 

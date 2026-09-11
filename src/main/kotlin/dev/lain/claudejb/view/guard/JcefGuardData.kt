@@ -1,9 +1,9 @@
-package dev.lain.claudejb.ui.jcef
+package dev.lain.claudejb.view.guard
 
-import dev.lain.claudejb.permission.PermissionBroker
-import dev.lain.claudejb.permission.SecurityCategory
-import dev.lain.claudejb.permission.SecurityRule
-import dev.lain.claudejb.settings.GuardAlert
+import dev.lain.claudejb.model.permission.broker.PermissionBroker
+import dev.lain.claudejb.model.permission.vocab.SecurityCategory
+import dev.lain.claudejb.model.permission.vocab.SecurityRule
+import dev.lain.claudejb.model.settings.guard.GuardAlert
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonArray

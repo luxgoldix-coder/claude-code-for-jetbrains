@@ -1,5 +1,9 @@
-package dev.lain.claudejb.settings
+package dev.lain.claudejb.model.settings
 
+import dev.lain.claudejb.model.settings.env.UntrustedState
+import dev.lain.claudejb.model.settings.legacy.LegacyPermissionMode
+import dev.lain.claudejb.model.settings.legacy.LegacySecurityToggles
+import dev.lain.claudejb.model.settings.legacy.LegacySettingsNotice
 import dev.lain.claudejb.util.logger
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject

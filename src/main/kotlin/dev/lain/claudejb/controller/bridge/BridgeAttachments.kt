@@ -1,12 +1,13 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.controller.bridge
 
 import com.intellij.openapi.application.ApplicationManager
-import dev.lain.claudejb.context.ImageAttachments
-import dev.lain.claudejb.context.ProjectTree
-import dev.lain.claudejb.ui.jcef.JcefTreeData
-import dev.lain.claudejb.ui.jcef.Msg
+import dev.lain.claudejb.controller.context.ProjectTree
+import dev.lain.claudejb.model.bridge.Msg
+import dev.lain.claudejb.model.context.ImageAttachments
 import dev.lain.claudejb.util.edt
 import dev.lain.claudejb.util.thisLogger
+import dev.lain.claudejb.view.payload.chat.JcefTreeData
+import dev.lain.claudejb.view.window.JcefChatPanel
 
 internal class BridgeAttachments(private val panel: JcefChatPanel) {
 

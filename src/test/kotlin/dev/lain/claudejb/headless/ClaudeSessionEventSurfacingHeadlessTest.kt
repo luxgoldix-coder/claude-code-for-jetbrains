@@ -2,16 +2,16 @@ package dev.lain.claudejb.headless
 
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import dev.lain.claudejb.protocol.ClaudeEvent
-import dev.lain.claudejb.protocol.ElicitationRequest
-import dev.lain.claudejb.protocol.FilesPersistedInfo
-import dev.lain.claudejb.protocol.MemoryRecallInfo
-import dev.lain.claudejb.protocol.PersistedFile
-import dev.lain.claudejb.protocol.PromptSuggestionInfo
-import dev.lain.claudejb.protocol.RecalledMemory
-import dev.lain.claudejb.protocol.ThinkingTokensInfo
-import dev.lain.claudejb.session.ClaudeSession
-import dev.lain.claudejb.session.Speaker
+import dev.lain.claudejb.controller.session.ClaudeSession
+import dev.lain.claudejb.model.protocol.ClaudeEvent
+import dev.lain.claudejb.model.protocol.models.ElicitationRequest
+import dev.lain.claudejb.model.protocol.models.FilesPersistedInfo
+import dev.lain.claudejb.model.protocol.models.MemoryRecallInfo
+import dev.lain.claudejb.model.protocol.models.PersistedFile
+import dev.lain.claudejb.model.protocol.models.PromptSuggestionInfo
+import dev.lain.claudejb.model.protocol.models.RecalledMemory
+import dev.lain.claudejb.model.protocol.models.ThinkingTokensInfo
+import dev.lain.claudejb.model.session.transcript.Speaker
 
 class ClaudeSessionEventSurfacingHeadlessTest : BasePlatformTestCase() {
 

@@ -1,4 +1,4 @@
-package dev.lain.claudejb.vuln
+package dev.lain.claudejb.model.vuln
 
 enum class ComponentOrigin(val wire: String, val label: String) {
     DIRECT("direct", "direct dependency"),

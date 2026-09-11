@@ -1,5 +1,7 @@
-package dev.lain.claudejb.permission
+package dev.lain.claudejb.model.permission.paths
 
+import dev.lain.claudejb.model.permission.SensitiveGuard
+import dev.lain.claudejb.model.permission.vocab.MAX_ANALYSIS_DEPTH
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit

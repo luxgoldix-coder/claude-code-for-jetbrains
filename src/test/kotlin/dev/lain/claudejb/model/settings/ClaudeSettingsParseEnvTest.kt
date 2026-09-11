@@ -1,5 +1,6 @@
-package dev.lain.claudejb.settings
+package dev.lain.claudejb.model.settings
 
+import dev.lain.claudejb.model.settings.env.parseEnv
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test

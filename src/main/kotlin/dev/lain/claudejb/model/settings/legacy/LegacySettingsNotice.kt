@@ -1,9 +1,9 @@
-package dev.lain.claudejb.settings
+package dev.lain.claudejb.model.settings.legacy
 
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
-import dev.lain.claudejb.protocol.PermissionMode
+import dev.lain.claudejb.model.protocol.PermissionMode
 import dev.lain.claudejb.util.PluginIdentity
 import dev.lain.claudejb.util.logger
 import java.util.concurrent.atomic.AtomicBoolean

@@ -1,4 +1,4 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.model.session.agents
 
 import java.nio.file.Files
 import java.nio.file.Path

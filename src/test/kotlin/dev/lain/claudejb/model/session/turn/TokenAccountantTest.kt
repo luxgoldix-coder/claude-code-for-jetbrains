@@ -1,4 +1,4 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.model.session.turn
 
 import org.junit.Assert.assertEquals
 import org.junit.Test

@@ -1,5 +1,10 @@
-package dev.lain.claudejb.permission
+package dev.lain.claudejb.model.permission
 
+import dev.lain.claudejb.model.permission.paths.CredentialPaths
+import dev.lain.claudejb.model.permission.rules.CommandRules
+import dev.lain.claudejb.model.permission.scan.ToolInputScanner
+import dev.lain.claudejb.model.permission.vocab.SecurityCategory
+import dev.lain.claudejb.model.permission.vocab.SecurityRule
 import dev.lain.claudejb.util.ReasonSecrecy
 import kotlinx.serialization.json.JsonObject
 

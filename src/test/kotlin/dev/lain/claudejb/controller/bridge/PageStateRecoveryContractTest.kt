@@ -1,4 +1,4 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.controller.bridge
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -9,7 +9,7 @@ class PageStateRecoveryContractTest {
 
     @Test
     fun `a load that did not deliver the page must not drain the queued pushes`() {
-        val body = bodyOf(source("ui/jcef/PageLoadHandler.kt").readLines(), "override fun onLoadEnd(")
+        val body = bodyOf(source("view/jcef/PageLoadHandler.kt").readLines(), "override fun onLoadEnd(")
         val guard = body.indexOfFirst { it.contains("pageArrived(") }
         val drain = body.indexOfFirst { it.contains("onArrived()") }
 
@@ -29,7 +29,7 @@ class PageStateRecoveryContractTest {
 
     @Test
     fun `the failure verdict is recorded, cleared and actually consulted`() {
-        val text = source("ui/jcef/PageLoadHandler.kt").readText()
+        val text = source("view/jcef/PageLoadHandler.kt").readText()
         listOf(
             "override fun onLoadError(" to
                 "nothing records that a load failed, so an unreachable route reads as a delivered page",
@@ -44,25 +44,25 @@ class PageStateRecoveryContractTest {
 
     @Test
     fun `the ready watchdog is armed when the browser starts loading, not when the page is handed over`() {
-        val deliver = bodyOf(source("ui/jcef/PageDelivery.kt").readLines(), "private fun deliver(")
+        val deliver = bodyOf(source("view/jcef/PageDelivery.kt").readLines(), "private fun deliver(")
         assertTrue(deliver.none { ARMS.containsMatchIn(it) }) {
             "deliver() arms the ready watchdog before the browser exists. JBCefOsrComponent.addNotify creates the " +
                 "browser, and a chat opened into a component not yet on screen — the replacement for a closed " +
                 "last tab — spends the whole grace period before its first navigation can start, then falls off " +
                 "the ladder with the page never run.\n" + deliver.joinToString("\n")
         }
-        val start = bodyOf(source("ui/jcef/PageLoadHandler.kt").readLines(), "override fun onLoadStart(")
+        val start = bodyOf(source("view/jcef/PageLoadHandler.kt").readLines(), "override fun onLoadStart(")
         assertTrue(start.any { it.contains("onStarted()") }) {
             "onLoadStart no longer reports that the browser began loading.\n" + start.joinToString("\n")
         }
-        assertTrue(source("ui/jcef/JcefHost.kt").readText().contains("onStarted = { delivery?.pageLoadStarted() }")) {
+        assertTrue(source("view/jcef/JcefHost.kt").readText().contains("onStarted = { delivery?.pageLoadStarted() }")) {
             "the host no longer arms the delivery's watchdog from the load start, so a rung that hangs is never left"
         }
     }
 
     @Test
     fun `a disposed host runs nothing in its browser`() {
-        val exec = bodyOf(source("ui/jcef/JcefHost.kt").readLines(), "fun exec(")
+        val exec = bodyOf(source("view/jcef/JcefHost.kt").readLines(), "fun exec(")
         assertTrue(exec.any { it.contains("disposed") }) {
             "exec no longer checks disposed. A pooled payload that finishes after the tab closed then executes " +
                 "JavaScript in a browser that is being torn down.\n" + exec.joinToString("\n")
@@ -71,7 +71,7 @@ class PageStateRecoveryContractTest {
 
     @Test
     fun `the Ready message re-pushes the tab bar, like everything else the page owes`() {
-        val lines = source("ui/BridgeLifecycle.kt").readLines()
+        val lines = source("controller/bridge/BridgeLifecycle.kt").readLines()
         val start = lines.indexOfFirst { it.contains("Msg.Ready ->") }
         assertTrue(start >= 0) { "BridgeLifecycle no longer handles Msg.Ready" }
         val length = lines.drop(start + 1).indexOfFirst { it == "            }" }

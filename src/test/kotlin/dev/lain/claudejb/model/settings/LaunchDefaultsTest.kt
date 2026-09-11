@@ -1,6 +1,6 @@
-package dev.lain.claudejb.settings
+package dev.lain.claudejb.model.settings
 
-import dev.lain.claudejb.protocol.ModelInfo
+import dev.lain.claudejb.model.protocol.models.ModelInfo
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 

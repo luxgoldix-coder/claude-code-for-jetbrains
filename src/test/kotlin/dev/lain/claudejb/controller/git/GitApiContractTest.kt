@@ -1,4 +1,4 @@
-package dev.lain.claudejb.git
+package dev.lain.claudejb.controller.git
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.AbstractVcs

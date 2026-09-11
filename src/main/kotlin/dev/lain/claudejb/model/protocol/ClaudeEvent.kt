@@ -1,5 +1,37 @@
-package dev.lain.claudejb.protocol
+package dev.lain.claudejb.model.protocol
 
+import dev.lain.claudejb.model.protocol.models.ApiRetryInfo
+import dev.lain.claudejb.model.protocol.models.AuthStatusInfo
+import dev.lain.claudejb.model.protocol.models.BackgroundTasksChangedInfo
+import dev.lain.claudejb.model.protocol.models.CanUseToolRequest
+import dev.lain.claudejb.model.protocol.models.CommandsChangedInfo
+import dev.lain.claudejb.model.protocol.models.ControlRequestProgressInfo
+import dev.lain.claudejb.model.protocol.models.ElicitationRequest
+import dev.lain.claudejb.model.protocol.models.FilesPersistedInfo
+import dev.lain.claudejb.model.protocol.models.HookProgressInfo
+import dev.lain.claudejb.model.protocol.models.HookResponseInfo
+import dev.lain.claudejb.model.protocol.models.HookStartedInfo
+import dev.lain.claudejb.model.protocol.models.InformationalInfo
+import dev.lain.claudejb.model.protocol.models.MemoryRecallInfo
+import dev.lain.claudejb.model.protocol.models.MirrorErrorInfo
+import dev.lain.claudejb.model.protocol.models.ModelRefusalFallbackInfo
+import dev.lain.claudejb.model.protocol.models.ModelRefusalNoFallbackInfo
+import dev.lain.claudejb.model.protocol.models.NotificationInfo
+import dev.lain.claudejb.model.protocol.models.PermissionDeniedInfo
+import dev.lain.claudejb.model.protocol.models.PluginInstallInfo
+import dev.lain.claudejb.model.protocol.models.PromptSuggestionInfo
+import dev.lain.claudejb.model.protocol.models.RateLimitInfo
+import dev.lain.claudejb.model.protocol.models.ResultMessage
+import dev.lain.claudejb.model.protocol.models.SessionStateInfo
+import dev.lain.claudejb.model.protocol.models.SystemInit
+import dev.lain.claudejb.model.protocol.models.TaskNotificationInfo
+import dev.lain.claudejb.model.protocol.models.TaskProgressInfo
+import dev.lain.claudejb.model.protocol.models.TaskStartedInfo
+import dev.lain.claudejb.model.protocol.models.TaskUpdatedInfo
+import dev.lain.claudejb.model.protocol.models.ThinkingTokensInfo
+import dev.lain.claudejb.model.protocol.models.ToolProgressInfo
+import dev.lain.claudejb.model.protocol.models.ToolUseSummaryInfo
+import dev.lain.claudejb.model.protocol.models.WorkerShuttingDownInfo
 import kotlinx.serialization.json.JsonObject
 
 sealed interface ClaudeEvent {

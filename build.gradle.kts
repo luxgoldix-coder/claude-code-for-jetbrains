@@ -626,16 +626,27 @@ kover {
                 // Need a live IDE / live Chromium to execute at all. Covered instead by the vitest suite,
                 // which drives the REAL shipped JS (`npm test` is what counts it), and by the manual UI pass
                 // the release checklist requires.
-                classes("dev.lain.claudejb.ui.*")
+                classes(
+                    "dev.lain.claudejb.view.*",
+                    "dev.lain.claudejb.model.bridge.*",
+                    "dev.lain.claudejb.controller.bridge.*",
+                    "dev.lain.claudejb.controller.commands.*",
+                    "dev.lain.claudejb.controller.context.Link*",
+                )
                 // Thin IDE-action shells: their bodies are one delegate call each, and exercising them means
                 // booting an IDE to assert that a menu item calls a method.
-                classes("dev.lain.claudejb.actions.*")
+                classes("dev.lain.claudejb.controller.actions.*")
                 // Wrappers over the OS — system clipboard, process spawn, shell environment. Most of what is
                 // uncovered here cannot run on a CI box at all. A KNOWN GAP, listed so it is not mistaken for
-                // coverage; the parts that are pure ARE tested — `ClipboardCli`/`ImageAttachments` in `context/`
-                // (ClipboardCliTest, ImageAttachmentsTest) and `EnvScriptLoader.parse` in `process/`. Those
-                // names are load-bearing: a comment citing a file that no longer exists is worse than none.
-                classes("dev.lain.claudejb.context.*", "dev.lain.claudejb.process.*")
+                // coverage; the parts that are pure ARE tested — `ClipboardCli` in `controller/context/`,
+                // `ImageAttachments` in `model/context/` (ClipboardCliTest, ImageAttachmentsTest) and
+                // `EnvScriptLoader.parse` in `model/settings/env/`. Those names are load-bearing: a comment
+                // citing a file that no longer exists is worse than none.
+                classes(
+                    "dev.lain.claudejb.model.context.*",
+                    "dev.lain.claudejb.controller.context.*",
+                    "dev.lain.claudejb.controller.process.*",
+                )
                 // The Git integration's IDE-bound half: the availability probe (asks the running IDE's plugin
                 // set), the git4idea gateway (spawns `git log` through the platform) and the hand-off to the
                 // Version Control tool window. Exercising any of them means a live IDE AND a real repository on
@@ -650,10 +661,10 @@ kover {
                 // match. A lambda added inside an excluded object would otherwise start counting against the
                 // package's floor, which reads as coverage erosion in code that was never gated.
                 classes(
-                    "dev.lain.claudejb.git.GitAvailability*",
-                    "dev.lain.claudejb.git.GitGateway*",
-                    "dev.lain.claudejb.git.GitHistoryService*",
-                    "dev.lain.claudejb.git.GitLogNavigator*",
+                    "dev.lain.claudejb.controller.git.GitAvailability*",
+                    "dev.lain.claudejb.controller.git.GitGateway*",
+                    "dev.lain.claudejb.controller.git.GitHistoryService*",
+                    "dev.lain.claudejb.controller.git.GitLogNavigator*",
                 )
                 // A single line delegating to PluginManager.isPluginInstalled. It exists precisely BECAUSE it
                 // must run against a real platform (PluginId is a Kotlin class since 2025.2, so the naive call
@@ -665,7 +676,7 @@ kover {
                 // needs a Project, the pooled thread and the EDT. `OsvScanner` is deliberately NOT excluded —
                 // it talks to OsvHttp through a plain call and its gap is real debt, so it stays gated and
                 // visible rather than being defined out of the measurement.
-                classes("dev.lain.claudejb.vuln.OsvHttp*", "dev.lain.claudejb.vuln.VulnService*")
+                classes("dev.lain.claudejb.controller.vuln.OsvHttp*", "dev.lain.claudejb.controller.vuln.VulnService*")
             }
         }
         verify {

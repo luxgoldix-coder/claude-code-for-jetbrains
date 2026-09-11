@@ -1,8 +1,9 @@
-package dev.lain.claudejb.ui.jcef
+package dev.lain.claudejb.view.payload.panel
 
-import dev.lain.claudejb.session.AgentStatus
-import dev.lain.claudejb.session.ClaudeSession
-import dev.lain.claudejb.settings.WorkloadWindow
+import dev.lain.claudejb.controller.session.ClaudeSession
+import dev.lain.claudejb.model.session.agents.AgentStatus
+import dev.lain.claudejb.model.settings.WorkloadWindow
+import dev.lain.claudejb.view.payload.JcefStatus
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.addJsonObject
 import kotlinx.serialization.json.buildJsonArray
@@ -79,7 +80,7 @@ internal object JcefWorkloadData {
     private fun ownershipChain(
         chatTitle: String,
         agentId: String,
-        nodes: Map<String, dev.lain.claudejb.session.AgentNode>,
+        nodes: Map<String, dev.lain.claudejb.model.session.agents.AgentNode>,
     ): String {
         val parts = ArrayDeque<String>()
         val seen = HashSet<String>()

@@ -1,4 +1,4 @@
-package dev.lain.claudejb.process
+package dev.lain.claudejb.controller.process.auth
 
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -73,7 +73,7 @@ class ClaudeLoginFlowTest {
                 urls += url
             }
 
-            override fun onCodeRequested() {}
+            override fun onCodeRequested() = Unit
 
             override fun onResult(success: Boolean, message: String) = ended.countDown()
         }
@@ -92,9 +92,9 @@ class ClaudeLoginFlowTest {
     fun `a cancelled sign-in reports no result, so the card is not told it failed`() {
         val reported = CountDownLatch(1)
         val listener = object : ClaudeLoginFlow.Listener {
-            override fun onAuthUrl(url: String) {}
+            override fun onAuthUrl(url: String) = Unit
 
-            override fun onCodeRequested() {}
+            override fun onCodeRequested() = Unit
 
             override fun onResult(success: Boolean, message: String) = reported.countDown()
         }

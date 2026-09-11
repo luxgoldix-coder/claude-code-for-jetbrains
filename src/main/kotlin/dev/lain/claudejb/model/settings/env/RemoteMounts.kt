@@ -1,6 +1,6 @@
-package dev.lain.claudejb.settings
+package dev.lain.claudejb.model.settings.env
 
-import dev.lain.claudejb.permission.ForeignTerritory
+import dev.lain.claudejb.model.permission.paths.ForeignTerritory
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths

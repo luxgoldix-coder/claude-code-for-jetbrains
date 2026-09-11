@@ -1,4 +1,8 @@
-package dev.lain.claudejb.settings
+package dev.lain.claudejb.model.settings.env
+
+import dev.lain.claudejb.model.settings.ClaudeSettings
+import dev.lain.claudejb.model.settings.Provider
+import dev.lain.claudejb.model.settings.guard.sensitivePolicy
 
 private const val FAKE_FIXTURE_PROP = "claudejb.fakeFixture"
 

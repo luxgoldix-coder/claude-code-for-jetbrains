@@ -1,4 +1,4 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.controller.context
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.actions.RevealFileAction
@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
-import dev.lain.claudejb.diff.DiffPresenter
+import dev.lain.claudejb.model.diff.DiffPresenter
 import java.io.File
 import java.net.URLDecoder
 

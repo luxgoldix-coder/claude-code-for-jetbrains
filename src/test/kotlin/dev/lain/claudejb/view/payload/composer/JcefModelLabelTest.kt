@@ -1,6 +1,6 @@
-package dev.lain.claudejb.ui.jcef
+package dev.lain.claudejb.view.payload.composer
 
-import dev.lain.claudejb.protocol.ModelInfo
+import dev.lain.claudejb.model.protocol.models.ModelInfo
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 

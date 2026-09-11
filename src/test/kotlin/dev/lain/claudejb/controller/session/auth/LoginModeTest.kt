@@ -1,6 +1,6 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.controller.session.auth
 
-import dev.lain.claudejb.process.TerminalLauncher
+import dev.lain.claudejb.controller.process.TerminalLauncher
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

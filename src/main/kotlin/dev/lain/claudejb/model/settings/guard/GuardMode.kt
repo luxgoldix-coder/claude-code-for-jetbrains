@@ -1,4 +1,4 @@
-package dev.lain.claudejb.settings
+package dev.lain.claudejb.model.settings.guard
 
 enum class GuardMode(val wire: String, val label: String, val perRule: Boolean, val summary: String) {
 

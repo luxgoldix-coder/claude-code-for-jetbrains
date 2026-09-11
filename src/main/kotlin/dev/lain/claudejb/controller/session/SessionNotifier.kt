@@ -1,4 +1,4 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.controller.session
 
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
@@ -6,9 +6,9 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import dev.lain.claudejb.settings.ClaudeSettings
-import dev.lain.claudejb.settings.requiresTrustPrompt
-import dev.lain.claudejb.settings.setExecutionTrusted
+import dev.lain.claudejb.model.settings.ClaudeSettings
+import dev.lain.claudejb.model.settings.env.requiresTrustPrompt
+import dev.lain.claudejb.model.settings.env.setExecutionTrusted
 import dev.lain.claudejb.util.PluginIdentity
 
 class SessionNotifier(private val project: Project) {

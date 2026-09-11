@@ -1,8 +1,8 @@
 package dev.lain.claudejb.integration
 
-import dev.lain.claudejb.permission.SecurityRule
-import dev.lain.claudejb.session.Speaker
-import dev.lain.claudejb.settings.ClaudeSettings
+import dev.lain.claudejb.model.permission.vocab.SecurityRule
+import dev.lain.claudejb.model.session.transcript.Speaker
+import dev.lain.claudejb.model.settings.ClaudeSettings
 
 class SecurityToggleLiveIntegrationTest : FakeClaudeTestBase() {
 

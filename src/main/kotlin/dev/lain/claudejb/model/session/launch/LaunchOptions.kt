@@ -1,7 +1,7 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.model.session.launch
 
-import dev.lain.claudejb.settings.ClaudeSettings
-import dev.lain.claudejb.settings.LaunchDefaults
+import dev.lain.claudejb.model.settings.ClaudeSettings
+import dev.lain.claudejb.model.settings.LaunchDefaults
 
 data class LaunchOptions(
     val model: String? = null,

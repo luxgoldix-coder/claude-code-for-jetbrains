@@ -1,7 +1,7 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.model.session.agents
 
-import dev.lain.claudejb.protocol.BackgroundTaskInfo
-import dev.lain.claudejb.protocol.ClaudeEvent
+import dev.lain.claudejb.model.protocol.ClaudeEvent
+import dev.lain.claudejb.model.protocol.models.BackgroundTaskInfo
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull

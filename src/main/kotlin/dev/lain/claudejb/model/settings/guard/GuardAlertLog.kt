@@ -1,5 +1,7 @@
-package dev.lain.claudejb.settings
+package dev.lain.claudejb.model.settings.guard
 
+import dev.lain.claudejb.model.settings.SecretStore
+import dev.lain.claudejb.model.settings.SettingsScope
 import dev.lain.claudejb.util.logger
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json

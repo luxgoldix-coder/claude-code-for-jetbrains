@@ -1,4 +1,4 @@
-package dev.lain.claudejb.git
+package dev.lain.claudejb.model.git
 
 data class GitRemoteInfo(
     val url: String,

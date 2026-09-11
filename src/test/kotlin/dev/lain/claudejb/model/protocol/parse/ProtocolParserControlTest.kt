@@ -1,5 +1,7 @@
-package dev.lain.claudejb.protocol
+package dev.lain.claudejb.model.protocol.parse
 
+import dev.lain.claudejb.model.protocol.ClaudeEvent
+import dev.lain.claudejb.model.protocol.models.parseElicitationFields
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue

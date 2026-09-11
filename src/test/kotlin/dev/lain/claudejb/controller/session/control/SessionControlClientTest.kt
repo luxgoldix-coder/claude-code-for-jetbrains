@@ -1,7 +1,7 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.controller.session.control
 
-import dev.lain.claudejb.protocol.ClaudeEvent
-import dev.lain.claudejb.protocol.str
+import dev.lain.claudejb.model.protocol.ClaudeEvent
+import dev.lain.claudejb.model.protocol.str
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put

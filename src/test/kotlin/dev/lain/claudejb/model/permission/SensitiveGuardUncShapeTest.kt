@@ -1,7 +1,10 @@
-package dev.lain.claudejb.permission
+package dev.lain.claudejb.model.permission
 
-import dev.lain.claudejb.permission.GuardFixture.HOME
-import dev.lain.claudejb.permission.SensitiveGuard.Verdict
+import dev.lain.claudejb.model.permission.GuardFixture.HOME
+import dev.lain.claudejb.model.permission.SensitiveGuard.Verdict
+import dev.lain.claudejb.model.permission.paths.ForeignTerritory
+import dev.lain.claudejb.model.permission.paths.GuardPaths
+import dev.lain.claudejb.model.permission.vocab.SecurityRule
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import org.junit.jupiter.api.Assertions.assertEquals

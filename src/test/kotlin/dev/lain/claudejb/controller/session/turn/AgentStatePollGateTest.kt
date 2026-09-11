@@ -1,4 +1,4 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.controller.session.turn
 
 import kotlinx.serialization.json.JsonObject
 import org.junit.jupiter.api.Assertions.assertFalse

@@ -1,7 +1,8 @@
-package dev.lain.claudejb.permission
+package dev.lain.claudejb.model.permission.scan
 
-import dev.lain.claudejb.permission.GuardFixture.bash
-import dev.lain.claudejb.permission.SensitiveGuard.Verdict
+import dev.lain.claudejb.model.permission.GuardFixture.bash
+import dev.lain.claudejb.model.permission.SensitiveGuard
+import dev.lain.claudejb.model.permission.SensitiveGuard.Verdict
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put

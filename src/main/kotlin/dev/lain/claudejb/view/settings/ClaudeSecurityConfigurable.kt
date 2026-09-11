@@ -1,9 +1,14 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.view.settings
 
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.ui.dsl.builder.panel
-import dev.lain.claudejb.settings.ClaudeSettings
+import dev.lain.claudejb.controller.commands.CleanSettings
+import dev.lain.claudejb.controller.commands.LivePanels
+import dev.lain.claudejb.model.settings.ClaudeSettings
+import dev.lain.claudejb.view.settings.sections.SettingsGuardLogSection
+import dev.lain.claudejb.view.settings.sections.SettingsGuardMasterSection
+import dev.lain.claudejb.view.settings.sections.SettingsSecuritySection
 import javax.swing.JButton
 import javax.swing.JComponent
 

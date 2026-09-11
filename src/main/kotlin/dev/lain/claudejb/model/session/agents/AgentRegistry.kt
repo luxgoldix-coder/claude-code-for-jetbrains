@@ -1,6 +1,8 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.model.session.agents
 
-import dev.lain.claudejb.settings.WorkloadWindow
+import dev.lain.claudejb.model.session.history.SessionTranscriptReader
+import dev.lain.claudejb.model.session.transcript.EntryDTO
+import dev.lain.claudejb.model.settings.WorkloadWindow
 import kotlinx.serialization.json.JsonObject
 import java.nio.file.Files
 import java.nio.file.Path

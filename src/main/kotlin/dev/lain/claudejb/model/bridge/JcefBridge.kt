@@ -1,4 +1,4 @@
-package dev.lain.claudejb.ui.jcef
+package dev.lain.claudejb.model.bridge
 
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray

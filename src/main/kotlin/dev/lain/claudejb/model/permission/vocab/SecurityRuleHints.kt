@@ -1,4 +1,4 @@
-package dev.lain.claudejb.permission
+package dev.lain.claudejb.model.permission.vocab
 
 val SecurityRule.hint: String get() = HINTS.getValue(this)
 

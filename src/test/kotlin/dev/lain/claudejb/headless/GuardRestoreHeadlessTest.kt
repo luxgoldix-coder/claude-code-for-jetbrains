@@ -2,16 +2,16 @@ package dev.lain.claudejb.headless
 
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import dev.lain.claudejb.permission.PermissionBroker
-import dev.lain.claudejb.permission.SecurityRule
-import dev.lain.claudejb.session.AttentionLanding
-import dev.lain.claudejb.session.ClaudeSession
-import dev.lain.claudejb.session.EntryDTO
-import dev.lain.claudejb.settings.ClaudeSettings
-import dev.lain.claudejb.settings.GuardAlert
-import dev.lain.claudejb.settings.GuardAlertLog
-import dev.lain.claudejb.settings.SecretStore
-import dev.lain.claudejb.ui.ChatTranscriptView
+import dev.lain.claudejb.controller.session.AttentionLanding
+import dev.lain.claudejb.controller.session.ClaudeSession
+import dev.lain.claudejb.model.permission.broker.PermissionBroker
+import dev.lain.claudejb.model.permission.vocab.SecurityRule
+import dev.lain.claudejb.model.session.transcript.EntryDTO
+import dev.lain.claudejb.model.settings.ClaudeSettings
+import dev.lain.claudejb.model.settings.SecretStore
+import dev.lain.claudejb.model.settings.guard.GuardAlert
+import dev.lain.claudejb.model.settings.guard.GuardAlertLog
+import dev.lain.claudejb.view.feed.ChatTranscriptView
 
 class GuardRestoreHeadlessTest : BasePlatformTestCase() {
 

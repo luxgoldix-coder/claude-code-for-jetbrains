@@ -1,4 +1,4 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.model.session.history
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json

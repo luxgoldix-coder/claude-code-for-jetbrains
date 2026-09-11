@@ -1,5 +1,6 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.controller.session.diff
 
+import dev.lain.claudejb.controller.session.control.WorkspaceDiff
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test

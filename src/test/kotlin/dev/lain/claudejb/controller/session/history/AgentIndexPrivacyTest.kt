@@ -1,7 +1,7 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.controller.session.history
 
-import dev.lain.claudejb.settings.SecretStore
-import dev.lain.claudejb.settings.SettingsScope
+import dev.lain.claudejb.model.settings.SecretStore
+import dev.lain.claudejb.model.settings.SettingsScope
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -91,7 +91,7 @@ class AgentIndexPrivacyTest {
     fun `the index lives in the IDE's safe, and nothing writes it to a file`() {
         assertTrue(SettingsScope("abc123").agentIndexName.startsWith(SecretStore.AGENT_INDEX + "@"))
 
-        val source = File("src/main/kotlin/dev/lain/claudejb/session/PluginAgentIndex.kt")
+        val source = File("src/main/kotlin/dev/lain/claudejb/controller/session/history/PluginAgentIndex.kt")
         assertTrue(source.isFile, "the index moved: this contract has to move with it")
         val code = source.readLines()
             .filterNot { it.trim().startsWith("*") || it.trim().startsWith("//") || it.trim().startsWith("/*") }

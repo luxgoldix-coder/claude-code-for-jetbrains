@@ -1,15 +1,16 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.view.log
 
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.util.SystemInfo
-import dev.lain.claudejb.ui.jcef.JcefLogData
 import dev.lain.claudejb.util.LogRing
 import dev.lain.claudejb.util.PluginIdentity
 import dev.lain.claudejb.util.PluginLog
 import dev.lain.claudejb.util.edt
 import dev.lain.claudejb.util.logger
+import dev.lain.claudejb.view.log.JcefLogData
+import dev.lain.claudejb.view.window.JcefChatPanel
 import java.awt.datatransfer.StringSelection
 
 internal class LogFeed(private val panel: JcefChatPanel) {

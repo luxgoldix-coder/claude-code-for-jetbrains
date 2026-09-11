@@ -1,4 +1,4 @@
-package dev.lain.claudejb.process
+package dev.lain.claudejb.controller.process
 
 import com.intellij.openapi.util.SystemInfo
 import org.junit.Assert.assertEquals

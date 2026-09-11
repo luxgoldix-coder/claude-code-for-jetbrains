@@ -1,8 +1,8 @@
-package dev.lain.claudejb.ui.jcef
+package dev.lain.claudejb.view.payload.composer
 
-import dev.lain.claudejb.protocol.ModelInfo
-import dev.lain.claudejb.session.ClaudeSession
-import dev.lain.claudejb.session.LegacyModels
+import dev.lain.claudejb.controller.session.ClaudeSession
+import dev.lain.claudejb.model.protocol.models.ModelInfo
+import dev.lain.claudejb.model.session.history.LegacyModels
 
 object JcefModelLabels {
 

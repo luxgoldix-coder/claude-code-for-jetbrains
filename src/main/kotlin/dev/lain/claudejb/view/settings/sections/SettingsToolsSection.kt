@@ -1,4 +1,4 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.view.settings.sections
 
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ToolbarDecorator
@@ -7,9 +7,12 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.Panel
-import dev.lain.claudejb.session.ToolNaming
-import dev.lain.claudejb.settings.ClaudeSettings
-import dev.lain.claudejb.settings.LaunchDefaults
+import dev.lain.claudejb.model.session.transcript.ToolNaming
+import dev.lain.claudejb.model.settings.ClaudeSettings
+import dev.lain.claudejb.model.settings.LaunchDefaults
+import dev.lain.claudejb.view.settings.CheckboxGroup
+import dev.lain.claudejb.view.settings.SettingsSection
+import dev.lain.claudejb.view.settings.csvSet
 import javax.swing.JComponent
 
 internal class SettingsToolsSection(private val settings: ClaudeSettings) : SettingsSection {

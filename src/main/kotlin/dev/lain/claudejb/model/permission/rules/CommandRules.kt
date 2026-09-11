@@ -1,5 +1,8 @@
-package dev.lain.claudejb.permission
+package dev.lain.claudejb.model.permission.rules
 
+import dev.lain.claudejb.model.permission.paths.GuardPaths
+import dev.lain.claudejb.model.permission.scan.CommandDeobfuscation
+import dev.lain.claudejb.model.permission.scan.ToolInputScanner
 import kotlinx.serialization.json.JsonObject
 
 object CommandRules {

@@ -1,9 +1,9 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.controller.commands
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
-import dev.lain.claudejb.permission.SecurityRule
-import dev.lain.claudejb.permission.blockedWhy
+import dev.lain.claudejb.model.permission.vocab.SecurityRule
+import dev.lain.claudejb.model.permission.vocab.blockedWhy
 
 internal object GuardWhitelistPrompt {
 

@@ -1,8 +1,9 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.controller.bridge
 
 import com.intellij.openapi.ide.CopyPasteManager
-import dev.lain.claudejb.ui.jcef.JcefBridge
-import dev.lain.claudejb.ui.jcef.Msg
+import dev.lain.claudejb.model.bridge.JcefBridge
+import dev.lain.claudejb.model.bridge.Msg
+import dev.lain.claudejb.view.window.JcefChatPanel
 import java.awt.datatransfer.StringSelection
 
 internal class BridgePrompting(private val panel: JcefChatPanel) {

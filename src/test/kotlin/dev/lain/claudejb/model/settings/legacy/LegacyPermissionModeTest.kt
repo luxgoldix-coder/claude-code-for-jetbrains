@@ -1,8 +1,9 @@
-package dev.lain.claudejb.settings
+package dev.lain.claudejb.model.settings.legacy
 
-import dev.lain.claudejb.permission.PermissionBroker
-import dev.lain.claudejb.protocol.CanUseToolRequest
-import dev.lain.claudejb.protocol.PermissionMode
+import dev.lain.claudejb.model.permission.broker.PermissionBroker
+import dev.lain.claudejb.model.protocol.PermissionMode
+import dev.lain.claudejb.model.protocol.models.CanUseToolRequest
+import dev.lain.claudejb.model.settings.ClaudeSettings
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import org.junit.jupiter.api.Assertions.assertEquals

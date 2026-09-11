@@ -1,5 +1,6 @@
-package dev.lain.claudejb.permission
+package dev.lain.claudejb.model.permission.vocab
 
+import dev.lain.claudejb.model.permission.broker.PermissionBroker
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test

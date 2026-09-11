@@ -1,11 +1,11 @@
 package dev.lain.claudejb.headless
 
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import dev.lain.claudejb.session.SessionHistory
-import dev.lain.claudejb.session.SessionStore
-import dev.lain.claudejb.settings.ClaudeHome
-import dev.lain.claudejb.settings.ClaudeSettings
-import dev.lain.claudejb.settings.SecretStore
+import dev.lain.claudejb.controller.session.history.SessionHistory
+import dev.lain.claudejb.model.session.history.SessionStore
+import dev.lain.claudejb.model.settings.ClaudeHome
+import dev.lain.claudejb.model.settings.ClaudeSettings
+import dev.lain.claudejb.model.settings.SecretStore
 import java.nio.file.Files
 import java.nio.file.Path
 

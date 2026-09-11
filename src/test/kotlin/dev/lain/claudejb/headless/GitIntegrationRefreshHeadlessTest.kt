@@ -2,7 +2,7 @@ package dev.lain.claudejb.headless
 
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import dev.lain.claudejb.ui.GitIntegration
+import dev.lain.claudejb.controller.commands.git.GitIntegration
 
 class GitIntegrationRefreshHeadlessTest : BasePlatformTestCase() {
 

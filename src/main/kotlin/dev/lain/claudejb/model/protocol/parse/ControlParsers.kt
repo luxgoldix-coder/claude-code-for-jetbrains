@@ -1,5 +1,11 @@
-package dev.lain.claudejb.protocol
+package dev.lain.claudejb.model.protocol.parse
 
+import dev.lain.claudejb.model.protocol.ClaudeEvent
+import dev.lain.claudejb.model.protocol.ClaudeJson
+import dev.lain.claudejb.model.protocol.models.CanUseToolRequest
+import dev.lain.claudejb.model.protocol.models.ElicitationRequest
+import dev.lain.claudejb.model.protocol.models.RateLimitInfo
+import dev.lain.claudejb.model.protocol.str
 import kotlinx.serialization.json.JsonObject
 
 internal object ControlParsers {

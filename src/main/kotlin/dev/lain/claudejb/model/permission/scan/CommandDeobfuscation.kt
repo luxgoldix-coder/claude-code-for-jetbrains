@@ -1,4 +1,7 @@
-package dev.lain.claudejb.permission
+package dev.lain.claudejb.model.permission.scan
+
+import dev.lain.claudejb.model.permission.paths.GuardPaths
+import dev.lain.claudejb.model.permission.vocab.MAX_ANALYSIS_DEPTH
 
 internal object CommandDeobfuscation {
 

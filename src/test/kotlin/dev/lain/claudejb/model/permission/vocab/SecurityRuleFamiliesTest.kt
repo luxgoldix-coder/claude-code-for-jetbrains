@@ -1,11 +1,12 @@
-package dev.lain.claudejb.permission
+package dev.lain.claudejb.model.permission.vocab
 
-import dev.lain.claudejb.permission.GuardReasonWords.CREDENTIAL_SURFACE
-import dev.lain.claudejb.permission.GuardReasonWords.CYCLE
-import dev.lain.claudejb.permission.GuardReasonWords.HIDDEN_VARIABLE
-import dev.lain.claudejb.permission.GuardReasonWords.RAW_DEVICE
-import dev.lain.claudejb.permission.GuardReasonWords.SUBSTITUTION
-import dev.lain.claudejb.permission.SensitiveGuard.Verdict
+import dev.lain.claudejb.model.permission.GuardProbe
+import dev.lain.claudejb.model.permission.SensitiveGuard.Verdict
+import dev.lain.claudejb.model.permission.vocab.GuardReasonWords.CREDENTIAL_SURFACE
+import dev.lain.claudejb.model.permission.vocab.GuardReasonWords.CYCLE
+import dev.lain.claudejb.model.permission.vocab.GuardReasonWords.HIDDEN_VARIABLE
+import dev.lain.claudejb.model.permission.vocab.GuardReasonWords.RAW_DEVICE
+import dev.lain.claudejb.model.permission.vocab.GuardReasonWords.SUBSTITUTION
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import org.junit.jupiter.api.Assertions.assertEquals

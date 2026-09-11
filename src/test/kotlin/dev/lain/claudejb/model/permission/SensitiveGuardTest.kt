@@ -1,9 +1,15 @@
-package dev.lain.claudejb.permission
+package dev.lain.claudejb.model.permission
 
-import dev.lain.claudejb.permission.GuardFixture.HOME
-import dev.lain.claudejb.permission.GuardFixture.PROJECT
-import dev.lain.claudejb.permission.GuardFixture.USER
-import dev.lain.claudejb.permission.SensitiveGuard.Verdict
+import dev.lain.claudejb.model.permission.GuardFixture.HOME
+import dev.lain.claudejb.model.permission.GuardFixture.PROJECT
+import dev.lain.claudejb.model.permission.GuardFixture.USER
+import dev.lain.claudejb.model.permission.SensitiveGuard.Verdict
+import dev.lain.claudejb.model.permission.paths.ForeignTerritory
+import dev.lain.claudejb.model.permission.paths.GuardPaths
+import dev.lain.claudejb.model.permission.paths.TempDirs
+import dev.lain.claudejb.model.permission.rules.CommandRules
+import dev.lain.claudejb.model.permission.scan.ToolInputScanner
+import dev.lain.claudejb.model.permission.vocab.SecurityRule
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.addJsonObject
 import kotlinx.serialization.json.buildJsonObject

@@ -1,7 +1,7 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.controller.commands
 
-import dev.lain.claudejb.permission.SecurityRule
-import dev.lain.claudejb.settings.GuardAlert
+import dev.lain.claudejb.model.permission.vocab.SecurityRule
+import dev.lain.claudejb.model.settings.guard.GuardAlert
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull

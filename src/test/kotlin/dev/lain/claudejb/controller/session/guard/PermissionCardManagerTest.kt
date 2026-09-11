@@ -1,6 +1,6 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.controller.session.guard
 
-import dev.lain.claudejb.permission.PendingPermission
+import dev.lain.claudejb.model.permission.broker.PendingPermission
 import kotlinx.serialization.json.JsonObject
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull

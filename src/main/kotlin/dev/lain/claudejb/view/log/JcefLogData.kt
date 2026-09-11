@@ -1,4 +1,4 @@
-package dev.lain.claudejb.ui.jcef
+package dev.lain.claudejb.view.log
 
 import dev.lain.claudejb.util.LogRing
 import kotlinx.serialization.json.JsonObject

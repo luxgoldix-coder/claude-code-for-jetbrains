@@ -1,8 +1,10 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.controller.session.events
 
-import dev.lain.claudejb.protocol.HookProgressInfo
-import dev.lain.claudejb.protocol.HookResponseInfo
-import dev.lain.claudejb.protocol.HookStartedInfo
+import dev.lain.claudejb.model.protocol.models.HookProgressInfo
+import dev.lain.claudejb.model.protocol.models.HookResponseInfo
+import dev.lain.claudejb.model.protocol.models.HookStartedInfo
+import dev.lain.claudejb.model.session.transcript.Speaker
+import dev.lain.claudejb.model.session.transcript.TranscriptModel
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test

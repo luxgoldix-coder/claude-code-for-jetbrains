@@ -1,10 +1,10 @@
-package dev.lain.claudejb.settings
+package dev.lain.claudejb.model.settings
 
-import dev.lain.claudejb.protocol.ClaudeJson
-import dev.lain.claudejb.protocol.EffortLevel
-import dev.lain.claudejb.protocol.McpTransport
-import dev.lain.claudejb.protocol.ModelInfo
-import dev.lain.claudejb.protocol.PermissionMode
+import dev.lain.claudejb.model.protocol.ClaudeJson
+import dev.lain.claudejb.model.protocol.EffortLevel
+import dev.lain.claudejb.model.protocol.McpTransport
+import dev.lain.claudejb.model.protocol.PermissionMode
+import dev.lain.claudejb.model.protocol.models.ModelInfo
 import kotlinx.serialization.json.JsonObject
 
 object LaunchDefaults {
@@ -37,7 +37,9 @@ object LaunchDefaults {
 
     const val DEFAULT_IDE_MCP_PORT = 64342
 
-    internal val VALID_PORTS = 1..65_535
+    private const val MAX_PORT = 65_535
+
+    internal val VALID_PORTS = 1..MAX_PORT
 
     val IDE_MCP_TRANSPORTS = McpTransport.entries.map { it.wire }
 

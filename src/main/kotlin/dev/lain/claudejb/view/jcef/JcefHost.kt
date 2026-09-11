@@ -1,4 +1,4 @@
-package dev.lain.claudejb.ui.jcef
+package dev.lain.claudejb.view.jcef
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager

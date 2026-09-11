@@ -1,9 +1,14 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.controller.bridge
 
-import dev.lain.claudejb.settings.ClaudeSettings
-import dev.lain.claudejb.settings.WorkloadWindow
-import dev.lain.claudejb.ui.jcef.Msg
+import dev.lain.claudejb.controller.commands.LivePanels
+import dev.lain.claudejb.controller.commands.git.GitActionCatalog
+import dev.lain.claudejb.controller.commands.git.GitIntegration
+import dev.lain.claudejb.model.bridge.Msg
+import dev.lain.claudejb.model.settings.ClaudeSettings
+import dev.lain.claudejb.model.settings.WorkloadWindow
 import dev.lain.claudejb.util.thisLogger
+import dev.lain.claudejb.view.window.ClaudeToolWindowFactory
+import dev.lain.claudejb.view.window.JcefChatPanel
 
 internal class BridgeSessionControl(private val panel: JcefChatPanel) {
 

@@ -1,10 +1,16 @@
-package dev.lain.claudejb.git
+package dev.lain.claudejb.controller.git
 
 import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
+import dev.lain.claudejb.model.git.GitBranchTopology
+import dev.lain.claudejb.model.git.GitCommitInfo
+import dev.lain.claudejb.model.git.GitLogScope
+import dev.lain.claudejb.model.git.GitRefInfo
+import dev.lain.claudejb.model.git.GitRefKind
+import dev.lain.claudejb.model.git.GitRemoteInfo
 import git4idea.GitCommit
 import git4idea.GitRevisionNumber
 import git4idea.branch.GitBranchesCollection

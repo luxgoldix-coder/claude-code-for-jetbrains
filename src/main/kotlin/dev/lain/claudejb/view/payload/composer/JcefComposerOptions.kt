@@ -1,10 +1,10 @@
-package dev.lain.claudejb.ui.jcef
+package dev.lain.claudejb.view.payload.composer
 
-import dev.lain.claudejb.protocol.PermissionMode
-import dev.lain.claudejb.session.ClaudeSession
-import dev.lain.claudejb.session.LegacyModels
-import dev.lain.claudejb.settings.LaunchDefaults
-import dev.lain.claudejb.settings.Provider
+import dev.lain.claudejb.controller.session.ClaudeSession
+import dev.lain.claudejb.model.protocol.PermissionMode
+import dev.lain.claudejb.model.session.history.LegacyModels
+import dev.lain.claudejb.model.settings.LaunchDefaults
+import dev.lain.claudejb.model.settings.Provider
 import kotlinx.serialization.json.addJsonObject
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject

@@ -1,7 +1,7 @@
 package dev.lain.claudejb.headless
 
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import dev.lain.claudejb.session.ClaudeSession
+import dev.lain.claudejb.controller.session.ClaudeSession
 
 class DisposedSessionHeadlessTest : BasePlatformTestCase() {
 

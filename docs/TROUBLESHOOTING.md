@@ -272,9 +272,10 @@ text once before publishing it.
 
 The same lines go to the IDE's single rolling log file, `idea.log`. Every
 entry is written under the category of the class that wrote it,
-`#dev.lain.claudejb.<package>.<Class>` — `process.ClaudeProcess` for the
-binary's lifecycle and stderr, `session.SessionGuard` for the guard's
-verdicts, `ui.jcef.JcefHost` for the chat page's own console — so
+`#dev.lain.claudejb.<package>.<Class>` — `controller.process.ClaudeProcess`
+for the binary's lifecycle and stderr, `controller.session.guard.SessionGuard`
+for the guard's verdicts, `view.jcef.JcefHost` for the chat page's own
+console — so
 `claudejb` matches all of them. Three levels, one meaning each: `WARN` is
 something that went wrong, `INFO` a lifecycle step, `DEBUG` the trace, which
 is off unless switched on.

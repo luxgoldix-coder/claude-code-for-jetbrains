@@ -1,4 +1,4 @@
-package dev.lain.claudejb.diff
+package dev.lain.claudejb.model.diff
 
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.buildJsonObject

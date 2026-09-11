@@ -1,14 +1,14 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.view.feed
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
-import dev.lain.claudejb.diff.DiffPresenter
-import dev.lain.claudejb.diff.EditSnapshot
-import dev.lain.claudejb.permission.PendingPermission
-import dev.lain.claudejb.session.ClaudeSession
-import dev.lain.claudejb.settings.ClaudeSettings
+import dev.lain.claudejb.controller.session.ClaudeSession
+import dev.lain.claudejb.model.diff.DiffPresenter
+import dev.lain.claudejb.model.diff.EditSnapshot
+import dev.lain.claudejb.model.permission.broker.PendingPermission
+import dev.lain.claudejb.model.settings.ClaudeSettings
 import java.io.File
 
 internal class ChatEditReview(

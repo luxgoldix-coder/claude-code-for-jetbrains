@@ -1,4 +1,4 @@
-package dev.lain.claudejb.settings
+package dev.lain.claudejb.model.settings.transfer
 
 import com.intellij.openapi.application.PathManager
 import java.nio.file.Files

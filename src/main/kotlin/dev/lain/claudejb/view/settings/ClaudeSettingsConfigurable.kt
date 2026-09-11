@@ -1,14 +1,22 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.view.settings
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.ui.dsl.builder.panel
-import dev.lain.claudejb.git.GitHistoryService
-import dev.lain.claudejb.session.ChatSessionManager
-import dev.lain.claudejb.session.ClaudeSession
-import dev.lain.claudejb.session.LaunchOptions
-import dev.lain.claudejb.settings.ClaudeSettings
+import dev.lain.claudejb.controller.commands.CleanSettings
+import dev.lain.claudejb.controller.git.GitHistoryService
+import dev.lain.claudejb.controller.session.ChatSessionManager
+import dev.lain.claudejb.controller.session.ClaudeSession
+import dev.lain.claudejb.model.session.launch.LaunchOptions
+import dev.lain.claudejb.model.settings.ClaudeSettings
+import dev.lain.claudejb.view.settings.sections.SettingsAdvancedSection
+import dev.lain.claudejb.view.settings.sections.SettingsExecutableSection
+import dev.lain.claudejb.view.settings.sections.SettingsMcpSection
+import dev.lain.claudejb.view.settings.sections.SettingsModelSection
+import dev.lain.claudejb.view.settings.sections.SettingsProviderSection
+import dev.lain.claudejb.view.settings.sections.SettingsToolsSection
+import dev.lain.claudejb.view.settings.sections.SettingsTransferSection
 import javax.swing.JComponent
 
 class ClaudeSettingsConfigurable(private val project: Project) : Configurable {

@@ -1,4 +1,4 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.model.session.agents
 
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject

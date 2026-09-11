@@ -1,4 +1,4 @@
-package dev.lain.claudejb.ui.jcef
+package dev.lain.claudejb.view.jcef
 
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame

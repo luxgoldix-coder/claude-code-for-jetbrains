@@ -28,7 +28,7 @@ class NoCommentsContractTest {
     private fun isComment(raw: String): Boolean {
         val trimmed = raw.trimStart()
         if (PRAGMAS.any { trimmed.contains(it) }) return false
-        if (trimmed.startsWith("//") || trimmed.startsWith("/*") || trimmed.startsWith("* ") || trimmed == "*") return true
+        if (trimmed == "*" || COMMENT_OPENERS.any { trimmed.startsWith(it) }) return true
         val code = MainSources.withoutStringLiterals(raw)
         return code.contains("//") || code.contains("/*")
     }
@@ -37,5 +37,6 @@ class NoCommentsContractTest {
         const val SOURCE_ROOT = "src/main/kotlin"
         const val MIN_SOURCES = 100
         val PRAGMAS = listOf("noinspection", "MAP:GENERATED")
+        val COMMENT_OPENERS = listOf("//", "/*", "* ")
     }
 }

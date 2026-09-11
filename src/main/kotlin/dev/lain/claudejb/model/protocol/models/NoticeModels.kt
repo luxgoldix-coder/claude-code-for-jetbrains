@@ -1,4 +1,4 @@
-package dev.lain.claudejb.protocol
+package dev.lain.claudejb.model.protocol.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

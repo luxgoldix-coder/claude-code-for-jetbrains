@@ -1,4 +1,4 @@
-package dev.lain.claudejb.settings
+package dev.lain.claudejb.model.settings
 
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType

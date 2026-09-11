@@ -1,4 +1,4 @@
-package dev.lain.claudejb.git
+package dev.lain.claudejb.controller.git
 
 import dev.lain.claudejb.util.InstalledPlugins
 

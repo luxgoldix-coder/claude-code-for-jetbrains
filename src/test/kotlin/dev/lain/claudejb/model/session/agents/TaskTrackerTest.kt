@@ -1,10 +1,10 @@
-package dev.lain.claudejb.session
+package dev.lain.claudejb.model.session.agents
 
-import dev.lain.claudejb.protocol.TaskNotificationInfo
-import dev.lain.claudejb.protocol.TaskPatch
-import dev.lain.claudejb.protocol.TaskProgressInfo
-import dev.lain.claudejb.protocol.TaskStartedInfo
-import dev.lain.claudejb.protocol.TaskUpdatedInfo
+import dev.lain.claudejb.model.protocol.models.TaskNotificationInfo
+import dev.lain.claudejb.model.protocol.models.TaskPatch
+import dev.lain.claudejb.model.protocol.models.TaskProgressInfo
+import dev.lain.claudejb.model.protocol.models.TaskStartedInfo
+import dev.lain.claudejb.model.protocol.models.TaskUpdatedInfo
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull

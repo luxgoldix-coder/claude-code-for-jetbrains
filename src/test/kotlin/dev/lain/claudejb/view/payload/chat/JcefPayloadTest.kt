@@ -1,14 +1,14 @@
-package dev.lain.claudejb.ui.jcef
+package dev.lain.claudejb.view.payload.chat
 
-import dev.lain.claudejb.permission.ElicitationCard
-import dev.lain.claudejb.permission.PendingPermission
-import dev.lain.claudejb.protocol.AskOption
-import dev.lain.claudejb.protocol.AskQuestion
-import dev.lain.claudejb.protocol.ElicitField
-import dev.lain.claudejb.session.Speaker
-import dev.lain.claudejb.session.ToolState
-import dev.lain.claudejb.session.TranscriptEntry
-import dev.lain.claudejb.ui.LinkResolver
+import dev.lain.claudejb.controller.context.LinkResolver
+import dev.lain.claudejb.model.permission.broker.ElicitationCard
+import dev.lain.claudejb.model.permission.broker.PendingPermission
+import dev.lain.claudejb.model.protocol.models.AskOption
+import dev.lain.claudejb.model.protocol.models.AskQuestion
+import dev.lain.claudejb.model.protocol.models.ElicitField
+import dev.lain.claudejb.model.session.transcript.Speaker
+import dev.lain.claudejb.model.session.transcript.ToolState
+import dev.lain.claudejb.model.session.transcript.TranscriptEntry
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.buildJsonObject

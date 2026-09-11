@@ -1,6 +1,7 @@
-package dev.lain.claudejb.settings
+package dev.lain.claudejb.model.settings.legacy
 
-import dev.lain.claudejb.permission.SecurityRule
+import dev.lain.claudejb.model.permission.vocab.SecurityRule
+import dev.lain.claudejb.model.settings.ClaudeSettings
 
 internal object LegacySecurityToggles {
 

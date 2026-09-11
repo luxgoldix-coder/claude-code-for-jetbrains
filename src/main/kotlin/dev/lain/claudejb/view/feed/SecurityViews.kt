@@ -1,6 +1,7 @@
-package dev.lain.claudejb.ui
+package dev.lain.claudejb.view.feed
 
-import dev.lain.claudejb.vuln.VulnService
+import dev.lain.claudejb.controller.vuln.VulnService
+import dev.lain.claudejb.view.window.JcefChatPanel
 
 internal class SecurityViews(private val panel: JcefChatPanel) {
 

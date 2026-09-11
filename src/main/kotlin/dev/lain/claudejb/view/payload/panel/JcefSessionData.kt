@@ -1,9 +1,12 @@
-package dev.lain.claudejb.ui.jcef
+package dev.lain.claudejb.view.payload.panel
 
-import dev.lain.claudejb.protocol.UsageReport
-import dev.lain.claudejb.session.ClaudeSession
-import dev.lain.claudejb.ui.LinkResolver
-import dev.lain.claudejb.vuln.VulnSnapshot
+import dev.lain.claudejb.controller.context.LinkResolver
+import dev.lain.claudejb.controller.session.ClaudeSession
+import dev.lain.claudejb.model.protocol.models.UsageReport
+import dev.lain.claudejb.model.vuln.VulnSnapshot
+import dev.lain.claudejb.view.git.JcefGitData
+import dev.lain.claudejb.view.payload.JcefVulnData
+import dev.lain.claudejb.view.payload.composer.JcefModelLabels
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -23,7 +26,7 @@ object JcefSessionData {
         nowMillis: Long,
         usage: UsageReport? = null,
         workloads: List<Workload> = emptyList(),
-        plan: dev.lain.claudejb.session.PlanInfo? = null,
+        plan: dev.lain.claudejb.controller.session.control.PlanInfo? = null,
         git: JcefGitData.Snapshot? = null,
         vuln: VulnSnapshot? = null,
     ): String {

@@ -1,5 +1,9 @@
-package dev.lain.claudejb.settings
+package dev.lain.claudejb.model.settings.env
 
+import dev.lain.claudejb.model.settings.ClaudeSettings
+import dev.lain.claudejb.model.settings.guard.GuardMode
+import dev.lain.claudejb.model.settings.guard.guardMode
+import dev.lain.claudejb.model.settings.legacy.LegacyPermissionMode
 import dev.lain.claudejb.util.logger
 
 internal object UntrustedState {

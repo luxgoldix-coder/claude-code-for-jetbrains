@@ -1,4 +1,4 @@
-package dev.lain.claudejb.diff
+package dev.lain.claudejb.view.diff
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service

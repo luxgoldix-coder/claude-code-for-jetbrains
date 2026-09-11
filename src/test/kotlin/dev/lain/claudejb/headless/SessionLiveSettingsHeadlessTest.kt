@@ -2,10 +2,10 @@ package dev.lain.claudejb.headless
 
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import dev.lain.claudejb.session.ClaudeSession
-import dev.lain.claudejb.session.LaunchOptions
-import dev.lain.claudejb.settings.ClaudeSettings
-import dev.lain.claudejb.settings.SecretStore
+import dev.lain.claudejb.controller.session.ClaudeSession
+import dev.lain.claudejb.model.session.launch.LaunchOptions
+import dev.lain.claudejb.model.settings.ClaudeSettings
+import dev.lain.claudejb.model.settings.SecretStore
 
 class SessionLiveSettingsHeadlessTest : BasePlatformTestCase() {
 
