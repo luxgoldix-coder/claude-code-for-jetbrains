@@ -30,6 +30,7 @@ internal object AgentEnding {
     }
 
     private fun JsonObject.endsTurn(): Boolean {
+        if ((this[TOOL_ENDS_TURN] as? JsonPrimitive)?.contentOrNull == "true") return true
         val message = this["message"] as? JsonObject ?: return false
         return (message["stop_reason"] as? JsonPrimitive)?.contentOrNull == "end_turn"
     }
@@ -66,6 +67,8 @@ internal object AgentEnding {
     }
 
     private const val SYNTHETIC_MODEL = "<synthetic>"
+
+    private const val TOOL_ENDS_TURN = "toolEndsTurn"
 
     private const val INTERRUPT_PREFIX = "[Request interrupted"
 }

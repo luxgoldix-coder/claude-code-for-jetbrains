@@ -23,6 +23,14 @@ class AgentEndingTest {
     }
 
     @Test
+    fun `a tool result that ends the turn, as StructuredOutput does for a workflow agent, is completed`() {
+        val structured = """{"type":"assistant","message":{"role":"assistant","stop_reason":"tool_use","content":[{"type":"tool_use","name":"StructuredOutput","input":{}}]}}"""
+        val ends = """{"type":"user","toolEndsTurn":true,"message":{"role":"user","content":[{"type":"tool_result","content":"Structured output provided successfully"}]}}"""
+
+        assertEquals(AgentEnding.Ending.COMPLETED, AgentEnding.of(records(listOf(toolUse, toolResult, structured, ends))))
+    }
+
+    @Test
     fun `a transcript with one record after a closed turn was resumed`() {
         val lines = listOf(endTurn, toolResult)
 
