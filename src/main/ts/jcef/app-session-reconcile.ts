@@ -21,7 +21,7 @@
       const next = cards[i];
       const key = keyOf(next);
       const previous = key != null ? existing[key] : undefined;
-      ordered.push(previous && previous.outerHTML === next.outerHTML ? previous : next);
+      ordered.push(previous && previous.isEqualNode(next) ? previous : next);
     }
 
     for (i = container.children.length - 1; i >= 0; i--) {
