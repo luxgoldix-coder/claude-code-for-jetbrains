@@ -2,6 +2,7 @@ package dev.lain.claudejb.view.payload.menu
 
 import dev.lain.claudejb.model.permission.vocab.SecurityRule
 import dev.lain.claudejb.model.protocol.models.ModelInfo
+import dev.lain.claudejb.model.session.launch.IdeRule
 import dev.lain.claudejb.model.session.launch.IdeServer
 import dev.lain.claudejb.model.settings.ClaudeSettings
 import dev.lain.claudejb.model.settings.guard.SecuritySuspensions
@@ -237,7 +238,7 @@ class JcefSettingsMenuTest {
     }
 
     @Test
-    fun `God Mode is one switch, our servers, and the JetBrains server is not part of it`() {
+    fun `God Mode is one switch that turns our servers, every plugin server and every rule on, and off again`() {
         val state = ClaudeSettings.State().apply { ideMcpEnabled = true }
         val rows = menu(state).filter { it.str("group") == "Claude God Mode" }
         val row = rows.single()
@@ -247,16 +248,20 @@ class JcefSettingsMenuTest {
         assertFalse(row.bool("on"), "the JetBrains server alone is not God Mode")
 
         assertTrue(write(state, "godMode", true))
-        assertTrue(state.ideMcp.enabled)
+        assertTrue(state.ideMcp.enabled && state.ideMcpEnabled && state.ideMcp.indexEnabled && state.ideMcp.debuggerEnabled)
+        assertEquals(IdeRule.entries.toSet(), IdeRule.parse(state.ideMcp.rules))
         assertTrue(menu(state).single { it.str("key") == "godMode" }.bool("on"))
 
+        state.ideMcp.rules = IdeRule.csv(IdeRule.entries - IdeRule.INDEX_READ)
+        assertFalse(menu(state).single { it.str("key") == "godMode" }.bool("on"), "one rule off is not God Mode")
+
         assertTrue(write(state, "godMode", false))
-        assertFalse(state.ideMcp.enabled)
-        assertTrue(state.ideMcpEnabled, "God Mode leaves the JetBrains server alone")
+        assertFalse(state.ideMcp.enabled || state.ideMcpEnabled || state.ideMcp.indexEnabled || state.ideMcp.debuggerEnabled)
+        assertEquals("", state.ideMcp.rules)
     }
 
     @Test
-    fun `the MCP group offers the JetBrains server and the strict flag, and the removed servers are gone`() {
+    fun `the MCP group offers the JetBrains server and the strict flag, and Index, Debugger and the rules live in Settings only`() {
         val state = ClaudeSettings.State()
         val rows = menu(state).filter { it.str("group") == "MCP" }
 

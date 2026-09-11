@@ -5,8 +5,9 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonObject
 
-class HookBroker {
+class HookBroker(private val rulesBlock: () -> String = { "" }) {
 
     fun parse(request: JsonObject): HookContext? {
         val input = request["input"] as? JsonObject ?: return null
@@ -32,9 +33,16 @@ class HookBroker {
         )
     }
 
-    fun buildResponse(callbackId: String): JsonObject = buildJsonObject {
-        if (callbackId.isNotEmpty()) put("callback_id", callbackId)
+    fun buildResponse(ctx: HookContext): JsonObject = buildJsonObject {
+        if (ctx.callbackId.isNotEmpty()) put("callback_id", ctx.callbackId)
         put("continue", true)
+        if (ctx.callbackId != IDE_RULES_CALLBACK || ctx.hookEventName != USER_PROMPT_SUBMIT) return@buildJsonObject
+        val block = rulesBlock()
+        if (block.isBlank()) return@buildJsonObject
+        putJsonObject("hookSpecificOutput") {
+            put("hookEventName", USER_PROMPT_SUBMIT)
+            put("additionalContext", block)
+        }
     }
 
     fun sideEffects(ctx: HookContext): List<HookSideEffect> = when (ctx.hookEventName) {
@@ -55,6 +63,11 @@ class HookBroker {
         "PostCompact" -> listOf(HookSideEffect.TranscriptNote("Conversation compacted."))
 
         else -> emptyList()
+    }
+
+    companion object {
+        const val USER_PROMPT_SUBMIT = "UserPromptSubmit"
+        const val IDE_RULES_CALLBACK = "ide_rules"
     }
 }
 

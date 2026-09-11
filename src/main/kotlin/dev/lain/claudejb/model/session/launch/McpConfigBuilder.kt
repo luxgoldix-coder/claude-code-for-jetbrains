@@ -29,9 +29,13 @@ object McpConfigBuilder {
         onCustomParseError: (Throwable) -> Unit = {},
         ownSockets: Map<IdeServer, String> = emptyMap(),
         helper: HelperParams? = null,
+        hechtcarmelServers: Map<IdeServer, Int> = emptyMap(),
     ): String? {
         val servers = buildJsonObject {
             if (ideMcpEnabled) jetbrainsMcpServer(transport, port, stdioParams)?.let { put(IdeServer.JETBRAINS.mcpName, it) }
+            hechtcarmelServers.forEach { (server, serverPort) ->
+                server.streamableHttpUrl(serverPort)?.let { put(server.mcpName, httpMcpServer("streamable-http", it)) }
+            }
             if (helper != null) ownSockets.forEach { (server, socket) -> put(server.mcpName, ownMcpServer(helper, socket)) }
             customMcpServersObject(customMcpServers, onCustomParseError)?.forEach { (name, server) -> put(name, server) }
         }

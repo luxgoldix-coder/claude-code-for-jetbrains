@@ -14,9 +14,13 @@ import kotlinx.serialization.json.JsonNames
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.add
+import kotlinx.serialization.json.addJsonObject
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonArray
+import kotlinx.serialization.json.putJsonObject
 
 data class RewindResult(val canRewind: Boolean, val error: String?, val filesChanged: List<String>)
 
@@ -138,9 +142,21 @@ object Asks {
 
     val BINARY_VERSION = Ask("get_binary_version") { it }
 
-    val INITIALIZE = Ask("initialize") { payload ->
-        payload?.let { runCatching { ClaudeJson.decodeFromJsonElement(InitializeResponse.serializer(), it) }.getOrNull() }
-    }
+    fun initialize(hooks: Map<String, String> = emptyMap()) = Ask(
+        subtype = "initialize",
+        params = {
+            if (hooks.isNotEmpty()) {
+                putJsonObject("hooks") {
+                    hooks.forEach { (event, callbackId) ->
+                        putJsonArray(event) { addJsonObject { putJsonArray("hookCallbackIds") { add(callbackId) } } }
+                    }
+                }
+            }
+        },
+        decode = { payload ->
+            payload?.let { runCatching { ClaudeJson.decodeFromJsonElement(InitializeResponse.serializer(), it) }.getOrNull() }
+        },
+    )
 
     fun generateTitle(description: String, persist: Boolean = true) = Ask(
         subtype = "generate_session_title",

@@ -94,6 +94,29 @@ class SessionLauncherTest {
         assertNull(SessionLauncher.mcpConfigJson(on))
     }
 
+    @Test
+    fun `IDE rules ride the system prompt after the plugin context, and the plugin servers ride the mcp config`() {
+        val withIndex = opts().copy(indexMcpEnabled = true, ideRules = setOf(IdeRule.INDEX_READ, IdeRule.DEBUGGER_DEBUG))
+        val prompt = SessionLauncher.systemPrompt(withIndex)
+        assertTrue(prompt.startsWith(PluginContextPrompt.TEXT))
+        assertTrue(prompt.contains("ide_read_file"))
+        assertFalse(prompt.contains("start_debug_session"), "a rule of a server that is off is left out")
+        val config = SessionLauncher.mcpConfigJson(withIndex)
+        val args = SessionLauncher.buildArgs(withIndex, resume = false, mcpConfig = config)
+        assertEquals(prompt, args[args.indexOf("--append-system-prompt") + 1])
+        assertTrue(config!!.contains("index-mcp/streamable-http"), config)
+    }
+
+    @Test
+    fun `the block the hook injects is the text the launch carries, and nothing without a plugin server`() {
+        assertEquals("", SessionLauncher.rulesBlock(opts().copy(ideRules = IdeRule.entries.toSet())))
+        val withIndex = opts().copy(indexMcpEnabled = true, ideRules = IdeRule.entries.toSet())
+        val block = SessionLauncher.rulesBlock(withIndex)
+        assertTrue(block.isNotBlank())
+        val prompt = SessionLauncher.systemPrompt(withIndex).lines()
+        block.lines().forEach { assertTrue(it in prompt, it) }
+    }
+
     private fun helper(tmp: Path) =
         McpConfigBuilder.HelperParams(File(tmp.toFile(), "java"), File(tmp.toFile(), "lib").apply { mkdirs() })
 

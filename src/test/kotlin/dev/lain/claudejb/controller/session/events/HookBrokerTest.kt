@@ -110,10 +110,26 @@ class HookBrokerTest {
 
     @Test
     fun `every hook is answered with continue and its callback id`() {
-        val out = broker.buildResponse("cb1")
+        val out = broker.buildResponse(HookContext("cb1", "PreToolUse"))
         assertEquals(true, out.bool("continue"))
         assertEquals("cb1", out.string("callback_id"))
-        assertNull(broker.buildResponse("")["callback_id"])
+        assertNull(broker.buildResponse(HookContext("", "PreToolUse"))["callback_id"])
+        assertNull(out["hookSpecificOutput"])
+    }
+
+    @Test
+    fun `the IDE rules callback on UserPromptSubmit carries the rules block as additional context, and nothing else does`() {
+        val block = "<ide-integration>\nrules\n</ide-integration>"
+        val rules = HookBroker { block }
+        val out = rules.buildResponse(HookContext(HookBroker.IDE_RULES_CALLBACK, HookBroker.USER_PROMPT_SUBMIT))
+        assertEquals(true, out.bool("continue"))
+        val specific = out["hookSpecificOutput"] as JsonObject
+        assertEquals(HookBroker.USER_PROMPT_SUBMIT, specific.string("hookEventName"))
+        assertEquals(block, specific.string("additionalContext"))
+        assertNull(rules.buildResponse(HookContext(HookBroker.IDE_RULES_CALLBACK, "PreToolUse"))["hookSpecificOutput"])
+        assertNull(rules.buildResponse(HookContext("hook_0", HookBroker.USER_PROMPT_SUBMIT))["hookSpecificOutput"])
+        val silent = HookBroker { "" }
+        assertNull(silent.buildResponse(HookContext(HookBroker.IDE_RULES_CALLBACK, HookBroker.USER_PROMPT_SUBMIT))["hookSpecificOutput"])
     }
 
     @Test

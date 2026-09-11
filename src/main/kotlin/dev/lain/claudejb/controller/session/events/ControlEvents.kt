@@ -4,6 +4,7 @@ import dev.lain.claudejb.controller.session.ClaudeSession
 import dev.lain.claudejb.model.protocol.ClaudeEvent
 import dev.lain.claudejb.model.protocol.control.ControlProtocol
 import dev.lain.claudejb.model.protocol.control.DialogResponder
+import dev.lain.claudejb.model.session.launch.SessionLauncher
 import dev.lain.claudejb.model.session.transcript.Speaker
 import dev.lain.claudejb.util.thisLogger
 import kotlinx.serialization.json.JsonObject
@@ -15,7 +16,7 @@ class ControlEvents(
 
     private val log = thisLogger()
 
-    private val hookBroker = HookBroker()
+    private val hookBroker = HookBroker { SessionLauncher.rulesBlock(s.launch) }
 
     fun onControl(event: ClaudeEvent.Control) {
         when (event) {
@@ -52,7 +53,7 @@ class ControlEvents(
             s.write(ControlProtocol.error(requestId, "Malformed hook_callback (missing input/hook_event_name)"))
             return
         }
-        s.write(ControlProtocol.success(requestId, hookBroker.buildResponse(ctx.callbackId)))
+        s.write(ControlProtocol.success(requestId, hookBroker.buildResponse(ctx)))
         val effects = hookBroker.sideEffects(ctx)
         if (effects.isEmpty()) return
         edt {

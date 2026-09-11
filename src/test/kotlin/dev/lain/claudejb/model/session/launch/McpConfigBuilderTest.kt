@@ -226,6 +226,40 @@ class McpConfigBuilderTest {
         assertEquals("http://localhost:1/sse", servers(out!!)["code"]!!.jsonObject["url"]!!.jsonPrimitive.content)
     }
 
+    @Test
+    fun `the Index and Debugger servers are streamable-http entries on their own ports`() {
+        val out = McpConfigBuilder.mcpConfigJson(
+            ideMcpEnabled = false,
+            transport = "sse",
+            port = 0,
+            customMcpServers = "",
+            hechtcarmelServers = mapOf(IdeServer.INDEX to 29170, IdeServer.DEBUGGER to 29199),
+        )
+        val s = servers(out!!)
+        assertNull(s["jetbrains"])
+        val index = s["index"]!!.jsonObject
+        assertEquals("streamable-http", index["type"]!!.jsonPrimitive.content)
+        assertEquals("http://127.0.0.1:29170/index-mcp/streamable-http", index["url"]!!.jsonPrimitive.content)
+        assertEquals("http://127.0.0.1:29199/debugger-mcp/streamable-http", s["debugger"]!!.jsonObject["url"]!!.jsonPrimitive.content)
+    }
+
+    @Test
+    fun `every server coexists in a fixed order, and a custom entry still wins by name`(@TempDir tmp: Path) {
+        val custom = """{"index":{"type":"sse","url":"http://localhost:1/sse","headers":{}}}"""
+        val out = McpConfigBuilder.mcpConfigJson(
+            ideMcpEnabled = true,
+            transport = "sse",
+            port = 64342,
+            customMcpServers = custom,
+            ownSockets = mapOf(IdeServer.CODE to "/run/x/code.sock"),
+            helper = helper(tmp),
+            hechtcarmelServers = mapOf(IdeServer.INDEX to 29170, IdeServer.DEBUGGER to 29190),
+        )
+        val s = servers(out!!)
+        assertEquals(listOf("jetbrains", "index", "debugger", "code"), s.keys.toList())
+        assertEquals("http://localhost:1/sse", s["index"]!!.jsonObject["url"]!!.jsonPrimitive.content)
+    }
+
     private fun helper(tmp: Path): McpConfigBuilder.HelperParams {
         val javaBin = File(tmp.toFile(), "java").apply { writeText("#!/bin/sh\n") }
         val lib = File(tmp.toFile(), "lib").apply { mkdirs() }

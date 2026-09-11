@@ -1,11 +1,13 @@
 package dev.lain.claudejb.controller.session
 
 import dev.lain.claudejb.controller.session.control.Asks
+import dev.lain.claudejb.controller.session.events.HookBroker
 import dev.lain.claudejb.model.protocol.models.AccountInfo
 import dev.lain.claudejb.model.protocol.models.AgentInfo
 import dev.lain.claudejb.model.protocol.models.InitializeResponse
 import dev.lain.claudejb.model.protocol.models.ModelInfo
 import dev.lain.claudejb.model.protocol.models.SlashCommand
+import dev.lain.claudejb.model.session.launch.SessionLauncher
 import dev.lain.claudejb.model.settings.LaunchDefaults
 import dev.lain.claudejb.util.thisLogger
 
@@ -41,7 +43,14 @@ class BinaryCatalog(
 
     fun preferredDefaultModel(): String = LaunchDefaults.preferredDefault(models)
 
-    fun request() = s.queries.ask(Asks.INITIALIZE) { info -> info?.let(::adopt) }
+    fun request() {
+        val hooks = if (SessionLauncher.rulesBlock(s.launch).isBlank()) {
+            emptyMap()
+        } else {
+            mapOf(HookBroker.USER_PROMPT_SUBMIT to HookBroker.IDE_RULES_CALLBACK)
+        }
+        s.queries.ask(Asks.initialize(hooks)) { info -> info?.let(::adopt) }
+    }
 
     internal fun adopt(info: InitializeResponse) {
         commands = info.commands

@@ -56,12 +56,25 @@ object SessionLauncher {
         prompt.trim().ifBlank { null }?.let { listOf("--append-system-prompt", it) } ?: emptyList()
 
     fun systemPrompt(opts: LaunchOptions): String =
-        listOf(PluginContextPrompt.TEXT, IdeMcpPrompt.text(ownSockets(opts).keys))
+        listOf(PluginContextPrompt.TEXT, IdeMcpPrompt.text(ownSockets(opts).keys + ideServers(opts), opts.ideRules, opts.knownIdeTools))
             .filter { it.isNotBlank() }
             .joinToString("\n\n")
 
+    fun rulesBlock(opts: LaunchOptions): String = IdeMcpPrompt.rulesBlock(opts.ideRules, ideServers(opts), opts.knownIdeTools)
+
     fun ownSockets(opts: LaunchOptions): Map<IdeServer, String> =
         if (opts.ideIntegration) opts.ideSockets.filterKeys { it.own } else emptyMap()
+
+    fun ideServers(opts: LaunchOptions): Set<IdeServer> = buildSet {
+        if (opts.ideMcpEnabled) add(IdeServer.JETBRAINS)
+        if (opts.indexMcpEnabled) add(IdeServer.INDEX)
+        if (opts.debuggerMcpEnabled) add(IdeServer.DEBUGGER)
+    }
+
+    private fun hechtcarmelServers(opts: LaunchOptions): Map<IdeServer, Int> = buildMap {
+        if (opts.indexMcpEnabled) put(IdeServer.INDEX, opts.indexMcpPort)
+        if (opts.debuggerMcpEnabled) put(IdeServer.DEBUGGER, opts.debuggerMcpPort)
+    }
 
     private fun advancedFlags(opts: LaunchOptions): List<String> = buildList {
         opts.maxTurns?.let { addAll(listOf("--max-turns", it.toString())) }
@@ -82,10 +95,11 @@ object SessionLauncher {
             onCustomParseError = { log.debug { "Failed to parse custom MCP servers JSON: $it" } },
             ownSockets = ownSockets(opts),
             helper = helper,
+            hechtcarmelServers = hechtcarmelServers(opts),
         )
 
     fun resolveStdioParams(opts: LaunchOptions): McpConfigBuilder.StdioParams? {
-        if (!InstalledPlugins.isEnabled(IdeServer.JETBRAINS_PLUGIN_ID)) return null
+        if (!InstalledPlugins.isEnabled(IdeServer.JETBRAINS.plugin)) return null
         val pluginLib = findMcpServerLib() ?: return null
         return McpConfigBuilder.StdioParams(javaBin(), pluginLib, PathManager.getLibPath(), opts.ideMcpPort)
     }

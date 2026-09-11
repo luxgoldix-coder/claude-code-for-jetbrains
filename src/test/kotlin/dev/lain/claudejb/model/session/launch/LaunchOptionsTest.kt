@@ -24,6 +24,16 @@ class LaunchOptionsTest {
     }
 
     @Test
+    fun `the plugin servers, their ports and the rules ride the launch, but the inventory the binary reports does not`() {
+        assertTrue(base.relaunchDiffers(base.copy(indexMcpEnabled = true)))
+        assertTrue(base.relaunchDiffers(base.copy(indexMcpPort = 29171)))
+        assertTrue(base.relaunchDiffers(base.copy(debuggerMcpEnabled = true)))
+        assertTrue(base.relaunchDiffers(base.copy(debuggerMcpPort = 29191)))
+        assertTrue(base.relaunchDiffers(base.copy(ideRules = setOf(IdeRule.INDEX_READ))))
+        assertFalse(base.relaunchDiffers(base.copy(knownIdeTools = setOf("ide_read_file"))))
+    }
+
+    @Test
     fun `the flags that only reach the binary as arguments differ`() {
         assertTrue(base.relaunchDiffers(base.copy(settingSources = "user")))
         assertTrue(base.relaunchDiffers(base.copy(includePartialMessages = false)))

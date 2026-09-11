@@ -3,6 +3,7 @@ package dev.lain.claudejb.controller.session.control
 import dev.lain.claudejb.model.protocol.control.ControlProtocol
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
@@ -34,8 +35,27 @@ class ControlAsksTest {
 
     @Test
     fun `every declared request survives a null reply`() {
-        val all = listOf(Asks.CONTEXT_USAGE, Asks.USAGE, Asks.SESSION_COST, Asks.MCP_STATUS, Asks.SETTINGS, Asks.BINARY_VERSION, Asks.rewind("u", false))
+        val all = listOf(
+            Asks.CONTEXT_USAGE,
+            Asks.USAGE,
+            Asks.SESSION_COST,
+            Asks.MCP_STATUS,
+            Asks.SETTINGS,
+            Asks.BINARY_VERSION,
+            Asks.rewind("u", false),
+            Asks.initialize(),
+        )
         all.forEach { assertNull(it.decode(null), "${it.subtype} should decode null to null") }
+    }
+
+    @Test
+    fun `initialize registers a hook under its event name with its callback id, and sends no hooks key without one`() {
+        val request = lineOf(Asks.initialize(mapOf("UserPromptSubmit" to "ide_rules")))["request"]!!.jsonObject
+        assertEquals("initialize", request["subtype"]!!.jsonPrimitive.content)
+        val matchers = request["hooks"]!!.jsonObject["UserPromptSubmit"]!!.jsonArray
+        assertEquals(1, matchers.size)
+        assertEquals(listOf("ide_rules"), matchers[0].jsonObject["hookCallbackIds"]!!.jsonArray.map { it.jsonPrimitive.content })
+        assertNull(lineOf(Asks.initialize())["request"]!!.jsonObject["hooks"])
     }
 
     @Test
