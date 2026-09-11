@@ -129,7 +129,12 @@
       } else if (isO && (e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey) {
         e.preventDefault();
         if (cc.toggleReasoning) cc.toggleReasoning();
-      } else if ((key === 'Escape' || e.keyCode === 27) && findBar && !findBar.hidden) {
+      } else if (
+        (key === 'Escape' || e.keyCode === 27) &&
+        findBar &&
+        !findBar.hidden &&
+        findBar.contains(document.activeElement)
+      ) {
         e.preventDefault();
         e.stopPropagation();
         if (e.stopImmediatePropagation) e.stopImmediatePropagation();
