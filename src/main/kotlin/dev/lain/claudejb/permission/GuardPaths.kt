@@ -119,14 +119,19 @@ object GuardPaths {
 
     private const val UNEXPANDED_PREFIXES = "~\$%"
 
-    internal fun isAbsolute(path: String): Boolean = path.startsWith("/") || isDriveRooted(path)
+    internal fun isAbsolute(path: String): Boolean =
+        path.startsWith("/") || isDriveRooted(path) || isDrivePrefixed(path)
 
     private fun isDriveRooted(path: String): Boolean = path.length > 2 && path[1] == ':' && path[2] == '/'
+
+    private fun isDrivePrefixed(path: String): Boolean =
+        path.length >= 2 && path[1] == ':' && (path[0] in 'A'..'Z' || path[0] in 'a'..'z')
 
     private fun rootPrefix(path: String): String = when {
         path.startsWith("//") -> "//"
         path.startsWith("/") -> "/"
         isDriveRooted(path) -> path.substring(0, 3)
+        isDrivePrefixed(path) -> path.substring(0, 2)
         else -> ""
     }
 
