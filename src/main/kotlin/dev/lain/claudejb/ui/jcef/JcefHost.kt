@@ -12,13 +12,6 @@ import com.intellij.ui.jcef.JBCefBrowserBase
 import com.intellij.ui.jcef.JBCefJSQuery
 import com.intellij.util.Alarm
 import dev.lain.claudejb.util.edtNow
-import org.cef.browser.CefBrowser
-import org.cef.browser.CefFrame
-import org.cef.handler.CefLifeSpanHandlerAdapter
-import org.cef.handler.CefLoadHandler
-import org.cef.handler.CefLoadHandlerAdapter
-import org.cef.handler.CefRequestHandlerAdapter
-import org.cef.network.CefRequest
 import java.util.LinkedList
 import javax.swing.JComponent
 import javax.swing.border.EmptyBorder
@@ -40,9 +33,6 @@ class JcefHost(
 
     @Volatile
     private var disposed: Boolean = false
-
-    @Volatile
-    private var mainFrameLoadFailed: Boolean = false
 
     private var delivery: PageDelivery? = null
 
@@ -85,8 +75,15 @@ class JcefHost(
                 null
             }
 
-            installNavigationGuards(b)
-            installLoadHandler(b, query)
+            installNavigationGuards(b, ::isOwnPage)
+            b.jbCefClient.addLoadHandler(
+                PageLoadHandler(
+                    onStarted = { delivery?.pageLoadStarted() },
+                    onArrived = { drainInto(b, query) },
+                    onMissed = ::pageMissed,
+                ),
+                b.cefBrowser,
+            )
 
             val d = PageDelivery(
                 browser = b,
@@ -176,81 +173,22 @@ class JcefHost(
         entry.block()
     }
 
-    private fun installLoadHandler(b: JBCefBrowser, query: JBCefJSQuery) {
-        b.jbCefClient.addLoadHandler(
-            object : CefLoadHandlerAdapter() {
-                override fun onLoadStart(
-                    cefBrowser: CefBrowser?,
-                    frame: CefFrame?,
-                    transitionType: CefRequest.TransitionType?,
-                ) {
-                    if (frame != null && !frame.isMain) return
-                    mainFrameLoadFailed = false
-                    delivery?.pageLoadStarted()
-                }
-
-                override fun onLoadError(
-                    cefBrowser: CefBrowser?,
-                    frame: CefFrame?,
-                    errorCode: CefLoadHandler.ErrorCode?,
-                    errorText: String?,
-                    failedUrl: String?,
-                ) {
-                    if (frame != null && !frame.isMain) return
-                    mainFrameLoadFailed = true
-                }
-
-                override fun onLoadEnd(cefBrowser: CefBrowser?, frame: CefFrame?, httpStatusCode: Int) {
-                    if (frame != null && !frame.isMain) return
-                    if (!pageArrived(httpStatusCode, mainFrameLoadFailed)) {
-                        edtNow {
-                            log.warn(
-                                "Claude Code chat page did not load over ${delivery?.route ?: "an unknown route"} " +
-                                    "(http status $httpStatusCode) — keeping the queued state for the next one",
-                            )
-                        }
-                        return
-                    }
-                    val inject = "window.__ccSend = function(p){ " + query.inject("p") + " };"
-                    executeNow(b, inject)
-                    edtNow {
-                        ready = true
-                        delivery?.relaxWatchdog()
-                        while (pending.isNotEmpty()) {
-                            executeNow(b, pending.poll())
-                        }
-                    }
-                }
-            },
-            b.cefBrowser,
+    private fun pageMissed(httpStatusCode: Int) = edtNow {
+        log.warn(
+            "Claude Code chat page did not load over ${delivery?.route ?: "an unknown route"} " +
+                "(http status $httpStatusCode) — keeping the queued state for the next one",
         )
     }
 
-    private fun installNavigationGuards(b: JBCefBrowser) {
-        b.jbCefClient.addRequestHandler(
-            object : CefRequestHandlerAdapter() {
-                override fun onBeforeBrowse(
-                    cefBrowser: CefBrowser?,
-                    frame: CefFrame?,
-                    request: CefRequest?,
-                    userGesture: Boolean,
-                    isRedirect: Boolean,
-                ): Boolean = !isOwnPage(request?.url)
-            },
-            b.cefBrowser,
-        )
-
-        b.jbCefClient.addLifeSpanHandler(
-            object : CefLifeSpanHandlerAdapter() {
-                override fun onBeforePopup(
-                    cefBrowser: CefBrowser?,
-                    frame: CefFrame?,
-                    targetUrl: String?,
-                    targetFrameName: String?,
-                ): Boolean = true
-            },
-            b.cefBrowser,
-        )
+    private fun drainInto(b: JBCefBrowser, query: JBCefJSQuery) {
+        executeNow(b, "window.__ccSend = function(p){ " + query.inject("p") + " };")
+        edtNow {
+            ready = true
+            delivery?.relaxWatchdog()
+            while (pending.isNotEmpty()) {
+                executeNow(b, pending.poll())
+            }
+        }
     }
 
     private fun isOwnPage(url: String?): Boolean =

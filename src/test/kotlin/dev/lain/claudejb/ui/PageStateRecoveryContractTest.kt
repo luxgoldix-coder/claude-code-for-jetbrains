@@ -9,13 +9,9 @@ class PageStateRecoveryContractTest {
 
     @Test
     fun `a load that did not deliver the page must not drain the queued pushes`() {
-        val lines = source("ui/jcef/JcefHost.kt").readLines()
-        val end = lines.indexOfFirst { it.contains("override fun onLoadEnd(") }
-        assertTrue(end >= 0) { "JcefHost no longer has an onLoadEnd — this contract needs rewriting, not deleting" }
-
-        val body = lines.drop(end)
+        val body = bodyOf(source("ui/jcef/PageLoadHandler.kt").readLines(), "override fun onLoadEnd(")
         val guard = body.indexOfFirst { it.contains("pageArrived(") }
-        val drain = body.indexOfFirst { it.contains("pending") }
+        val drain = body.indexOfFirst { it.contains("onArrived()") }
 
         assertTrue(guard >= 0) {
             "onLoadEnd no longer asks pageArrived() whether the page actually arrived. Without that question " +
@@ -23,7 +19,7 @@ class PageStateRecoveryContractTest {
                 "PageRoute ladder comes up with nothing to draw."
         }
         assertTrue(drain > guard) {
-            "onLoadEnd touches the pending queue before deciding whether the page arrived."
+            "onLoadEnd reports the page as arrived before deciding whether it did."
         }
         assertTrue(body.subList(guard, drain).any { it.trim() == "return" }) {
             "the pageArrived() check must RETURN when the page did not arrive — logging it and carrying on " +
@@ -33,7 +29,7 @@ class PageStateRecoveryContractTest {
 
     @Test
     fun `the failure verdict is recorded, cleared and actually consulted`() {
-        val text = source("ui/jcef/JcefHost.kt").readText()
+        val text = source("ui/jcef/PageLoadHandler.kt").readText()
         listOf(
             "override fun onLoadError(" to
                 "nothing records that a load failed, so an unreachable route reads as a delivered page",
@@ -49,16 +45,18 @@ class PageStateRecoveryContractTest {
     @Test
     fun `the ready watchdog is armed when the browser starts loading, not when the page is handed over`() {
         val deliver = bodyOf(source("ui/jcef/PageDelivery.kt").readLines(), "private fun deliver(")
-        assertTrue(deliver.none { it.contains("armWatchdog(") }) {
+        assertTrue(deliver.none { ARMS.containsMatchIn(it) }) {
             "deliver() arms the ready watchdog before the browser exists. JBCefOsrComponent.addNotify creates the " +
                 "browser, and a chat opened into a component not yet on screen — the replacement for a closed " +
                 "last tab — spends the whole grace period before its first navigation can start, then falls off " +
                 "the ladder with the page never run.\n" + deliver.joinToString("\n")
         }
-        val start = bodyOf(source("ui/jcef/JcefHost.kt").readLines(), "override fun onLoadStart(")
-        assertTrue(start.any { it.contains("pageLoadStarted(") }) {
-            "onLoadStart no longer tells the delivery that the browser began loading, so nothing arms the " +
-                "watchdog at all and a rung that hangs is never left.\n" + start.joinToString("\n")
+        val start = bodyOf(source("ui/jcef/PageLoadHandler.kt").readLines(), "override fun onLoadStart(")
+        assertTrue(start.any { it.contains("onStarted()") }) {
+            "onLoadStart no longer reports that the browser began loading.\n" + start.joinToString("\n")
+        }
+        assertTrue(source("ui/jcef/JcefHost.kt").readText().contains("onStarted = { delivery?.pageLoadStarted() }")) {
+            "the host no longer arms the delivery's watchdog from the load start, so a rung that hangs is never left"
         }
     }
 
@@ -117,4 +115,8 @@ class PageStateRecoveryContractTest {
         sequenceOf(File("src/main/kotlin"), File("../src/main/kotlin"))
             .firstOrNull { it.isDirectory }
             ?: error("could not locate src/main/kotlin from ${File("").absolutePath}")
+
+    private companion object {
+        val ARMS = Regex("""\barm\(""")
+    }
 }
