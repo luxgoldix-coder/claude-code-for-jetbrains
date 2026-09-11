@@ -3,9 +3,18 @@ const path = require('node:path');
 const { JSDOM } = require('jsdom');
 
 const JCEF = path.resolve(__dirname, '../../../main/resources/jcef');
+const EMIT = path.resolve(__dirname, '../../../../build/web/jcef');
+
+function appDir(name) {
+  return fs.existsSync(path.join(EMIT, name)) ? EMIT : JCEF;
+}
+
+function appPath(name) {
+  return path.join(appDir(name), name);
+}
 
 function readApp(name) {
-  return fs.readFileSync(path.join(JCEF, name), 'utf8');
+  return fs.readFileSync(appPath(name), 'utf8');
 }
 
 function shellBody() {
@@ -58,7 +67,8 @@ function loadFrontend(files = [], { vendor = true } = {}) {
 }
 
 function appJsFiles() {
-  return fs.readdirSync(JCEF).filter((f) => /^app-.*\.js$/.test(f));
+  const emitted = fs.existsSync(EMIT) ? fs.readdirSync(EMIT) : [];
+  return [...new Set([...emitted, ...fs.readdirSync(JCEF)])].filter((f) => /^app-.*\.js$/.test(f)).sort();
 }
 
 function readCss() {
@@ -67,4 +77,4 @@ function readCss() {
     .join('\n');
 }
 
-module.exports = { loadFrontend, readApp, appJsFiles, appModules, cssParts, readCss, JCEF };
+module.exports = { loadFrontend, readApp, appPath, appJsFiles, appModules, cssParts, readCss, JCEF, EMIT };

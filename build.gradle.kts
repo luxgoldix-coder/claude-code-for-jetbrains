@@ -153,7 +153,36 @@ tasks {
     // Kept as a build step rather than a checked-in copy under `src/main/resources/`, so the notices cannot
     // drift out of sync with the files they describe: one source of truth at the repository root, packaged at
     // build time. `THIRD-PARTY-NOTICES.md` is surfaced to the user by the About dialog (see InfoDialogs).
+    val npm = if (System.getProperty("os.name").startsWith("Windows")) "npm.cmd" else "npm"
+
+    val npmInstall by registering(Exec::class) {
+        inputs.files("package.json", "package-lock.json")
+        outputs.file("node_modules/.package-lock.json")
+        commandLine(npm, "ci")
+    }
+
+    val compileWeb by registering(Exec::class) {
+        dependsOn(npmInstall)
+        inputs.dir("src/main/ts/jcef")
+        inputs.file("tsconfig.json")
+        outputs.dir(layout.buildDirectory.dir("web"))
+        commandLine(npm, "run", "build")
+    }
+
+    val frontendTest by registering(Exec::class) {
+        dependsOn(compileWeb)
+        inputs.dir("src/test/frontend")
+        inputs.dir("src/main/resources/jcef")
+        inputs.dir("src/main/ts/jcef")
+        outputs.dir(layout.buildDirectory.dir("reports/frontend"))
+        environment("CI", "true")
+        commandLine(npm, "test")
+    }
+
+    check { dependsOn(frontendTest) }
+
     processResources {
+        from(compileWeb)
         // The distributed map is written FOR this repository and lands in the artifact by accident: the one
         // under `src/main/resources/jcef/` is a resource like any other, so it shipped inside the plugin jar —
         // 20 KB of internal design notes and source paths handed to every user, for nothing. Excluded by

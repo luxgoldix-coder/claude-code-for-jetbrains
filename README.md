@@ -561,8 +561,10 @@ Bugs and features: open an issue with the templates in
 
 ## Build from source
 
-Requires **JDK 21** — the Gradle toolchain is pinned to it, because the IDE runs on JBR 21. The Gradle
-wrapper is included.
+Requires **JDK 21** — the Gradle toolchain is pinned to it, because the IDE runs on JBR 21 — and
+**Node 22 or newer** (`.nvmrc`): the chat page is written in TypeScript and the Gradle build compiles it
+(`npm ci` and `tsc`, driven by the `compileWeb` task) before the resources are packaged. The Gradle
+wrapper is included; node is not.
 
 ```bash
 JAVA_HOME=/path/to/a/jdk-21 ./gradlew buildPlugin

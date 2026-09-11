@@ -1,6 +1,6 @@
 const fs = require('node:fs');
 const path = require('node:path');
-const { JCEF, appJsFiles, cssParts } = require('./helpers/load');
+const { JCEF, appJsFiles, appPath, cssParts } = require('./helpers/load');
 
 const ALLOWED_CONTROL = new Set([0x09, 0x0a, 0x0d]);
 
@@ -16,7 +16,7 @@ function controlBytes(file) {
 
 function servedFiles() {
   return [
-    ...appJsFiles().map((f) => path.join(JCEF, f)),
+    ...appJsFiles().map(appPath),
     ...cssParts().map((p) => path.join(JCEF, 'css', p)),
     path.join(JCEF, 'shell.html'),
   ];
@@ -25,7 +25,7 @@ function servedFiles() {
 describe('the page is built from text', () => {
   it('no source the host inlines contains a control character', () => {
     const offenders = servedFiles()
-      .map((file) => ({ file: path.relative(JCEF, file), hits: controlBytes(file) }))
+      .map((file) => ({ file: path.basename(file), hits: controlBytes(file) }))
       .filter((r) => r.hits.length)
       .map((r) => `${r.file}: ${r.hits.map((h) => `${h.byte}@${h.offset}`).join(', ')}`);
     expect(offenders).toEqual([]);
@@ -37,7 +37,7 @@ describe('the page is built from text', () => {
         const bytes = fs.readFileSync(file);
         return !Buffer.from(bytes.toString('utf8'), 'utf8').equals(bytes);
       })
-      .map((file) => path.relative(JCEF, file));
+      .map((file) => path.basename(file));
     expect(offenders).toEqual([]);
   });
 });

@@ -1,6 +1,4 @@
-const fs = require('node:fs');
-const path = require('node:path');
-const { JCEF, appJsFiles, readCss } = require('./helpers/load');
+const { appJsFiles, readApp, readCss } = require('./helpers/load');
 const { stripComments } = require('./helpers/source');
 
 const GRANDFATHERED = new Set([
@@ -45,7 +43,7 @@ function classesIn(src) {
 function jsEmittedClasses() {
   const used = new Set();
   for (const f of appJsFiles()) {
-    for (const c of classesIn(fs.readFileSync(path.join(JCEF, f), 'utf8'))) used.add(c);
+    for (const c of classesIn(readApp(f))) used.add(c);
   }
   return used;
 }
