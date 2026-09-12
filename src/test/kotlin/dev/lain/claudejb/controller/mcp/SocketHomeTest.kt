@@ -21,6 +21,7 @@ class SocketHomeTest {
     fun `the home is a private directory whose sockets fit the platform limit`() {
         val home = SocketHome.create(listOf(tmp))
         assertEquals("rwx------", PosixFilePermissions.toString(Files.getPosixFilePermissions(home.dir)))
+        assertEquals("rwx------", PosixFilePermissions.toString(Files.getPosixFilePermissions(tmp.resolve(SocketHome.PARENT))))
         assertTrue(home.dir.startsWith(tmp.resolve(SocketHome.PARENT)))
         IdeServer.entries.forEach { assertTrue(home.socket(it).toString().length <= SocketHome.MAX_SOCKET_PATH) }
         home.remove()
@@ -35,6 +36,15 @@ class SocketHomeTest {
         val file = home.dir.resolve(StdioBridge.TOKEN_FILE)
         assertEquals("rw-------", PosixFilePermissions.toString(Files.getPosixFilePermissions(file)))
         assertEquals("second", Files.readString(file))
+        home.remove()
+    }
+
+    @Test
+    fun `a parent left open by an older build is closed to other users`() {
+        val parent = Files.createDirectory(tmp.resolve(SocketHome.PARENT))
+        Files.setPosixFilePermissions(parent, PosixFilePermissions.fromString("rwxr-xr-x"))
+        val home = SocketHome.create(listOf(tmp))
+        assertEquals("rwx------", PosixFilePermissions.toString(Files.getPosixFilePermissions(parent)))
         home.remove()
     }
 

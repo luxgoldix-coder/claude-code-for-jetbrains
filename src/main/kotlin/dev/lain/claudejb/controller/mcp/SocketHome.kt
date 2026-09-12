@@ -37,16 +37,19 @@ internal class SocketHome private constructor(val dir: Path) {
         private const val SOCKET_SUFFIX = ".sock"
         private const val ID_BYTES = 16
         private val POSIX = FileSystems.getDefault().supportedFileAttributeViews().contains("posix")
+        private val OWNER_ONLY = PosixFilePermissions.fromString("rwx------")
 
         fun create(bases: List<Path>): SocketHome {
             val id = Base64.getUrlEncoder().withoutPadding().encodeToString(ByteArray(ID_BYTES).also(SecureRandom()::nextBytes))
             val longestName = IdeServer.entries.maxOf { it.key.length } + SOCKET_SUFFIX.length
             val base = bases.firstOrNull { fits(it, id, longestName) }
                 ?: error("no temporary directory short enough for a Unix socket path")
-            val dir = base.resolve(PARENT).resolve(id)
+            val parent = base.resolve(PARENT)
+            val dir = parent.resolve(id)
             if (POSIX) {
-                Files.createDirectories(base.resolve(PARENT))
-                Files.createDirectory(dir, PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwx------")))
+                Files.createDirectories(parent, PosixFilePermissions.asFileAttribute(OWNER_ONLY))
+                Files.setPosixFilePermissions(parent, OWNER_ONLY)
+                Files.createDirectory(dir, PosixFilePermissions.asFileAttribute(OWNER_ONLY))
             } else {
                 Files.createDirectories(dir)
             }
