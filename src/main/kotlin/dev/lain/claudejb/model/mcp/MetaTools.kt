@@ -18,7 +18,7 @@ class MetaTools(private val catalog: ToolCatalog, private val gate: ToolGate, pr
 
     val specs: List<ToolSpec> = listOf(DOMAINS, TOOLS, RUN)
 
-    suspend fun call(name: String, arguments: JsonObject, meta: JsonObject = EMPTY): ToolResult? = when (name) {
+    suspend fun call(name: String, arguments: JsonObject, meta: JsonObject = JsonObject(emptyMap())): ToolResult? = when (name) {
         DOMAINS.name -> domains()
         TOOLS.name -> tools(ToolArgs(arguments))
         RUN.name -> run(arguments, meta)
@@ -122,7 +122,6 @@ class MetaTools(private val catalog: ToolCatalog, private val gate: ToolGate, pr
             mutates = true,
         )
 
-        private val EMPTY = JsonObject(emptyMap())
         private const val MILLIS = 1000L
 
         const val PRIMER =
