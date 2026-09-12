@@ -7,7 +7,6 @@ import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.evaluation.EvaluationMode
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.frame.XCompositeNode
-import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XFullValueEvaluator
 import com.intellij.xdebugger.frame.XStackFrame
@@ -25,6 +24,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import java.lang.reflect.Proxy
 import javax.swing.Icon
 
 internal class RenderedText : ColoredTextContainer, XValuePresentation.XValueTextRenderer {
@@ -102,36 +102,37 @@ internal object DebugValues {
 
     suspend fun children(container: XValueContainer, max: Int): List<Pair<String, XValue>> = collected { done ->
         val found = ArrayList<Pair<String, XValue>>()
-        container.computeChildren(
-            object : XCompositeNode {
-                override fun addChildren(children: XValueChildrenList, last: Boolean) {
-                    children.topValues.forEach { found += it.name to it }
-                    for (i in 0 until children.size()) found += children.getName(i) to children.getValue(i)
-                    if (last || found.size >= max) done.complete(found.take(max))
-                }
-
-                override fun tooManyChildren(remaining: Int) {
-                    done.complete(found.take(max))
-                }
-
-                override fun setAlreadySorted(alreadySorted: Boolean) = Unit
-
-                override fun setErrorMessage(errorMessage: String) {
-                    done.completeExceptionally(ToolException(errorMessage))
-                }
-
-                override fun setErrorMessage(errorMessage: String, link: XDebuggerTreeNodeHyperlink?) = setErrorMessage(errorMessage)
-
-                override fun setMessage(
-                    message: String,
-                    icon: Icon?,
-                    attributes: SimpleTextAttributes,
-                    link: XDebuggerTreeNodeHyperlink?,
-                ) = Unit
-
-                override fun isObsolete(): Boolean = done.isCompleted
+        val node = compositeNode(
+            done,
+            onChildren = { children, last ->
+                children.topValues.forEach { found += it.name to it }
+                for (i in 0 until children.size()) found += children.getName(i) to children.getValue(i)
+                if (last || found.size >= max) done.complete(found.take(max))
             },
+            onTooMany = { done.complete(found.take(max)) },
         )
+        container.computeChildren(node)
+    }
+
+    private fun compositeNode(
+        done: CompletableDeferred<*>,
+        onChildren: (XValueChildrenList, Boolean) -> Unit,
+        onTooMany: () -> Unit,
+    ): XCompositeNode {
+        val type = XCompositeNode::class.java
+        return Proxy.newProxyInstance(type.classLoader, arrayOf(type)) { proxy, method, arguments ->
+            val args = arguments.orEmpty()
+            when (method.name) {
+                "addChildren" -> onChildren(args[0] as XValueChildrenList, args[1] as Boolean)
+                "tooManyChildren" -> onTooMany()
+                "setErrorMessage" -> done.completeExceptionally(ToolException(args[0] as String))
+                "isObsolete" -> done.isCompleted
+                "hashCode" -> System.identityHashCode(proxy)
+                "equals" -> proxy === args[0]
+                "toString" -> "XCompositeNode(Claude)"
+                else -> null
+            }
+        } as XCompositeNode
     }
 
     suspend fun present(target: XValue): Presented = collected { done ->
