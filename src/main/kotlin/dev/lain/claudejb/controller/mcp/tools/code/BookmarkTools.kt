@@ -5,10 +5,10 @@ import com.intellij.ide.bookmark.BookmarkType
 import com.intellij.ide.bookmark.BookmarksManager
 import com.intellij.ide.bookmark.FileBookmark
 import com.intellij.ide.bookmark.LineBookmark
+import com.intellij.ide.bookmark.providers.LineBookmarkProvider
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import dev.lain.claudejb.controller.mcp.FocusKeeper
@@ -73,7 +73,7 @@ internal class BookmarkTools(private val project: Project, private val reveal: R
         val file = readAction { Locations.file(project, path) }
         val manager = manager()
         withContext(Dispatchers.EDT) {
-            val bookmark = manager.createBookmark(context(file, line)) ?: throw ToolException("the IDE cannot bookmark $path")
+            val bookmark = bookmark(file, line) ?: throw ToolException("the IDE cannot bookmark $path")
             val group = groupName?.let { manager.getGroup(it) ?: manager.addGroup(it, false) }
                 ?: manager.defaultGroup
                 ?: manager.addGroup(DEFAULT_GROUP, true)
@@ -90,7 +90,8 @@ internal class BookmarkTools(private val project: Project, private val reveal: R
         )
     }
 
-    private fun context(file: VirtualFile, line: Int): Any = if (line > 0) OpenFileDescriptor(project, file, line - 1, 0) else file
+    private fun bookmark(file: VirtualFile, line: Int): Bookmark? =
+        LineBookmarkProvider.Util.find(project)?.createBookmark(file, line - 1) ?: manager().createBookmark(file)
 
     private suspend fun remove(args: ToolArgs): ToolResult {
         val path = args.string("path")
