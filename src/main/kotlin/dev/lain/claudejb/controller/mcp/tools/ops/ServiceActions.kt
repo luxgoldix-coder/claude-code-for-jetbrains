@@ -108,9 +108,12 @@ internal class ServiceActions(private val project: Project, private val node: Se
 
     private fun viewContext(): DataContext? {
         val id = ServiceViewManager.getInstance(project).getToolWindowId(node.root.javaClass) ?: ToolWindowId.SERVICES
-        val component = ToolWindowManager.getInstance(project).getToolWindow(id)?.contentManager?.selectedContent?.component ?: return null
-        val tree = UIUtil.findComponentOfType(component, JTree::class.java) ?: return null
-        return DataManager.getInstance().getDataContext(tree)
+        val contents = ToolWindowManager.getInstance(project).getToolWindow(id)?.contentManager?.contents ?: return null
+        return contents.asSequence()
+            .flatMap { UIUtil.findComponentsOfType(it.component, JTree::class.java) }
+            .filter { it.selectionCount > 0 }
+            .map { DataManager.getInstance().getDataContext(it) }
+            .firstOrNull { PlatformCoreDataKeys.SELECTED_ITEM.getData(it) == node.value }
     }
 
     private companion object {
