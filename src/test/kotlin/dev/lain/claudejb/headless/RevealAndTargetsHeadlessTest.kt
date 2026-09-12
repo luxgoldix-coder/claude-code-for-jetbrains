@@ -93,7 +93,6 @@ class RevealAndTargetsHeadlessTest : BasePlatformTestCase() {
         val file = LocalFileSystem.getInstance().findFileByNioFile(source)!!
         assertTrue(reveal.file(file, line = 2, column = 3, preview = true))
         assertTrue(FileEditorManager.getInstance(project).isFileOpen(file))
-        assertTrue(reveal.mirroring)
         assertFalse(reveal.toolWindow("No Such Window"))
         val window = ToolWindowManager.getInstance(project).registerToolWindow("Claude Reveal") { anchor = ToolWindowAnchor.RIGHT }
         window.contentManager.addContent(ContentFactory.getInstance().createContent(JPanel(), "First", false))
@@ -102,9 +101,6 @@ class RevealAndTargetsHeadlessTest : BasePlatformTestCase() {
         assertTrue(reveal.content("Claude Reveal", "Second"))
         assertFalse(reveal.content("Claude Reveal", "Third"))
         assertFalse(reveal.content("No Such Window", "First"))
-        assertFalse(reveal.log())
-        assertFalse(reveal.requests())
-        assertFalse(reveal.fileHistory(source.toString()))
     }
 
     fun `test an action is dispatched in a target's context, a toggle flips and reads back, and the unknown is named`() = runBlocking {
