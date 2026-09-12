@@ -1,11 +1,19 @@
 package dev.lain.claudejb.model.settings.env
 
+import com.intellij.openapi.util.SystemInfo
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assumptions.assumeFalse
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Files
+import java.nio.file.Path
 
 class EnvScriptLoaderTest {
+
+    @TempDir
+    lateinit var tmp: Path
 
     @Test
     fun `simple KEY=VALUE line`() {
@@ -59,6 +67,29 @@ class EnvScriptLoaderTest {
     fun `empty value is allowed`() {
         val env = EnvScriptLoader.parse("EMPTY=")
         assertEquals("", env["EMPTY"])
+    }
+
+    @Test
+    fun `a blank or missing script loads nothing`() {
+        assertEquals(emptyMap<String, String>(), EnvScriptLoader.load(null))
+        assertEquals(emptyMap<String, String>(), EnvScriptLoader.load("  "))
+        assertEquals(emptyMap<String, String>(), EnvScriptLoader.load(tmp.resolve("missing.sh").toString()))
+    }
+
+    @Test
+    fun `a real script is sourced and its exports come back`() {
+        assumeFalse(SystemInfo.isWindows)
+        val script = tmp.resolve("env.sh")
+        Files.writeString(script, "export CLAUDE_TEST_SOURCED=hello\n")
+        assertEquals("hello", EnvScriptLoader.load(script.toString())["CLAUDE_TEST_SOURCED"])
+    }
+
+    @Test
+    fun `a script that exits before the shell can dump its environment yields nothing`() {
+        assumeFalse(SystemInfo.isWindows)
+        val failing = tmp.resolve("fail.sh")
+        Files.writeString(failing, "export CLAUDE_TEST_PARTIAL=yes\nexit 3\n")
+        assertEquals(emptyMap<String, String>(), EnvScriptLoader.load(failing.toString()))
     }
 
     @Test
