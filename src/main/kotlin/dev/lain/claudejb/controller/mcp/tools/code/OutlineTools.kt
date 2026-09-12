@@ -5,7 +5,6 @@ import com.intellij.ide.structureView.TreeBasedStructureViewBuilder
 import com.intellij.ide.util.treeView.smartTree.TreeElement
 import com.intellij.lang.LanguageStructureViewBuilder
 import com.intellij.navigation.NavigationItem
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -20,8 +19,6 @@ import dev.lain.claudejb.model.mcp.ToolDomain
 import dev.lain.claudejb.model.mcp.ToolException
 import dev.lain.claudejb.model.mcp.ToolResult
 import dev.lain.claudejb.model.mcp.ToolSpec
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonArray
@@ -46,7 +43,7 @@ internal class OutlineTools(private val project: Project) {
         val builder = readAction { LanguageStructureViewBuilder.getInstance().getStructureViewBuilder(psiFile) }
             as? TreeBasedStructureViewBuilder
             ?: throw ToolException("the IDE has no structure view for $path")
-        val items = withContext(Dispatchers.EDT) {
+        val items = readAction {
             val model = builder.createStructureViewModel(null)
             try {
                 children(model.root, depth)
