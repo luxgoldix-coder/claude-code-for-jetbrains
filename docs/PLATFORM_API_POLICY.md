@@ -56,15 +56,16 @@ code**, because it loses signatures, and an approximate signature is indistingui
 | The plugin manager's descriptor lookups: by class, by id, and the plugin arrays | internal since 262 | the plugin-aware class loader's descriptor and id for the plugin a class came from; an optional dependency in `plugin.xml` for the classes of another plugin, loaded through this plugin's own class loader; the installed and loaded checks, which stay public |
 | The terminal tool window manager's shell widget creator | deprecated since 261 | the terminal tool window tabs manager's tab builder, and the view's send-text builder |
 | The breakpoint manager's five-argument add-line-breakpoint | deprecated for removal since 262 | the four-argument form, then the breakpoint's temporary setter |
+| The terminal execution console's constructors and its LF-to-CRLF switch | deprecated since 261; the builder they name is 262-only | a console view from the text console builder factory, attached to the process handler |
+| The build file position's file getter | deprecated for removal since 262; its path getter is 262-only | the message event's navigatable: a file navigatable's descriptor, or an open-file descriptor |
+| The PATH utility's find-in-path family | deprecated for removal since 263; find-first is 263-only | the PATH variable value and its directory list, with the exact executable names |
+| Implementing the composite debugger node | its single-argument too-many-children is abstract and deprecated at once, so every implementation overrides a deprecated method | a dynamic proxy of the interface, dispatching by method name |
 
 ## Tolerated, because experimental is not a promise broken
 
 The project task execution environment factory; the file editor manager's current-file and can-open checks;
 the project-scoped JDK table getter; the module manager's all-module descriptions; the service view
 descriptor's unique id; the bookmarks manager; and the terminal tool window tabs manager with its builders.
-
-One deprecation is tolerated because the platform forces it: the composite debugger node's single-argument
-too-many-children is abstract and deprecated at once, so any implementation of that interface overrides it.
 
 ## Watch list
 
