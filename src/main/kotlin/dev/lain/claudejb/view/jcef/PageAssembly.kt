@@ -105,6 +105,7 @@ internal object PageAssembly {
         "views/chat/markdown.css",
         "views/chat/fold.css",
         "views/chat/tools.css",
+        "views/chat/output.css",
         "views/chat/code.css",
         "views/chat/notices.css",
         "views/chat/toon.css",
