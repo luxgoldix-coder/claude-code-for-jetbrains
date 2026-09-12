@@ -69,9 +69,23 @@ internal class ActionTools(private val project: Project, private val actions: Id
         return runCatching { ActionUtil.updateAction(action, event) }.isSuccess && event.presentation.isEnabledAndVisible
     }
 
-    private fun row(id: String, action: AnAction, group: Boolean, enabled: Boolean): JsonObject = buildJsonObject {
+    private fun shownText(action: AnAction, context: DataContext): String {
+        val template = plain(action.templatePresentation.text)
+        if (template.isNotEmpty()) return template
+        val event = AnActionEvent.createEvent(action, context, null, ActionPlaces.MAIN_MENU, ActionUiKind.NONE, null)
+        runCatching { ActionUtil.updateAction(action, event) }
+        return plain(event.presentation.text)
+    }
+
+    private fun row(
+        id: String,
+        action: AnAction,
+        group: Boolean,
+        enabled: Boolean,
+        text: String = plain(action.templatePresentation.text),
+    ): JsonObject = buildJsonObject {
         put("id", id)
-        put("text", plain(action.templatePresentation.text))
+        put("text", text)
         put("description", action.templatePresentation.description.orEmpty())
         put("group", group)
         put("enabled", enabled)
@@ -86,12 +100,13 @@ internal class ActionTools(private val project: Project, private val actions: Id
             for ((depth, segment) in segments.withIndex()) {
                 group = group.getChildActionsOrStubs()
                     .filterIsInstance<DefaultActionGroup>()
-                    .firstOrNull { plain(it.templatePresentation.text).equals(segment, ignoreCase = true) }
+                    .firstOrNull { plain(it.templatePresentation.text).equals(segment, ignoreCase = true) || manager.getId(it) == segment }
                     ?: throw ToolException("no menu $segment under " + parent(segments.take(depth)))
             }
+            val context = TargetContext(project).project()
             group.getChildActionsOrStubs().filterNot { it is Separator }.map { child ->
                 val id = manager.getId(child).orEmpty()
-                row(id, child, child is DefaultActionGroup, enabled = true)
+                row(id, child, child is DefaultActionGroup, enabled = true, text = shownText(child, context))
             }
         }
         return ToolResult.toon(
