@@ -27,7 +27,7 @@ internal class DbTools(project: Project, private val gateway: DbGateway = DbGate
             listOf(
                 Tool(DB_CONNECTIONS, ::connections),
                 Tool(DB_SCHEMA, ::schema),
-                Tool(DB_QUERY) { ToolResult.toon(Batch.run(it, QUERIES, ::queryOne)) },
+                Tool(DB_QUERY) { ToolResult.toon(Batch.run(it, Batch.STATEMENTS, ::queryOne)) },
             ),
         )
     } else {
@@ -121,7 +121,6 @@ internal class DbTools(project: Project, private val gateway: DbGateway = DbGate
         private const val MAX_ROWS = 1000
         private const val CELL_CHARS = 200
         private const val MILLIS = 1000L
-        val QUERIES = Batch.Plural("queries", "code")
 
         val DB_CONNECTIONS = ToolSpec(
             "db_connections",
@@ -144,13 +143,13 @@ internal class DbTools(project: Project, private val gateway: DbGateway = DbGate
 
         val DB_QUERY = ToolSpec(
             "db_query",
-            "Runs one SQL statement, or several in a row with queries, on a data source through the IDE's own connection, " +
+            "Runs one SQL statement, or several in a row with statements, on a data source through the IDE's own connection, " +
                 "driver and stored credentials, and returns its rows, or the update count when it returns none. Meant for " +
                 "read-only queries; anything that writes is a change the user approves.",
             listOf(
                 Param("connection", "The data source name as db_connections lists it"),
                 Param("code", "The SQL statement to run", required = false),
-                Batch.param(QUERIES, "Several SQL statements at once, one result each, on the same connection"),
+                Batch.param(Batch.STATEMENTS, "Several SQL statements at once, one result each, on the same connection"),
                 Param("max", "Maximum rows to return (default $DEFAULT_MAX, at most $MAX_ROWS)", type = "integer", required = false),
             ),
             mutates = true,

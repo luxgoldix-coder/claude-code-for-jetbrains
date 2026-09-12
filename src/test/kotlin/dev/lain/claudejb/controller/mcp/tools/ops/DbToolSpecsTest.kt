@@ -1,5 +1,6 @@
 package dev.lain.claudejb.controller.mcp.tools.ops
 
+import dev.lain.claudejb.model.mcp.Batch
 import dev.lain.claudejb.model.mcp.ToolDomain
 import dev.lain.claudejb.model.mcp.ToolSpec
 import dev.lain.claudejb.model.permission.scan.ToolInputScanner
@@ -30,8 +31,8 @@ class DbToolSpecsTest {
 
     @Test
     fun `the SQL travels under code, which the guard scans as a command, alone or as a list`() {
-        assertEquals("code", DbTools.QUERIES.identity)
-        assertEquals("queries", DbTools.QUERIES.key)
+        assertEquals("code", Batch.STATEMENTS.identity)
+        assertEquals("statements", DbTools.DB_QUERY.params.single { it.type == "array" }.name)
         assertNotNull(ToolInputScanner.commandText(buildJsonObject { put("code", "select 1") }))
         assertNull(ToolInputScanner.commandText(buildJsonObject { put("sql", "select 1") }), "sql is not a key the guard scans")
         assertEquals(listOf("connection"), DbTools.DB_QUERY.params.filter { it.required }.map { it.name })
@@ -57,7 +58,7 @@ class DbToolSpecsTest {
     @Test
     fun `the data source is always called connection and the schema filter table`() {
         assertEquals(listOf("connection", "table", "max"), DbTools.DB_SCHEMA.params.map { it.name })
-        assertEquals(listOf("connection", "code", "queries", "max"), DbTools.DB_QUERY.params.map { it.name })
+        assertEquals(listOf("connection", "code", "statements", "max"), DbTools.DB_QUERY.params.map { it.name })
         assertEquals(listOf("max"), DbTools.DB_CONNECTIONS.params.map { it.name })
     }
 

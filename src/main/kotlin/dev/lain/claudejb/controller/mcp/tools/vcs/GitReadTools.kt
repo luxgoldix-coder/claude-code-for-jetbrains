@@ -37,7 +37,7 @@ internal class GitReadTools(private val project: Project, private val io: Corout
         "Git as the IDE sees it: status, log, diff and branches, read-only",
         listOf(
             Tool(GIT_STATUS, ::status),
-            Tool(GIT_LOG) { ToolResult.toon(Batch.run(it, HASHES, ::logOne)) },
+            Tool(GIT_LOG) { ToolResult.toon(Batch.run(it, Batch.HASHES, ::logOne)) },
             Tool(GIT_DIFF) { ToolResult.toon(Batch.run(it, Batch.PATHS, ::diffOne)) },
             Tool(GIT_BRANCHES, ::branches),
         ),
@@ -164,7 +164,6 @@ internal class GitReadTools(private val project: Project, private val io: Corout
         private const val MIN_HASH_LENGTH = 4
         private const val MAX_HASH_LENGTH = 64
         private val HASH = Regex("[0-9a-fA-F]{$MIN_HASH_LENGTH,$MAX_HASH_LENGTH}")
-        val HASHES = Batch.Plural("hashes", "hash")
 
         val GIT_STATUS = ToolSpec(
             "git_status",
@@ -181,7 +180,7 @@ internal class GitReadTools(private val project: Project, private val io: Corout
                 "vcs_open(view=log) to show one in the IDE's Git log.",
             listOf(
                 Param("hash", "One commit to describe, 4 to 64 hex characters (default: the recent commits)", required = false),
-                Batch.param(HASHES, "Several commits at once, one result per hash"),
+                Batch.param(Batch.HASHES, "Several commits at once, one result per hash"),
                 Param("max", "Maximum commits to return (default $DEFAULT_LOG_MAX)", type = "integer", required = false),
                 Param("all_branches", "true to include every branch, remote and tag (default false)", type = "boolean", required = false),
             ),

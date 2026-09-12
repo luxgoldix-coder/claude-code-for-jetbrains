@@ -46,7 +46,7 @@ class BatchTest {
         assertEquals("missing.kt", items[1]["path"]!!.jsonPrimitive.content)
         assertEquals("fun b.kt", items[2]["text"]!!.jsonPrimitive.content)
         val toolUseIds = Batch.expand(args("""{"paths":["a.kt"]}"""), paths)!!.map { it.toolUseId }
-        assertEquals(listOf("tu_1"), toolUseIds)
+        assertEquals(listOf("tu_1#0"), toolUseIds)
     }
 
     @Test
@@ -68,13 +68,25 @@ class BatchTest {
     }
 
     @Test
-    fun `a run list refuses the keys that would make its items ambiguous, and the size of any list is known`() {
+    fun `a run list refuses the keys that would make its items ambiguous, and each item carries its own tool use id`() {
         assertThrows<ToolException> { Batch.expand(args("""{"job":"run-1","names":["a"]}"""), Batch.RUN_NAMES) }
         assertThrows<ToolException> { Batch.expand(args("""{"name":"Kotlin tests","paths":["a.kt"]}"""), Batch.RUN_PATHS) }
-        assertEquals(2, Batch.expand(args("""{"paths":["a.kt","b.kt"],"wait":"5"}"""), Batch.RUN_PATHS)!!.size)
-        assertEquals(3, Batch.size(args("""{"hashes":["a","b","c"]}""").json))
-        assertEquals(1, Batch.size(args("""{"positions":[{"path":"a.kt","line":1}]}""").json))
-        assertNull(Batch.size(args("""{"path":"a.kt"}""").json))
+        val items = Batch.expand(args("""{"paths":["a.kt","b.kt"],"wait":"5"}"""), Batch.RUN_PATHS)!!
+        assertEquals(listOf("tu_1#0", "tu_1#1"), items.map { it.toolUseId })
+    }
+
+    @Test
+    fun `the host splits any list the same way the server does, so every item gets a card of its own`() {
+        val hashes = Batch.split(args("""{"hashes":["a","b"],"max":"3"}""").json)!!
+        assertEquals(listOf("a", "b"), hashes.map { it["hash"]!!.jsonPrimitive.content })
+        assertEquals("3", hashes[1]["max"]!!.jsonPrimitive.content)
+        assertNull(hashes[0]["hashes"])
+        val statements = Batch.split(args("""{"connection":"db","statements":["select 1"]}""").json)!!
+        assertEquals("select 1", statements.single()["code"]!!.jsonPrimitive.content)
+        val edits = Batch.split(args("""{"edits":[{"path":"a.kt","line":1,"content":"x"}]}""").json)!!
+        assertEquals("a.kt", edits.single()["path"]!!.jsonPrimitive.content)
+        assertNull(Batch.split(args("""{"path":"a.kt"}""").json))
+        assertEquals("tu#4", Batch.itemId("tu", 4))
     }
 
     @Test

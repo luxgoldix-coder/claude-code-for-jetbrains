@@ -207,16 +207,17 @@ object SessionTranscriptReader {
         val name = block["name"]?.jsonPrimitive?.contentOrNull ?: return null
         val input = block["input"] as? JsonObject ?: JsonObject(emptyMap())
         val own = OwnTools.parse(name, input)
+        val args = OwnTools.argsOf(input)
         return EntryDTO(
             "TOOL",
-            own?.let { OwnTools.label(it, input) } ?: ToolNaming.formatToolUse(name, input, projectRoot),
+            own?.let { OwnTools.label(it, args) } ?: ToolNaming.formatToolUse(name, input, projectRoot),
             meta = name,
             toolUseId = block["id"]?.jsonPrimitive?.contentOrNull,
             parentToolUseId = origin.parent,
             atMillis = origin.atMillis,
-            filePath = if (own != null) OwnTools.path(input) else ToolNaming.toolFilePath(name, input, projectRoot),
+            filePath = if (own != null) OwnTools.path(args) else ToolNaming.toolFilePath(name, input, projectRoot),
             commandText = ToolInputScanner.commandText(input),
-            messageText = if (own != null) OwnTools.argsToon(input) else ToolInputScanner.messageText(input),
+            messageText = if (own != null) OwnTools.argsToon(args) else ToolInputScanner.messageText(input),
         )
     }
 

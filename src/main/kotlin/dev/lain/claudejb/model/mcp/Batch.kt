@@ -59,7 +59,11 @@ object Batch {
         ),
     )
 
-    private val KEYS = listOf("paths", "queries", "names", "files", "positions", "edits", "hashes")
+    val HASHES = Plural("hashes", "hash")
+    val STATEMENTS = Plural("statements", "code")
+
+    private val IDENTITIES: Map<String, String> =
+        listOf(PATHS, QUERIES, NAMES, HASHES, STATEMENTS, FILES, POSITIONS, REPLACEMENTS).associate { it.key to it.identity }
 
     fun paths(what: String): Param = param(PATHS, "Several files at once, one result per path: $what")
 
@@ -68,7 +72,15 @@ object Batch {
     fun param(plural: Plural, description: String): Param =
         Param(plural.key, description, type = "array", required = false, items = plural.items)
 
-    fun size(args: JsonObject): Int? = KEYS.firstNotNullOfOrNull { key -> (args[key] as? JsonArray)?.size }
+    fun split(args: JsonObject): List<JsonObject>? {
+        val (key, identity) = IDENTITIES.entries.firstOrNull { args[it.key] is JsonArray } ?: return null
+        val shared = args.filterKeys { it != key }
+        return (args.getValue(key) as JsonArray).map { item ->
+            JsonObject(shared + (if (item is JsonObject) item else mapOf(identity to item)))
+        }
+    }
+
+    fun itemId(toolUseId: String, index: Int): String = "$toolUseId#$index"
 
     suspend fun run(args: ToolArgs, plural: Plural, one: suspend (ToolArgs) -> JsonObject): JsonObject {
         val items = expand(args, plural) ?: return one(args)
@@ -84,7 +96,9 @@ object Batch {
         val list = args.json[plural.key] ?: return null
         val elements = checked(args, plural, list)
         val base = args.json.filterKeys { it != plural.key }
-        return elements.map { ToolArgs(JsonObject(base + element(it, plural)), args.toolUseId) }
+        return elements.mapIndexed { index, item ->
+            ToolArgs(JsonObject(base + element(item, plural)), args.toolUseId?.let { itemId(it, index) })
+        }
     }
 
     private fun checked(args: ToolArgs, plural: Plural, list: JsonElement): JsonArray {
