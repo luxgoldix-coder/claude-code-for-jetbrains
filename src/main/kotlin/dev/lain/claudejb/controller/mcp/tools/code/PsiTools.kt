@@ -3,6 +3,7 @@ package dev.lain.claudejb.controller.mcp.tools.code
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
@@ -113,10 +114,12 @@ internal class PsiTools(private val project: Project, private val reveal: Reveal
         val outcome = writeCommandAction(project, "Claude: psi ${insertion ?: "replace"} in ${file.name}") {
             val name = "fragment." + (file.virtualFile?.extension ?: "txt")
             val fragment = PsiFileFactory.getInstance(project).createFileFromText(name, file.language, text)
-            val nodes = fragment.children.filterNot { it is PsiWhiteSpace }
-            if (nodes.isEmpty()) throw ToolException("the text parses to nothing in ${file.language.id}")
-            val placed = place(target, nodes, insertion)
-            CodeStyleManager.getInstance(project).reformat(placed.parent ?: placed)
+            val nodes = fragment.children.filter { it !is PsiWhiteSpace && it.textLength > 0 }
+            val placed = if (nodes.isNotEmpty() && !PsiTreeUtil.hasErrorElements(fragment)) {
+                place(target, nodes, insertion).also { CodeStyleManager.getInstance(project).reformat(it.parent ?: it) }
+            } else {
+                placeAsText(file, target, text, insertion)
+            }
             row(placed, 0, file)
         }
         file.virtualFile?.let { reveal.file(it) }
@@ -127,6 +130,16 @@ internal class PsiTools(private val project: Project, private val reveal: Reveal
                 put("element", outcome)
             },
         )
+    }
+
+    private fun placeAsText(file: PsiFile, target: PsiElement, text: String, insertion: String?): PsiElement {
+        val document = file.viewProvider.document ?: throw ToolException("${file.name} has no document")
+        val range = target.textRange
+        val start = if (insertion == "after") range.endOffset else range.startOffset
+        if (insertion == null) document.replaceString(range.startOffset, range.endOffset, text) else document.insertString(start, text)
+        PsiDocumentManager.getInstance(project).commitDocument(document)
+        CodeStyleManager.getInstance(project).reformatText(file, start, start + text.length)
+        return file.findElementAt(start)?.let { leaf -> leaf.parent?.takeIf { it.textRange.startOffset == start } ?: leaf } ?: file
     }
 
     private fun place(target: PsiElement, nodes: List<PsiElement>, insertion: String?): PsiElement {
