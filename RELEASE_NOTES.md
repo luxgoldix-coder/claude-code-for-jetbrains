@@ -1,7 +1,43 @@
-## v6.0.0 — Unreleased
+## v6.0.0 — 2026-09-12
 
-**A polish release.** No new way of working: the plugin is restructured inside, it can be traced,
-and the bugs found on the way are fixed.
+**Claude becomes one with your IDE.** This release gives Claude the IDE itself as its instrument.
+Four MCP servers of the plugin's own run inside the IDE — no port, nothing to install, nothing exposed
+— and through them Claude reads through the index, edits through the document model, refactors with
+the refactoring engine, builds, runs, tests and debugs through the run system, drives Git and GitHub
+through the IDE's own account and views, works the Services panel, and can fire any menu entry the IDE
+registers. 178 tools in 55 domains, on by default.
+
+**Ask it to show you things.** "Open `SessionLauncher.kt`", "take me to line 120", "show me the last
+commit", "show me the diff of this branch against the last release", "find me the pull request and
+open it", "open Settings at Code Style", "show me `api` in Services" — it appears in the IDE, in the
+right place, without you touching the mouse. Everything Claude does is mirrored the same way: what it
+reads opens in the preview tab, what it edits in a real tab, a commit is selected in the Log, a node in
+Services, a problem in its tab, a run in its window — and your caret never moves. Turn on the
+Presentation Assistant and every action it fires is announced on screen.
+
+**Claude God Mode.** The flame in the chat bar is the whole integration in one switch: all four servers
+and every rule. Each rule is one line in Claude's system prompt, repeated every turn, naming which IDE
+tool replaces which native one, so it does not drift back to `grep` and `sed`. Settings ▸ Claude Code
+▸ Claude IDE Integration fine-tunes servers, rules and the mirror. It costs *less* in tokens than the
+native tools it replaces: results come back as compact tables, and a file read is one call where a
+`cat` was a process plus a permission.
+
+**Cards you can follow.** Every IDE call is a card named by server, tool and subject; a list passed to a
+tool draws one sub-card per item with its own diff, live lines and state; every card carries a one-click
+link into the IDE. Own edits have *View diff* and *Restore*. A subagent's calls draw under its Task card.
+
+**Pull requests and releases, through your IDE's GitHub account.** List, read and open pull requests in
+the IDE's Pull Requests view; create one, comment, wait for the checks, merge when green; then check the
+tag, the Actions runs, the GitHub Release and the Marketplace. That is how this plugin's own releases
+are driven.
+
+**Every IDE call passes the guard first**, inside the servers, with the same rules as the native tools.
+The guard also learned to tell a path that is merely mentioned from one that is reached, to judge a
+container mount by its host side, and to refuse more privileged-container vectors.
+
+**Any MCP client can drive the IDE.** The servers speak plain MCP; the bridge and the protocol are in
+`docs/MCP_CLIENT.md`. The JetBrains MCP Server switch and the third-party Index and Debugger servers are
+gone — the plugin's own servers replace all three.
 
 **You can read the plugin's log without leaving the chat.** A Log view sits in the view row next to
 Guard and Vulnerabilities: the plugin's own entries, filtered by level, with a *Copy* button that
@@ -23,8 +59,9 @@ all of them.
 chat; Fork Session gets its own session id; `/btw` gets its answer instead of a thirty-second shrug; closing a chat mid sign-in leaves no process behind; `Shift+Tab`
 leaves the prompt; `Escape` closes what you opened even with the find bar up.
 
-**Under the hood.** The session orchestrator, the chat bridge, the page host and the guard are split
-one responsibility per file, the page is TypeScript in small files, every comment is gone, and a
+**Under the hood.** The plugin uses no deprecated or internal platform API, verified against every IDE
+build from 2025.3.1 to 2026.3. The session orchestrator, the chat bridge, the page host and the guard are
+split one responsibility per file, the page is TypeScript in small files, every comment is gone, and a
 package-dependency gate keeps the layering honest. Logging uses one level vocabulary across the
 plugin, and the binary's stderr and the page's own errors are recorded instead of dropped. The
 guard's tests pin the verdict each rule must give — with Windows paths and commands in every rule
