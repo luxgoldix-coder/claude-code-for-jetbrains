@@ -10,6 +10,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
+import dev.lain.claudejb.model.mcp.Batch
 import dev.lain.claudejb.model.mcp.Param
 import dev.lain.claudejb.model.mcp.Tool
 import dev.lain.claudejb.model.mcp.ToolArgs
@@ -29,10 +30,14 @@ internal class DiagnosticsTools(private val project: Project, private val daemon
     fun domain(): ToolDomain = ToolDomain(
         "diagnostics",
         "What the IDE's own analysis flags: the highlights of one file, the Problems view for the whole project, and its tabs",
-        listOf(Tool(PROBLEMS, ::problems), Tool(PROJECT_PROBLEMS, ::projectProblems), Tool(PROBLEMS_VIEW, ::problemsView)),
+        listOf(
+            Tool(PROBLEMS) { ToolResult.toon(Batch.run(it, Batch.PATHS, ::problemsOne)) },
+            Tool(PROJECT_PROBLEMS, ::projectProblems),
+            Tool(PROBLEMS_VIEW, ::problemsView),
+        ),
     )
 
-    private suspend fun problems(args: ToolArgs): ToolResult {
+    private suspend fun problemsOne(args: ToolArgs): JsonObject {
         val path = args.string("path")
         val severity = severity(args.optionalString("severity") ?: "warning")
         val max = args.int("max", DEFAULT_MAX)
@@ -42,29 +47,27 @@ internal class DiagnosticsTools(private val project: Project, private val daemon
         }
         val highlights = daemon.collect(file, document, severity)
             ?: throw ToolException("the IDE has not finished analysing $path; retry in a moment")
-        return ToolResult.toon(
-            buildJsonObject {
-                put("path", path)
-                put("count", highlights.size)
-                put("truncated", highlights.size > max)
-                put(
-                    "problems",
-                    buildJsonArray {
-                        highlights.take(max).forEach { h ->
-                            add(
-                                buildJsonObject {
-                                    put("line", h.line)
-                                    put("column", h.column)
-                                    put("severity", h.severity)
-                                    put("inspection", h.inspection ?: "")
-                                    put("message", h.message)
-                                },
-                            )
-                        }
-                    },
-                )
-            },
-        )
+        return buildJsonObject {
+            put("path", path)
+            put("count", highlights.size)
+            put("truncated", highlights.size > max)
+            put(
+                "problems",
+                buildJsonArray {
+                    highlights.take(max).forEach { h ->
+                        add(
+                            buildJsonObject {
+                                put("line", h.line)
+                                put("column", h.column)
+                                put("severity", h.severity)
+                                put("inspection", h.inspection ?: "")
+                                put("message", h.message)
+                            },
+                        )
+                    }
+                },
+            )
+        }
     }
 
     private suspend fun projectProblems(args: ToolArgs): ToolResult {
@@ -156,7 +159,8 @@ internal class DiagnosticsTools(private val project: Project, private val daemon
             "The errors and warnings the IDE's analysis shows for one file, with line, column, severity and the inspection " +
                 "that raised each. Opens the file in an editor tab, since the IDE analyses open files.",
             listOf(
-                Param("path", "File path, absolute or relative to the project root"),
+                Param("path", "File path, absolute or relative to the project root", required = false),
+                Batch.paths("every touched file in one call"),
                 Param("severity", "Minimum severity: error, warning (default), weak or all", required = false),
                 Param("max", "Maximum problems to return (default $DEFAULT_MAX)", type = "integer", required = false),
             ),

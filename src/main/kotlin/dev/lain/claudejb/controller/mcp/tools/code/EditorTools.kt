@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import dev.lain.claudejb.model.mcp.Batch
 import dev.lain.claudejb.model.mcp.Param
 import dev.lain.claudejb.model.mcp.Tool
 import dev.lain.claudejb.model.mcp.ToolArgs
@@ -17,6 +18,7 @@ import dev.lain.claudejb.model.mcp.ToolResult
 import dev.lain.claudejb.model.mcp.ToolSpec
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
@@ -27,10 +29,14 @@ internal class EditorTools(private val project: Project) {
     fun domain(): ToolDomain = ToolDomain(
         "editor",
         "What the editor shows and whether the index is ready: open a file at a line, the active file and caret, indexing state",
-        listOf(Tool(OPEN_FILE, ::openFile), Tool(ACTIVE_FILE, ::activeFile), Tool(INDEX_STATUS, ::indexStatus)),
+        listOf(
+            Tool(OPEN_FILE) { ToolResult.toon(Batch.run(it, Batch.PATHS, ::openOne)) },
+            Tool(ACTIVE_FILE, ::activeFile),
+            Tool(INDEX_STATUS, ::indexStatus),
+        ),
     )
 
-    private suspend fun openFile(args: ToolArgs): ToolResult {
+    private suspend fun openOne(args: ToolArgs): JsonObject {
         val path = args.string("path")
         val line = args.int("line", 1)
         val column = args.int("column", 1)
@@ -41,14 +47,12 @@ internal class EditorTools(private val project: Project) {
             manager.openTextEditor(OpenFileDescriptor(project, file, line - 1, column - 1), true) != null ||
                 manager.openFile(file, true).isNotEmpty()
         }
-        return ToolResult.toon(
-            buildJsonObject {
-                put("path", path)
-                put("line", line)
-                put("column", column)
-                put("opened", opened)
-            },
-        )
+        return buildJsonObject {
+            put("path", path)
+            put("line", line)
+            put("column", column)
+            put("opened", opened)
+        }
     }
 
     private suspend fun activeFile(ignored: ToolArgs): ToolResult = withContext(Dispatchers.EDT) {
@@ -87,7 +91,8 @@ internal class EditorTools(private val project: Project) {
             "open_file",
             "Opens a file in the editor and places the caret at a line and column, as the IDE's Go to File does.",
             listOf(
-                Param("path", "File path, absolute or relative to the project root"),
+                Param("path", "File path, absolute or relative to the project root", required = false),
+                Batch.paths("each opens in its own tab"),
                 Param("line", "1-based line for the caret (default 1)", type = "integer", required = false),
                 Param("column", "1-based column for the caret (default 1)", type = "integer", required = false),
             ),

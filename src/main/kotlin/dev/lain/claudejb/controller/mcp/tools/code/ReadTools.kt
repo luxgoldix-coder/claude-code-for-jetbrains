@@ -5,6 +5,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import dev.lain.claudejb.model.mcp.Batch
 import dev.lain.claudejb.model.mcp.Param
 import dev.lain.claudejb.model.mcp.Tool
 import dev.lain.claudejb.model.mcp.ToolArgs
@@ -12,6 +13,7 @@ import dev.lain.claudejb.model.mcp.ToolDomain
 import dev.lain.claudejb.model.mcp.ToolException
 import dev.lain.claudejb.model.mcp.ToolResult
 import dev.lain.claudejb.model.mcp.ToolSpec
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import java.nio.file.Path
@@ -24,7 +26,9 @@ internal class ReadTools(private val project: Project) {
         listOf(Tool(READ_FILE, ::readFile)),
     )
 
-    private suspend fun readFile(args: ToolArgs): ToolResult {
+    private suspend fun readFile(args: ToolArgs): ToolResult = ToolResult.toon(Batch.run(args, Batch.PATHS, ::readOne))
+
+    private suspend fun readOne(args: ToolArgs): JsonObject {
         val path = args.string("path")
         val offset = args.int("offset", 1)
         val limit = args.int("limit", DEFAULT_LIMIT)
@@ -36,15 +40,13 @@ internal class ReadTools(private val project: Project) {
             val lines = text.lines()
             val from = minOf(offset, lines.size + 1)
             val to = minOf(from + limit - 1, lines.size)
-            ToolResult.toon(
-                buildJsonObject {
-                    put("path", path)
-                    put("lines", lines.size)
-                    put("from", from)
-                    put("to", to)
-                    put("text", lines.subList(from - 1, to).joinToString("\n"))
-                },
-            )
+            buildJsonObject {
+                put("path", path)
+                put("lines", lines.size)
+                put("from", from)
+                put("to", to)
+                put("text", lines.subList(from - 1, to).joinToString("\n"))
+            }
         }
     }
 
@@ -74,9 +76,11 @@ internal class ReadTools(private val project: Project) {
 
         val READ_FILE = ToolSpec(
             "read_file",
-            "Reads a text file through the IDE, so unsaved editor changes are included. Use offset and limit for large files.",
+            "Reads a text file through the IDE, so unsaved editor changes are included, or several files at once with " +
+                "paths. Use offset and limit for large files.",
             listOf(
-                Param("path", "File path, absolute or relative to the project root"),
+                Param("path", "File path, absolute or relative to the project root", required = false),
+                Batch.paths("offset and limit apply to each"),
                 Param("offset", "First line to return, 1-based (default 1)", type = "integer", required = false),
                 Param(
                     "limit",

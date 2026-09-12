@@ -38,7 +38,16 @@ class RunToolSpecsTest {
     @Test
     fun `tool names are unique and every parameter has a type the schema accepts`() {
         assertEquals(all.size, all.map(ToolSpec::name).toSet().size)
-        assertTrue(all.flatMap { it.params }.all { it.type in setOf("string", "integer", "boolean") })
+        assertTrue(all.flatMap { it.params }.all { it.type in setOf("string", "integer", "boolean", "array") })
+        assertTrue(all.flatMap { it.params }.all { (it.type == "array") == (it.items != null) })
+    }
+
+    @Test
+    fun `a run of several configurations or files takes the list where the single one goes`() {
+        assertEquals(listOf("name", "names"), RunTools.RUN_CONFIGURATION.params.map { it.name }.filter { it.startsWith("name") })
+        assertEquals(listOf("path", "paths"), TestTools.RUN_TESTS.params.map { it.name }.filter { it.startsWith("path") })
+        assertTrue(RunTools.RUN_CONFIGURATION.params.none { it.required })
+        assertTrue(TestTools.RUN_TESTS.params.none { it.required })
     }
 
     private companion object {

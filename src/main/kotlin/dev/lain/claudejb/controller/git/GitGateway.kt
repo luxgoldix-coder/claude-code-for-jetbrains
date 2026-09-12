@@ -66,6 +66,10 @@ internal object GitGateway {
         return commits.map { commit -> toInfo(commit, root.path) }
     }
 
+    @Throws(VcsException::class)
+    fun commit(project: Project, root: VirtualFile, hash: String): GitCommitInfo? =
+        GitHistoryUtils.history(project, root, hash, "-n", "1").firstOrNull()?.let { toInfo(it, root.path) }
+
     private fun revisionsOf(scope: GitLogScope): Array<String> = when (scope) {
         GitLogScope.CURRENT_BRANCH -> arrayOf("HEAD")
         GitLogScope.EVERY_LINE_OF_DEVELOPMENT -> arrayOf("HEAD", "--branches", "--remotes", "--tags")

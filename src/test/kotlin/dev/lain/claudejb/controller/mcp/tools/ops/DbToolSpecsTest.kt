@@ -29,11 +29,12 @@ class DbToolSpecsTest {
     }
 
     @Test
-    fun `the SQL travels under code, which the guard scans as a command`() {
-        val sql = DbTools.DB_QUERY.params.single { it.required && it.name != "connection" }
-        assertEquals("code", sql.name)
+    fun `the SQL travels under code, which the guard scans as a command, alone or as a list`() {
+        assertEquals("code", DbTools.QUERIES.identity)
+        assertEquals("queries", DbTools.QUERIES.key)
         assertNotNull(ToolInputScanner.commandText(buildJsonObject { put("code", "select 1") }))
         assertNull(ToolInputScanner.commandText(buildJsonObject { put("sql", "select 1") }), "sql is not a key the guard scans")
+        assertEquals(listOf("connection"), DbTools.DB_QUERY.params.filter { it.required }.map { it.name })
     }
 
     @Test
@@ -56,7 +57,7 @@ class DbToolSpecsTest {
     @Test
     fun `the data source is always called connection and the schema filter table`() {
         assertEquals(listOf("connection", "table", "max"), DbTools.DB_SCHEMA.params.map { it.name })
-        assertEquals(listOf("connection", "code", "max"), DbTools.DB_QUERY.params.map { it.name })
+        assertEquals(listOf("connection", "code", "queries", "max"), DbTools.DB_QUERY.params.map { it.name })
         assertEquals(listOf("max"), DbTools.DB_CONNECTIONS.params.map { it.name })
     }
 
@@ -65,7 +66,7 @@ class DbToolSpecsTest {
         all.forEach { spec ->
             assertTrue(spec.description.length in DESCRIPTION_RANGE) { "${spec.name}: ${spec.description.length} chars" }
             spec.params.forEach { param ->
-                assertTrue(param.type in setOf("string", "integer", "boolean")) { "${spec.name}.${param.name}: ${param.type}" }
+                assertTrue(param.type in setOf("string", "integer", "boolean", "array")) { "${spec.name}.${param.name}: ${param.type}" }
                 assertTrue(param.description.isNotBlank()) { "${spec.name}.${param.name} has no description" }
             }
         }

@@ -14,7 +14,9 @@ import dev.lain.claudejb.model.session.transcript.Speaker
 import dev.lain.claudejb.model.session.transcript.ToolNaming
 import dev.lain.claudejb.model.session.transcript.ToolState
 import dev.lain.claudejb.model.session.transcript.TranscriptEntry
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 
 class ToolEvents(
     private val s: ClaudeSession,
@@ -22,9 +24,11 @@ class ToolEvents(
     private val fireState: () -> Unit,
 ) {
 
+    private class Own(val call: OwnTools.Call, val edits: Int)
+
     private val live = HashMap<String, Pair<TranscriptEntry, LiveLines>>()
     private val early = HashMap<String, LiveLines>()
-    private val ownCalls = HashMap<String, OwnTools.Call>()
+    private val ownCalls = HashMap<String, Own>()
 
     init {
         s.project.messageBus.connect(s).subscribe(
@@ -60,7 +64,7 @@ class ToolEvents(
         }
         s.reconciler.onMessageBoundary()
         val own = OwnTools.parse(event.name, event.input)
-        val review = own?.let { OwnTools.reviewAs(it, event.input, s.project.basePath) }
+        val reviews = own?.let { OwnTools.reviewsAs(it, event.input, s.project.basePath) }.orEmpty()
         s.transcript.add(
             Speaker.TOOL,
             own?.let { OwnTools.label(it, event.input) } ?: ToolNaming.formatToolUse(event.name, event.input, s.project.basePath),
@@ -70,20 +74,25 @@ class ToolEvents(
             toolState = ToolState.LOADING,
             filePath = ownPath(own, event),
             commandText = ToolInputScanner.commandText(event.input),
-            messageText = ownMessage(own, review, event.input),
+            messageText = ownMessage(own, reviews.isNotEmpty(), event.input),
         )
-        if (own != null) ownCalls[event.id] = own
+        if (own != null) ownCalls[event.id] = Own(own, reviews.size)
         flushEarly(event.id)
-        if (review != null) s.diffs.captureForReview(review.toolName, review.input, event.id)
+        snapshotKeys(event.id, reviews.size).zip(reviews).forEach { (key, review) ->
+            s.diffs.captureForReview(review.toolName, review.input, key)
+        }
         if (event.name in DiffPresenter.REVIEWABLE_TOOLS) {
             s.diffs.captureForReview(event.name, event.input, event.id)
             s.prompts.bindTool(event.id)
         }
     }
 
-    private fun ownMessage(own: OwnTools.Call?, review: OwnTools.Review?, input: JsonObject): String? = when {
+    private fun snapshotKeys(toolUseId: String, edits: Int): List<String> =
+        if (edits == 1) listOf(toolUseId) else List(edits) { "$toolUseId#$it" }
+
+    private fun ownMessage(own: OwnTools.Call?, reviewed: Boolean, input: JsonObject): String? = when {
         own == null -> ToolInputScanner.messageText(input)
-        review != null -> null
+        reviewed -> null
         else -> OwnTools.argsToon(input)
     }
 
@@ -100,21 +109,31 @@ class ToolEvents(
             s.poll.ensureOutputTail()
             fireState()
         }
-        val snap = s.diffs.onToolResult(event.toolUseId)
+        val own = ownCalls.remove(event.toolUseId)
+        val keys = if (own == null) listOf(event.toolUseId) else snapshotKeys(event.toolUseId, own.edits)
+        val diffs = keys.mapNotNull { key -> s.diffs.onToolResult(key)?.let { snap -> diffOf(snap)?.let { snap to it } } }
         if (!event.isError) {
             s.diffs.refreshTouched()
             if (ToolNaming.mayHaveWrittenUnknownFiles(s.transcript.toolNameOf(event.toolUseId))) {
                 s.diffs.refreshProjectTree()
             }
         }
-        val own = ownCalls.remove(event.toolUseId)
-        val diff = snap?.let { proposed(it) }?.let { DiffPresenter.unifiedDiff(snap.beforeText, it) }?.takeIf { it.isNotBlank() }
         if (event.parentToolUseId != null) return@edt
-        if (diff != null) {
-            s.transcript.addToolOutput(event.toolUseId, diff, meta = "diff")
+        if (keys.size == 1 && diffs.size == 1) {
+            s.transcript.addToolOutput(event.toolUseId, diffs.single().second, meta = DIFF)
             return@edt
         }
-        recordOutput(event, own)
+        diffs.forEach { (snap, diff) -> s.transcript.addToolOutput(event.toolUseId, headed(snap, diff), meta = DIFF) }
+        recordOutput(event, own?.call, onlyFailures = diffs.isNotEmpty())
+    }
+
+    private fun diffOf(snap: EditSnapshot): String? =
+        proposed(snap)?.let { DiffPresenter.unifiedDiff(snap.beforeText, it) }?.takeIf { it.isNotBlank() }
+
+    private fun headed(snap: EditSnapshot, diff: String): String {
+        val root = s.project.basePath
+        val path = if (root != null && snap.filePath.startsWith("$root/")) snap.filePath.removePrefix("$root/") else snap.filePath
+        return "@@ $path @@\n$diff"
     }
 
     private fun proposed(snap: EditSnapshot): String? = when (snap.toolName) {
@@ -123,11 +142,12 @@ class ToolEvents(
         else -> null
     }
 
-    private fun recordOutput(event: ClaudeEvent.ToolResult, own: OwnTools.Call?) {
+    private fun recordOutput(event: ClaudeEvent.ToolResult, own: OwnTools.Call?, onlyFailures: Boolean) {
         val text = event.content.trim()
         if (text.isBlank()) return
         val decoded = if (!event.isError && own != null) OwnTools.decodeResult(text) else null
         if (decoded != null) {
+            if (onlyFailures && failed(decoded) == 0) return
             val read = own?.takeIf(OwnTools::isRead)?.let { OwnTools.readText(decoded) }
             if (read != null) {
                 s.transcript.addToolOutput(event.toolUseId, read)
@@ -143,9 +163,13 @@ class ToolEvents(
         s.transcript.addToolOutput(event.toolUseId, text, meta = tags.joinToString(" ").ifBlank { null })
     }
 
+    private fun failed(decoded: JsonElement): Int =
+        ((decoded as? JsonObject)?.get("failed") as? JsonPrimitive)?.content?.toIntOrNull() ?: 0
+
     private companion object {
         const val TOON = "toon"
         const val LIVE = "live"
+        const val DIFF = "diff"
     }
 
     fun labelAgentCards() {

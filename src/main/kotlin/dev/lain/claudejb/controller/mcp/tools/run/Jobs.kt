@@ -12,6 +12,19 @@ import java.util.concurrent.atomic.AtomicInteger
 
 internal class Job<T>(val id: String, val tail: OutputTail, val deferred: Deferred<T>)
 
+internal class Deadline(millis: Long) {
+
+    private val end = System.nanoTime() + millis * NANOS_PER_MILLI
+
+    fun remaining(): Long = ((end - System.nanoTime()) / NANOS_PER_MILLI).coerceAtLeast(0)
+
+    fun expired(): Boolean = remaining() == 0L
+
+    private companion object {
+        const val NANOS_PER_MILLI = 1_000_000L
+    }
+}
+
 internal class Jobs<T>(private val scope: CoroutineScope, private val prefix: String) {
 
     private val counter = AtomicInteger()
@@ -53,6 +66,10 @@ internal class Jobs<T>(private val scope: CoroutineScope, private val prefix: St
         )
 
         fun status(result: Any?): String = if (result == null) "running" else "finished"
+
+        fun deadline(args: ToolArgs): Deadline = Deadline(waitMillis(args))
+
+        const val NOT_STARTED = "not started: the wait ran out on an earlier item; call again with the rest"
 
         fun waitMillis(args: ToolArgs): Long {
             val seconds = args.int("wait", DEFAULT_WAIT_SECONDS)

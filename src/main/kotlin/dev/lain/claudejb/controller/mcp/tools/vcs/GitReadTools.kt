@@ -8,6 +8,7 @@ import dev.lain.claudejb.controller.git.GitHistoryService
 import dev.lain.claudejb.model.git.GitCommitInfo
 import dev.lain.claudejb.model.git.GitLogScope
 import dev.lain.claudejb.model.git.GitRefInfo
+import dev.lain.claudejb.model.mcp.Batch
 import dev.lain.claudejb.model.mcp.Param
 import dev.lain.claudejb.model.mcp.Tool
 import dev.lain.claudejb.model.mcp.ToolArgs
@@ -34,7 +35,12 @@ internal class GitReadTools(private val project: Project, private val io: Corout
     fun domain(): ToolDomain = ToolDomain(
         "git",
         "Git as the IDE sees it: status, log, diff and branches, read-only",
-        listOf(Tool(GIT_STATUS, ::status), Tool(GIT_LOG, ::log), Tool(GIT_DIFF, ::diff), Tool(GIT_BRANCHES, ::branches)),
+        listOf(
+            Tool(GIT_STATUS, ::status),
+            Tool(GIT_LOG) { ToolResult.toon(Batch.run(it, HASHES, ::logOne)) },
+            Tool(GIT_DIFF) { ToolResult.toon(Batch.run(it, Batch.PATHS, ::diffOne)) },
+            Tool(GIT_BRANCHES, ::branches),
+        ),
     )
 
     private suspend fun status(args: ToolArgs): ToolResult {
@@ -64,36 +70,43 @@ internal class GitReadTools(private val project: Project, private val io: Corout
         )
     }
 
-    private suspend fun log(args: ToolArgs): ToolResult {
+    private suspend fun logOne(args: ToolArgs): JsonObject {
         val max = args.int("max", DEFAULT_LOG_MAX)
+        val hash = args.optionalString("hash")
         val scope = if (args.boolean("all_branches", false)) GitLogScope.EVERY_LINE_OF_DEVELOPMENT else GitLogScope.CURRENT_BRANCH
         root()
+        if (hash != null) return commitOne(hash)
         val commits = withContext(io) { history.recentCommits(max + 1, scope) }
-        return ToolResult.toon(
-            buildJsonObject {
-                put("count", commits.size.coerceAtMost(max))
-                put("truncated", commits.size > max)
-                put("commits", buildJsonArray { commits.take(max).forEach { add(commitRow(it)) } })
-            },
-        )
+        return buildJsonObject {
+            put("count", commits.size.coerceAtMost(max))
+            put("truncated", commits.size > max)
+            put("commits", buildJsonArray { commits.take(max).forEach { add(commitRow(it)) } })
+        }
     }
 
-    private suspend fun diff(args: ToolArgs): ToolResult {
+    private suspend fun commitOne(hash: String): JsonObject {
+        if (!HASH.matches(hash)) throw ToolException("hash must be $MIN_HASH_LENGTH to $MAX_HASH_LENGTH hexadecimal characters")
+        val commit = withContext(io) { history.commit(hash) } ?: throw ToolException("no commit $hash in this repository")
+        return buildJsonObject {
+            commitRow(commit).forEach { (key, value) -> put(key, value) }
+            put("paths", buildJsonArray { commit.changedPaths.forEach { add(JsonPrimitive(it)) } })
+        }
+    }
+
+    private suspend fun diffOne(args: ToolArgs): JsonObject {
         val path = args.optionalString("path")
         val maxLines = args.int("max_lines", DEFAULT_DIFF_LINES)
         root()
         awaitChangeLists()
         val patch = withContext(io) { WorkingTreePatch.unified(project, path) }
         val lines = patch.text.lines()
-        return ToolResult.toon(
-            buildJsonObject {
-                put("path", path ?: "")
-                put("files", patch.files)
-                put("lines", lines.size)
-                put("truncated", lines.size > maxLines)
-                put("diff", lines.take(maxLines).joinToString("\n"))
-            },
-        )
+        return buildJsonObject {
+            put("path", path ?: "")
+            put("files", patch.files)
+            put("lines", lines.size)
+            put("truncated", lines.size > maxLines)
+            put("diff", lines.take(maxLines).joinToString("\n"))
+        }
     }
 
     private suspend fun branches(args: ToolArgs): ToolResult {
@@ -148,6 +161,10 @@ internal class GitReadTools(private val project: Project, private val io: Corout
         private const val DEFAULT_DIFF_LINES = 400
         private const val DEFAULT_BRANCHES_MAX = 100
         private const val UNVERSIONED = "UNVERSIONED"
+        private const val MIN_HASH_LENGTH = 4
+        private const val MAX_HASH_LENGTH = 64
+        private val HASH = Regex("[0-9a-fA-F]{$MIN_HASH_LENGTH,$MAX_HASH_LENGTH}")
+        val HASHES = Batch.Plural("hashes", "hash")
 
         val GIT_STATUS = ToolSpec(
             "git_status",
@@ -160,8 +177,11 @@ internal class GitReadTools(private val project: Project, private val io: Corout
         val GIT_LOG = ToolSpec(
             "git_log",
             "Recent commits of the current branch, newest first, with hash, subject, author, ISO-8601 date and the number of " +
-                "files each touched. Pass a hash to vcs_open(view=log) to show one in the IDE's Git log.",
+                "files each touched; with hash or hashes, those commits with the paths each changed. Pass a hash to " +
+                "vcs_open(view=log) to show one in the IDE's Git log.",
             listOf(
+                Param("hash", "One commit to describe, 4 to 64 hex characters (default: the recent commits)", required = false),
+                Batch.param(HASHES, "Several commits at once, one result per hash"),
                 Param("max", "Maximum commits to return (default $DEFAULT_LOG_MAX)", type = "integer", required = false),
                 Param("all_branches", "true to include every branch, remote and tag (default false)", type = "boolean", required = false),
             ),
@@ -173,6 +193,7 @@ internal class GitReadTools(private val project: Project, private val io: Corout
                 "or directory. Use it to review before committing; for a commit's diff use vcs_open(view=log, hash).",
             listOf(
                 Param("path", "File or directory, absolute or relative to the project root (default: whole tree)", required = false),
+                Batch.paths("one diff each"),
                 Param("max_lines", "Maximum diff lines to return (default $DEFAULT_DIFF_LINES)", type = "integer", required = false),
             ),
         )

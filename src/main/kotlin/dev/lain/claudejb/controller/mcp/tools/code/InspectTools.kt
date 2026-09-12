@@ -13,6 +13,7 @@ import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.psi.PsiFile
+import dev.lain.claudejb.model.mcp.Batch
 import dev.lain.claudejb.model.mcp.Param
 import dev.lain.claudejb.model.mcp.Tool
 import dev.lain.claudejb.model.mcp.ToolArgs
@@ -33,7 +34,7 @@ internal class InspectTools(private val project: Project, private val io: Corout
     fun domain(): ToolDomain = ToolDomain(
         "inspect",
         "The IDE's inspections on demand, without waiting for the editor: list them, or run them on one file",
-        listOf(Tool(INSPECTIONS, ::inspections), Tool(INSPECT, ::inspect)),
+        listOf(Tool(INSPECTIONS, ::inspections), Tool(INSPECT) { ToolResult.toon(Batch.run(it, Batch.PATHS, ::inspectOne)) }),
     )
 
     private suspend fun inspections(args: ToolArgs): ToolResult {
@@ -62,7 +63,7 @@ internal class InspectTools(private val project: Project, private val io: Corout
         )
     }
 
-    private suspend fun inspect(args: ToolArgs): ToolResult {
+    private suspend fun inspectOne(args: ToolArgs): JsonObject {
         val path = args.string("path")
         val only = args.optionalString("inspection")
         val max = args.int("max", DEFAULT_MAX)
@@ -82,14 +83,12 @@ internal class InspectTools(private val project: Project, private val io: Corout
         } finally {
             context.cleanup()
         }
-        return ToolResult.toon(
-            buildJsonObject {
-                put("path", path)
-                put("inspections", tools.size)
-                put("truncated", rows.size >= max)
-                put("problems", buildJsonArray { rows.forEach { add(it) } })
-            },
-        )
+        return buildJsonObject {
+            put("path", path)
+            put("inspections", tools.size)
+            put("truncated", rows.size >= max)
+            put("problems", buildJsonArray { rows.forEach { add(it) } })
+        }
     }
 
     private fun missing(only: String?, path: String): String =
@@ -141,7 +140,8 @@ internal class InspectTools(private val project: Project, private val io: Corout
             "Runs the profile's enabled inspections on one file, or a single inspection by id, and returns each finding " +
                 "with its line and message.",
             listOf(
-                Param("path", "File path, absolute or relative to the project root"),
+                Param("path", "File path, absolute or relative to the project root", required = false),
+                Batch.paths("one result each"),
                 Param("inspection", "Run only this inspection id (default: every enabled inspection)", required = false),
                 Param("max", "Maximum findings to return (default $DEFAULT_MAX)", type = "integer", required = false),
             ),

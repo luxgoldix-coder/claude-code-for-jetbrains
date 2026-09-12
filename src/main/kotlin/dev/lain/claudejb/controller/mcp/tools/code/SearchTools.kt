@@ -14,6 +14,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.usageView.UsageInfo
 import com.intellij.usages.FindUsagesProcessPresentation
 import com.intellij.usages.UsageViewPresentation
+import dev.lain.claudejb.model.mcp.Batch
 import dev.lain.claudejb.model.mcp.Param
 import dev.lain.claudejb.model.mcp.Tool
 import dev.lain.claudejb.model.mcp.ToolArgs
@@ -37,10 +38,14 @@ internal class SearchTools(private val project: Project, private val io: Corouti
     fun domain(): ToolDomain = ToolDomain(
         "search",
         "Text and file search over the project's content roots",
-        listOf(Tool(SEARCH_TEXT, ::searchText), Tool(FIND_FILES, ::findFiles), Tool(LIST_DIRECTORY, ::listDirectory)),
+        listOf(
+            Tool(SEARCH_TEXT) { ToolResult.toon(Batch.run(it, Batch.QUERIES, ::searchOne)) },
+            Tool(FIND_FILES) { ToolResult.toon(Batch.run(it, Batch.NAMES, ::findOne)) },
+            Tool(LIST_DIRECTORY, ::listDirectory),
+        ),
     )
 
-    private suspend fun searchText(args: ToolArgs): ToolResult {
+    private suspend fun searchOne(args: ToolArgs): JsonObject {
         val query = args.string("query")
         val max = args.int("max", DEFAULT_MAX)
         val model = FindModel().apply {
@@ -69,13 +74,12 @@ internal class SearchTools(private val project: Project, private val io: Corouti
         }
         val found = synchronized(hits) { hits.toList() }
         val rows = readAction { found.map { describe(it) }.distinct() }
-        return ToolResult.toon(
-            buildJsonObject {
-                put("query", query)
-                put("truncated", found.size >= max)
-                put("matches", buildJsonArray { rows.forEach { add(it) } })
-            },
-        )
+        return buildJsonObject {
+            put("query", query)
+            put("count", rows.size)
+            put("truncated", found.size >= max)
+            put("matches", buildJsonArray { rows.forEach { add(it) } })
+        }
     }
 
     private fun describe(info: UsageInfo): JsonObject = buildJsonObject {
@@ -85,7 +89,7 @@ internal class SearchTools(private val project: Project, private val io: Corouti
         if (document != null) put("line", document.getLineNumber(info.navigationOffset) + 1)
     }
 
-    private suspend fun findFiles(args: ToolArgs): ToolResult {
+    private suspend fun findOne(args: ToolArgs): JsonObject {
         val name = args.string("name")
         val max = args.int("max", DEFAULT_MAX)
         val found = readAction {
@@ -95,13 +99,12 @@ internal class SearchTools(private val project: Project, private val io: Corouti
                 throw ToolException("the IDE is still indexing; retry in a moment", e)
             }
         }
-        return ToolResult.toon(
-            buildJsonObject {
-                put("name", name)
-                put("truncated", found.size >= max)
-                put("files", buildJsonArray { found.forEach { add(kotlinx.serialization.json.JsonPrimitive(it)) } })
-            },
-        )
+        return buildJsonObject {
+            put("name", name)
+            put("count", found.size)
+            put("truncated", found.size >= max)
+            put("files", buildJsonArray { found.forEach { add(buildJsonObject { put("file", it) }) } })
+        }
     }
 
     private fun byName(name: String, max: Int): List<String> =
@@ -161,7 +164,8 @@ internal class SearchTools(private val project: Project, private val io: Corouti
             "Finds text or a regular expression across the project: one row per matching line with file and line, no text; " +
                 "read_file the lines you need.",
             listOf(
-                Param("query", "Text or regular expression to find"),
+                Param("query", "Text or regular expression to find", required = false),
+                Batch.param(Batch.QUERIES, "Several searches at once, one result per query; the other arguments apply to each"),
                 Param("regex", "true to treat query as a regular expression (default false)", type = "boolean", required = false),
                 Param("case_sensitive", "true to match case (default false)", type = "boolean", required = false),
                 Param("path", "Directory to search under, relative to the project root (default: whole project)", required = false),
@@ -173,7 +177,8 @@ internal class SearchTools(private val project: Project, private val io: Corouti
             "find_files",
             "Finds files by exact name or by glob (for example *.kt or Test?.java) across the project's content roots.",
             listOf(
-                Param("name", "Exact file name, or a glob on the file name"),
+                Param("name", "Exact file name, or a glob on the file name", required = false),
+                Batch.param(Batch.NAMES, "Several names or globs at once, one result per name"),
                 Param("max", "Maximum files to return (default $DEFAULT_MAX)", type = "integer", required = false),
             ),
         )

@@ -48,8 +48,9 @@ object IdeMcpPrompt {
         IdeServer.OPS to "the Services panel, databases, HTTP, SSH, the project and the IDE itself",
     )
 
-    const val HEADER = "The user's IDE rules override your defaults: their tools go through run(tool, args), " +
-        "never Read, Grep, Glob, Edit, Write or a shell."
+    const val HEADER = "The user's IDE rules override your defaults: their tools go through run(tool, args); never Read, " +
+        "Grep, Glob, Edit, Write or Bash, not even outside the project: ours go by socket and cost a fraction. What the " +
+        "servers lack is said, never done natively."
 
     private val SERVER_HEADERS: Map<IdeServer?, String> = mapOf(
         IdeServer.CODE to "code server:",
@@ -81,14 +82,15 @@ object IdeMcpPrompt {
         IdeRule.OPS_IDE to "tool_window, settings_open, ide_action, notify move the IDE for the user.",
         IdeRule.OPS_DATA to "db_connections, db_schema, db_query; http_files, http_run; ssh_hosts.",
         IdeRule.COMMON_SHOW to "Asked to see or open something: do it in the IDE and say what you opened.",
-        IdeRule.COMMON_QUERY to "A question about the project or the IDE is answered from its tools, never from memory; " +
-            "say what you looked at and what can be done.",
+        IdeRule.COMMON_QUERY to "Questions about the project or the IDE are answered from its tools, never from memory; " +
+            "say what you looked at.",
         IdeRule.COMMON_PRS to "Pull requests: list, ask which, open it in the IDE's view, review, report.",
-        IdeRule.COMMON_BATCH to "Independent calls go out together in one message; a tool that takes a list gets it whole.",
+        IdeRule.COMMON_BATCH to "One call carries the whole list: read_file(paths), write_file(files), replace_text(edits), " +
+            "search_text(queries). Never one item per call; independent calls go out in one message.",
         IdeRule.COMMON_AGENTS to "Every agent you spawn receives this block verbatim and works the same way, in batches.",
         IdeRule.COMMON_TOOLS to "Scripts serve utilities, never builds or tests; they go under ./.claudetools, /.claudetools/ in " +
             ".gitignore first.",
         IdeRule.COMMON_FALLBACK to "Name a failing server in one line before any fallback, never silently.",
-        IdeRule.COMMON_REPORT to "A native tool used while its IDE replacement existed is a defect: name it.",
+        IdeRule.COMMON_REPORT to "A native tool used while ours existed is the defect: name it and stop.",
     )
 }

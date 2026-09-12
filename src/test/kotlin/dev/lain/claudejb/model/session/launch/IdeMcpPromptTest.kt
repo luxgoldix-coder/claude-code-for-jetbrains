@@ -60,7 +60,8 @@ class IdeMcpPromptTest {
     @Test
     fun `the rules replace the native tools by name, batch by default, and bind agents to the same way of working`() {
         val text = IdeMcpPrompt.rulesBlock(all, own)
-        val expected = "never Bash|never grep|write_file|one message|verbatim|in batches|never from memory|.idea/runConfigurations"
+        val expected = "never Bash|never grep|write_file(files)|one message|verbatim|in batches|never from memory|" +
+            ".idea/runConfigurations|not even outside the project|never done natively|name it and stop"
         expected.split('|').forEach { assertTrue(text.contains(it), it) }
         listOf("ide_read_file", "jetbrains", "hechtcarmel", "apply_patch").forEach { assertFalse(text.contains(it), it) }
     }
@@ -78,8 +79,8 @@ class IdeMcpPromptTest {
 
     private companion object {
         const val BUDGET_PARAGRAPH = 800
-        const val BUDGET_RULES = 2600
-        const val BUDGET_ALL = 3400
+        const val BUDGET_RULES = 2800
+        const val BUDGET_ALL = 3600
 
         val SNAKE_CASE = Regex("[a-z]+_[a-z_]+")
     }

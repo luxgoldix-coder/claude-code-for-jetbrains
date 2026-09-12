@@ -29,6 +29,8 @@ internal object Locations {
         Param("column", "1-based column (default 1)", type = "integer", required = false),
     )
 
+    val OPTIONAL_POSITION = POSITION.map { it.copy(required = false) }
+
     fun relative(project: Project, file: VirtualFile): String {
         val base = project.basePath ?: return file.path
         return file.path.removePrefix("$base/")

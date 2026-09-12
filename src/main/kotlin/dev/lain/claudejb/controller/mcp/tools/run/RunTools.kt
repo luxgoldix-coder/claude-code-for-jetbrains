@@ -7,6 +7,7 @@ import com.intellij.execution.ui.RunContentManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
+import dev.lain.claudejb.model.mcp.Batch
 import dev.lain.claudejb.model.mcp.Param
 import dev.lain.claudejb.model.mcp.Tool
 import dev.lain.claudejb.model.mcp.ToolArgs
@@ -32,10 +33,15 @@ internal class RunTools(private val project: Project, scope: CoroutineScope) {
         "Run configurations as the Run tool window sees them: list them, start one and read its console, stop a process",
         listOf(
             Tool(RUN_CONFIGURATIONS, ::runConfigurations),
-            Tool(RUN_CONFIGURATION, ::runConfiguration),
+            Tool(RUN_CONFIGURATION) { args -> ToolResult.toon(Batch.run(args, Batch.RUN_NAMES, runner(args))) },
             Tool(PROCESSES, ::processes),
         ),
     )
+
+    private fun runner(args: ToolArgs): suspend (ToolArgs) -> JsonObject {
+        val deadline = Jobs.deadline(args)
+        return { runOne(it, deadline) }
+    }
 
     private suspend fun runConfigurations(args: ToolArgs): ToolResult {
         val max = args.int("max", DEFAULT_MAX)
@@ -62,20 +68,19 @@ internal class RunTools(private val project: Project, scope: CoroutineScope) {
         put("selected", selected)
     }
 
-    private suspend fun runConfiguration(args: ToolArgs): ToolResult {
+    private suspend fun runOne(args: ToolArgs, deadline: Deadline): JsonObject {
         val tailLines = OutputTail.lines(args)
-        val job = args.optionalString("job")?.let { jobs.find(it) } ?: start(args)
-        val exitCode = jobs.await(job, Jobs.waitMillis(args))
-        return ToolResult.toon(
-            buildJsonObject {
-                put("name", args.optionalString("name") ?: "")
-                outcome(Jobs.status(exitCode), job.id, exitCode, job.tail, tailLines)
-            },
-        )
+        val job = args.optionalString("job")?.let { jobs.find(it) } ?: start(args, deadline)
+        val exitCode = jobs.await(job, deadline.remaining())
+        return buildJsonObject {
+            put("name", args.optionalString("name") ?: "")
+            outcome(Jobs.status(exitCode), job.id, exitCode, job.tail, tailLines)
+        }
     }
 
-    private suspend fun start(args: ToolArgs): Job<Int> {
+    private suspend fun start(args: ToolArgs, deadline: Deadline): Job<Int> {
         val name = args.string("name")
+        if (deadline.expired()) throw ToolException(Jobs.NOT_STARTED)
         val settings = readAction { RunManager.getInstance(project).findConfigurationByName(name) }
             ?: throw ToolException("no run configuration named $name; run_configurations lists them")
         val tail = OutputTail.toCard(project, args)
@@ -139,9 +144,11 @@ internal class RunTools(private val project: Project, scope: CoroutineScope) {
         val RUN_CONFIGURATION = ToolSpec(
             "run_configuration",
             "Starts a run configuration exactly as the Run button does, before-launch tasks included, and returns its exit code " +
-                "and the end of its console. Output streams to the chat while it runs; status running means call again with job.",
+                "and the end of its console; several in a row with names. Output streams to the chat while it runs; status " +
+                "running means call again with job.",
             listOf(
                 Param("name", "The configuration name as run_configurations lists it (not needed with job)", required = false),
+                Batch.param(Batch.RUN_NAMES, "Several configurations, run one after another within one wait, one result each"),
                 Jobs.WAIT,
                 OutputTail.TAIL,
                 Jobs.JOB,

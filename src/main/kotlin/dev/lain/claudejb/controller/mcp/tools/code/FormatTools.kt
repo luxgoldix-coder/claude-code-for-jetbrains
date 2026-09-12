@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.util.DocumentUtil
+import dev.lain.claudejb.model.mcp.Batch
 import dev.lain.claudejb.model.mcp.Param
 import dev.lain.claudejb.model.mcp.Tool
 import dev.lain.claudejb.model.mcp.ToolArgs
@@ -21,6 +22,7 @@ import dev.lain.claudejb.model.mcp.ToolSpec
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
@@ -29,36 +31,35 @@ internal class FormatTools(private val project: Project, private val io: Corouti
     fun domain(): ToolDomain = ToolDomain(
         "format",
         "The IDE's Reformat Code and Optimize Imports on one file, respecting .editorconfig and the project code style",
-        listOf(Tool(REFORMAT, ::reformat), Tool(OPTIMIZE_IMPORTS, ::optimizeImports)),
+        listOf(
+            Tool(REFORMAT) { ToolResult.toon(Batch.run(it, Batch.PATHS, ::reformatOne)) },
+            Tool(OPTIMIZE_IMPORTS) { ToolResult.toon(Batch.run(it, Batch.PATHS, ::optimizeOne)) },
+        ),
     )
 
-    private suspend fun reformat(args: ToolArgs): ToolResult {
+    private suspend fun reformatOne(args: ToolArgs): JsonObject {
         val path = args.string("path")
         val fromLine = args.int("from_line", 0)
         val toLine = args.int("to_line", 0)
         val (psiFile, document) = readAction { open(path) }
         val range = readAction { range(document, fromLine, toLine) }
         val changed = process(document) { ReformatCodeProcessor(project, psiFile, range, false) }
-        return ToolResult.toon(
-            buildJsonObject {
-                put("path", path)
-                put("from_line", fromLine)
-                put("to_line", toLine)
-                put("changed", changed)
-            },
-        )
+        return buildJsonObject {
+            put("path", path)
+            put("from_line", fromLine)
+            put("to_line", toLine)
+            put("changed", changed)
+        }
     }
 
-    private suspend fun optimizeImports(args: ToolArgs): ToolResult {
+    private suspend fun optimizeOne(args: ToolArgs): JsonObject {
         val path = args.string("path")
         val (psiFile, document) = readAction { open(path) }
         val changed = process(document) { OptimizeImportsProcessor(project, psiFile) }
-        return ToolResult.toon(
-            buildJsonObject {
-                put("path", path)
-                put("changed", changed)
-            },
-        )
+        return buildJsonObject {
+            put("path", path)
+            put("changed", changed)
+        }
     }
 
     private fun open(path: String): Pair<PsiFile, Document> {
@@ -87,7 +88,8 @@ internal class FormatTools(private val project: Project, private val io: Corouti
             "reformat",
             "Runs the IDE's Reformat Code on one file, or on a line range, with the project's code style and .editorconfig.",
             listOf(
-                Param("path", "File path, absolute or relative to the project root"),
+                Param("path", "File path, absolute or relative to the project root", required = false),
+                Batch.paths("whole files only"),
                 Param("from_line", "First 1-based line to reformat (default: the whole file)", type = "integer", required = false),
                 Param("to_line", "Last 1-based line to reformat; required with from_line", type = "integer", required = false),
             ),
@@ -97,7 +99,7 @@ internal class FormatTools(private val project: Project, private val io: Corouti
         val OPTIMIZE_IMPORTS = ToolSpec(
             "optimize_imports",
             "Runs the IDE's Optimize Imports on one file; changed is false for languages without an import optimizer.",
-            listOf(Param("path", "File path, absolute or relative to the project root")),
+            listOf(Param("path", "File path, absolute or relative to the project root", required = false), Batch.paths("one row each")),
             mutates = true,
         )
     }

@@ -132,10 +132,67 @@
     return node;
   }
 
+  const IDENTITY = ['path', 'file', 'query', 'name', 'hash'];
+
+  function identityOf(item: Row): string | null {
+    for (let i = 0; i < IDENTITY.length; i++) {
+      const v = item[IDENTITY[i]];
+      if (typeof v === 'string' && v) return IDENTITY[i];
+    }
+    return null;
+  }
+
+  function codeBlock(text: string, path: string): HTMLElement {
+    const pre = el('pre', { class: 'toon-block toon-code' });
+    const code = el('code', { text: text });
+    const lang = typeof CC.languageForPath === 'function' ? CC.languageForPath(path) : null;
+    if (lang) code.className = 'language-' + lang;
+    pre.appendChild(code);
+    if (typeof CC.decorateOneCodeBlock === 'function') CC.decorateOneCodeBlock(code);
+    return pre;
+  }
+
+  function itemBody(item: Row, key: string | null): HTMLElement {
+    const rest: Row = {};
+    Object.keys(item).forEach(function (k) {
+      if (k !== key) rest[k] = item[k];
+    });
+    const path = key === 'path' || key === 'file' ? String(item[key]) : '';
+    if (path && typeof rest.text === 'string' && rest.text.indexOf('\n') >= 0) {
+      const node = el('div', {});
+      delete rest.text;
+      node.appendChild(fields(rest));
+      node.appendChild(codeBlock(String(item.text), path));
+      return node;
+    }
+    return render(rest);
+  }
+
+  function items(list: Row[]): HTMLElement {
+    const node = el('div', { class: 'toon-items' });
+    list.forEach(function (item) {
+      const key = identityOf(item);
+      const details = el('details', { class: 'toon-item' + ('error' in item ? ' toon-item-error' : '') });
+      const summary = el('summary', {});
+      if (key === 'path' || key === 'file') summary.appendChild(fileLink(String(item[key]), item.line));
+      else summary.appendChild(el('span', { class: 'toon-scalar', text: key ? String(item[key]) : '' }));
+      if (typeof item.error === 'string')
+        summary.appendChild(el('span', { class: 'toon-item-err', text: String(item.error) }));
+      details.appendChild(summary);
+      details.appendChild(itemBody(item, key));
+      node.appendChild(details);
+    });
+    return node;
+  }
+
   function fields(row: Row): HTMLElement {
     const node = el('div', { class: 'toon-fields' });
     Object.keys(row).forEach(function (key) {
       const value = row[key];
+      if (key === 'items' && Array.isArray(value) && value.length > 0 && value.every(isRow)) {
+        node.appendChild(items(value as Row[]));
+        return;
+      }
       const nested =
         Array.isArray(value) || isRow(value) || (typeof value === 'string' && value.indexOf('\n') >= 0);
       const field = el('div', { class: 'toon-field' + (nested ? ' toon-nested' : '') });

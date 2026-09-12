@@ -8,11 +8,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import dev.lain.claudejb.controller.mcp.tools.code.Locations
+import dev.lain.claudejb.controller.mcp.tools.run.Deadline
 import dev.lain.claudejb.controller.mcp.tools.run.Job
 import dev.lain.claudejb.controller.mcp.tools.run.Jobs
 import dev.lain.claudejb.controller.mcp.tools.run.OutputTail
 import dev.lain.claudejb.controller.mcp.tools.run.ProcessRun
 import dev.lain.claudejb.controller.mcp.tools.run.outcome
+import dev.lain.claudejb.model.mcp.Batch
 import dev.lain.claudejb.model.mcp.Param
 import dev.lain.claudejb.model.mcp.Tool
 import dev.lain.claudejb.model.mcp.ToolArgs
@@ -23,6 +25,7 @@ import dev.lain.claudejb.model.mcp.ToolSpec
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
@@ -39,8 +42,17 @@ internal class HttpTools(private val project: Project, scope: CoroutineScope) {
         "http",
         "The IDE's HTTP Client: the project's .http and .rest request files, running one through its run configuration with " +
             "the response console, and opening one in the editor",
-        listOf(Tool(HTTP_FILES, ::files), Tool(HTTP_RUN, ::run), Tool(HTTP_OPEN, ::open)),
+        listOf(
+            Tool(HTTP_FILES, ::files),
+            Tool(HTTP_RUN) { args -> ToolResult.toon(Batch.run(args, Batch.RUN_PATHS, runner(args))) },
+            Tool(HTTP_OPEN, ::open),
+        ),
     )
+
+    private fun runner(args: ToolArgs): suspend (ToolArgs) -> JsonObject {
+        val deadline = Jobs.deadline(args)
+        return { runOne(it, deadline) }
+    }
 
     private suspend fun files(args: ToolArgs): ToolResult {
         val max = args.int("max", DEFAULT_MAX)
@@ -57,20 +69,19 @@ internal class HttpTools(private val project: Project, scope: CoroutineScope) {
         )
     }
 
-    private suspend fun run(args: ToolArgs): ToolResult {
+    private suspend fun runOne(args: ToolArgs, deadline: Deadline): JsonObject {
         val tailLines = OutputTail.lines(args)
-        val job = args.optionalString("job")?.let { jobs.find(it) } ?: start(args)
-        val exitCode = jobs.await(job, Jobs.waitMillis(args))
-        return ToolResult.toon(
-            buildJsonObject {
-                put("path", args.optionalString("path") ?: "")
-                outcome(Jobs.status(exitCode), job.id, exitCode, job.tail, tailLines)
-            },
-        )
+        val job = args.optionalString("job")?.let { jobs.find(it) } ?: start(args, deadline)
+        val exitCode = jobs.await(job, deadline.remaining())
+        return buildJsonObject {
+            put("path", args.optionalString("path") ?: "")
+            outcome(Jobs.status(exitCode), job.id, exitCode, job.tail, tailLines)
+        }
     }
 
-    private suspend fun start(args: ToolArgs): Job<Int> {
+    private suspend fun start(args: ToolArgs, deadline: Deadline): Job<Int> {
         val path = requestFile(args)
+        if (deadline.expired()) throw ToolException(Jobs.NOT_STARTED)
         val psiFile = readAction { Locations.psiFile(project, path) }
         val settings = HttpClientGateway.configurationFor(project, psiFile, path)
         val tail = OutputTail.toCard(project, args)
@@ -111,10 +122,11 @@ internal class HttpTools(private val project: Project, scope: CoroutineScope) {
         val HTTP_RUN = ToolSpec(
             "http_run",
             "Runs every request of an .http or .rest file through the IDE's HTTP Client run configuration, creating or reusing " +
-                "the one the IDE would make from the file, and returns the end of its console. Output streams to the chat while " +
-                "it runs; status running means call again with job.",
+                "the one the IDE would make from the file, and returns the end of its console; several files in a row with " +
+                "paths. Output streams to the chat while it runs; status running means call again with job.",
             listOf(
                 Param("path", "The request file, absolute or relative to the project root (not needed with job)", required = false),
+                Batch.param(Batch.RUN_PATHS, "Several request files, run one after another within one wait, one result each"),
                 Jobs.WAIT,
                 OutputTail.TAIL,
                 Jobs.JOB,

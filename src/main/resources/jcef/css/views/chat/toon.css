@@ -83,3 +83,38 @@
 .toon-diff-meta {
   color: var(--dim);
 }
+.toon-items {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+.toon-item {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 8px;
+}
+.toon-item > summary {
+  cursor: pointer;
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+}
+.toon-item[open] > summary {
+  margin-bottom: 4px;
+}
+.toon-item-error > summary {
+  color: var(--err, #ef5350);
+}
+.toon-item-err {
+  color: var(--err, #ef5350);
+  font-family: var(--mono);
+}
+.toon-code {
+  padding: 0;
+}
+.toon-code code {
+  display: block;
+  padding: 6px 8px;
+}

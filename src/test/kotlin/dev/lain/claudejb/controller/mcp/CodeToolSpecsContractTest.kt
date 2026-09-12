@@ -73,7 +73,8 @@ class CodeToolSpecsContractTest {
     fun `every parameter has a type the schema accepts and a description`() {
         for (spec in specs) {
             for (param in spec.params) {
-                assertTrue(param.type in setOf("string", "integer", "boolean")) { "${spec.name}.${param.name}: ${param.type}" }
+                assertTrue(param.type in setOf("string", "integer", "boolean", "array")) { "${spec.name}.${param.name}: ${param.type}" }
+                assertTrue((param.type == "array") == (param.items != null)) { "${spec.name}.${param.name}: an array says what it holds" }
                 assertTrue(param.description.isNotBlank()) { "${spec.name}.${param.name} has no description" }
             }
             assertTrue(spec.description.length in DESCRIPTION_RANGE) { "${spec.name}: ${spec.description.length} chars" }

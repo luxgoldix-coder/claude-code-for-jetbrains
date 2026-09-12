@@ -49,7 +49,7 @@ class HttpSshToolSpecsTest {
     @Test
     fun `a request file is always called path, which is what the guard walks`() {
         val locations = all.flatMap { spec -> spec.params.filter { LOCATION.containsMatchIn(it.description) }.map { spec.name to it.name } }
-        assertEquals(listOf("http_run" to "path", "http_open" to "path"), locations)
+        assertEquals(listOf("http_run" to "path", "http_run" to "paths", "http_open" to "path"), locations)
         all.flatMap { it.params }.map { it.name }.forEach { assertFalse(it in ALIASES, "$it is a location under another name") }
     }
 
@@ -66,7 +66,7 @@ class HttpSshToolSpecsTest {
         all.flatMap { spec -> spec.params.filter { it.type == "integer" }.map { spec.name to it } }.forEach { (tool, param) ->
             assertTrue("default" in param.description, "$tool.${param.name} names no default")
         }
-        assertTrue(all.flatMap { it.params }.all { it.type in setOf("string", "integer", "boolean") })
+        assertTrue(all.flatMap { it.params }.all { it.type in setOf("string", "integer", "boolean", "array") })
         all.forEach { assertEquals(ToolSpec.DEFAULT_TIMEOUT_MILLIS, it.timeoutMillis, it.name) }
     }
 

@@ -20,26 +20,41 @@ data class ToolSpec(
             put(
                 "properties",
                 buildJsonObject {
-                    for (param in params) {
-                        put(
-                            param.name,
-                            buildJsonObject {
-                                put("type", param.type)
-                                put("description", param.description)
-                            },
-                        )
-                    }
+                    for (param in params) put(param.name, property(param))
                 },
             )
             put("required", buildJsonArray { params.filter { it.required }.forEach { add(JsonPrimitive(it.name)) } })
         }
+
+    private fun property(param: Param): JsonObject = buildJsonObject {
+        put("type", param.type)
+        put("description", param.description)
+        param.items?.let { put("items", itemSchema(it)) }
+    }
+
+    private fun itemSchema(items: Items): JsonObject = buildJsonObject {
+        put("type", items.type)
+        if (items.params.isNotEmpty()) {
+            put("additionalProperties", false)
+            put("properties", buildJsonObject { for (param in items.params) put(param.name, property(param)) })
+            put("required", buildJsonArray { items.params.filter { it.required }.forEach { add(JsonPrimitive(it.name)) } })
+        }
+    }
 
     companion object {
         const val DEFAULT_TIMEOUT_MILLIS = 120_000L
     }
 }
 
-data class Param(val name: String, val description: String, val type: String = "string", val required: Boolean = true)
+data class Items(val type: String, val params: List<Param> = emptyList())
+
+data class Param(
+    val name: String,
+    val description: String,
+    val type: String = "string",
+    val required: Boolean = true,
+    val items: Items? = null,
+)
 
 class Tool(val spec: ToolSpec, val run: suspend (ToolArgs) -> ToolResult)
 

@@ -12,6 +12,7 @@ import com.intellij.psi.search.searches.DefinitionsScopedSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.indexing.FindSymbolParameters
 import dev.lain.claudejb.controller.mcp.tools.code.Locations.place
+import dev.lain.claudejb.model.mcp.Batch
 import dev.lain.claudejb.model.mcp.Param
 import dev.lain.claudejb.model.mcp.Tool
 import dev.lain.claudejb.model.mcp.ToolArgs
@@ -30,14 +31,14 @@ internal class NavigateTools(private val project: Project) {
         "navigate",
         "Symbols as the IDE resolves them: find by name, go to definition, references, implementations",
         listOf(
-            Tool(FIND_SYMBOLS, ::findSymbols),
-            Tool(DEFINITION, ::definition),
-            Tool(REFERENCES, ::references),
-            Tool(IMPLEMENTATIONS, ::implementations),
+            Tool(FIND_SYMBOLS) { ToolResult.toon(Batch.run(it, Batch.QUERIES, ::findOne)) },
+            Tool(DEFINITION) { ToolResult.toon(Batch.run(it, Batch.POSITIONS, ::definitionOne)) },
+            Tool(REFERENCES) { ToolResult.toon(Batch.run(it, Batch.POSITIONS, ::referencesOne)) },
+            Tool(IMPLEMENTATIONS) { ToolResult.toon(Batch.run(it, Batch.POSITIONS, ::implementationsOne)) },
         ),
     )
 
-    private suspend fun findSymbols(args: ToolArgs): ToolResult {
+    private suspend fun findOne(args: ToolArgs): JsonObject {
         val query = args.string("query")
         val max = args.int("max", DEFAULT_MAX)
         val libraries = args.boolean("libraries", false)
@@ -70,20 +71,21 @@ internal class NavigateTools(private val project: Project) {
             }
             items.filter { it is PsiElement && Locations.located(it) }.map(::symbolRow)
         }
-        return table("query", query, "symbols", rows, rows.size >= max)
+        return buildJsonObject {
+            put("query", query)
+            table("symbols", rows, rows.size >= max)
+        }
     }
 
-    private suspend fun definition(args: ToolArgs): ToolResult = indexed {
+    private suspend fun definitionOne(args: ToolArgs): JsonObject = indexed {
         val target = resolved(args)
-        ToolResult.toon(
-            buildJsonObject {
-                put("kind", Locations.kind(target))
-                place(project, target)
-            },
-        )
+        buildJsonObject {
+            put("kind", Locations.kind(target))
+            place(project, target)
+        }
     }
 
-    private suspend fun references(args: ToolArgs): ToolResult {
+    private suspend fun referencesOne(args: ToolArgs): JsonObject {
         val max = args.int("max", DEFAULT_MAX)
         val rows = indexed {
             val rows = ArrayList<JsonObject>()
@@ -93,10 +95,10 @@ internal class NavigateTools(private val project: Project) {
             }
             rows
         }
-        return table("count", rows.size, "references", rows, rows.size >= max)
+        return buildJsonObject { table("references", rows, rows.size >= max) }
     }
 
-    private suspend fun implementations(args: ToolArgs): ToolResult {
+    private suspend fun implementationsOne(args: ToolArgs): JsonObject {
         val max = args.int("max", DEFAULT_MAX)
         val rows = indexed {
             val rows = ArrayList<JsonObject>()
@@ -109,7 +111,7 @@ internal class NavigateTools(private val project: Project) {
             }
             rows
         }
-        return table("count", rows.size, "implementations", rows, rows.size >= max)
+        return buildJsonObject { table("implementations", rows, rows.size >= max) }
     }
 
     private fun resolved(args: ToolArgs): PsiElement = Locations.declarationAt(project, args)
@@ -131,14 +133,11 @@ internal class NavigateTools(private val project: Project) {
         throw ToolException("the IDE is still indexing; retry in a moment", e)
     }
 
-    private fun table(headKey: String, head: Any, key: String, rows: List<JsonObject>, truncated: Boolean): ToolResult =
-        ToolResult.toon(
-            buildJsonObject {
-                if (head is Int) put(headKey, head) else put(headKey, head.toString())
-                put("truncated", truncated)
-                put(key, buildJsonArray { rows.forEach { add(it) } })
-            },
-        )
+    private fun kotlinx.serialization.json.JsonObjectBuilder.table(key: String, rows: List<JsonObject>, truncated: Boolean) {
+        put("count", rows.size)
+        put("truncated", truncated)
+        put(key, buildJsonArray { rows.forEach { add(it) } })
+    }
 
     companion object {
 
@@ -146,9 +145,11 @@ internal class NavigateTools(private val project: Project) {
 
         val FIND_SYMBOLS = ToolSpec(
             "find_symbols",
-            "Finds classes, functions and other named symbols whose name contains the query, as the IDE's Go to Symbol does.",
+            "Finds classes, functions and other named symbols whose name contains the query, as the IDE's Go to Symbol does; " +
+                "several queries at once with queries.",
             listOf(
-                Param("query", "Part of the symbol name, case-insensitive"),
+                Param("query", "Part of the symbol name, case-insensitive", required = false),
+                Batch.param(Batch.QUERIES, "Several queries at once, one result per query; the other arguments apply to each"),
                 Param("libraries", "true to include library symbols (default false)", type = "boolean", required = false),
                 Param("max", "Maximum symbols to return (default $DEFAULT_MAX)", type = "integer", required = false),
             ),
@@ -156,20 +157,23 @@ internal class NavigateTools(private val project: Project) {
 
         val DEFINITION = ToolSpec(
             "definition",
-            "Resolves the reference at a position to its declaration and returns where it is.",
-            Locations.POSITION,
+            "Resolves the reference at a position to its declaration and returns where it is; several positions at once " +
+                "with positions.",
+            Locations.OPTIONAL_POSITION + Batch.positions("the declaration each resolves to"),
         )
 
         val REFERENCES = ToolSpec(
             "references",
-            "Lists the places that reference the symbol at a position.",
-            Locations.POSITION + Param("max", "Maximum references to return (default $DEFAULT_MAX)", type = "integer", required = false),
+            "Lists the places that reference the symbol at a position; several positions at once with positions.",
+            Locations.OPTIONAL_POSITION + Batch.positions("the references of each") +
+                Param("max", "Maximum references to return (default $DEFAULT_MAX)", type = "integer", required = false),
         )
 
         val IMPLEMENTATIONS = ToolSpec(
             "implementations",
-            "Lists the implementations or overrides of the symbol at a position.",
-            Locations.POSITION + Param("max", "Maximum results to return (default $DEFAULT_MAX)", type = "integer", required = false),
+            "Lists the implementations or overrides of the symbol at a position; several positions at once with positions.",
+            Locations.OPTIONAL_POSITION + Batch.positions("the implementations of each") +
+                Param("max", "Maximum results to return (default $DEFAULT_MAX)", type = "integer", required = false),
         )
     }
 }

@@ -45,6 +45,34 @@ describe('a result from one of our own servers is drawn from its data, not paste
     expect(card.querySelector('.tool-out pre')).toBeNull();
   });
 
+  it('a batch result becomes one collapsible sub-card per item, its path a link, a read as a code block, a failure marked', () => {
+    const win = loadFrontend(['app-transcript.js']);
+    const card = withOwnCall(
+      win,
+      JSON.stringify({
+        count: 3,
+        failed: 1,
+        items: [
+          { path: 'src/A.kt', lines: 2, from: 1, to: 2, text: 'fun a()\nfun b()' },
+          { path: 'missing.kt', error: 'no such path: missing.kt' },
+          { query: 'Mcp', count: 1, matches: [{ file: 'src/B.kt', line: 3 }] },
+        ],
+      })
+    );
+
+    const items = card.querySelectorAll('.tool-out .toon-items > details.toon-item');
+    expect(items.length).toBe(3);
+    expect(items[0].querySelector('summary a.jb-link').getAttribute('href')).toBe(
+      'jb://open?file=src%2FA.kt'
+    );
+    expect(items[0].querySelector('pre.toon-code code').textContent).toBe('fun a()\nfun b()');
+    expect(items[0].querySelector('.toon-fields').textContent).not.toContain('fun a()');
+    expect(items[1].classList.contains('toon-item-error')).toBe(true);
+    expect(items[1].querySelector('summary .toon-item-err').textContent).toBe('no such path: missing.kt');
+    expect(items[2].querySelector('summary').textContent).toBe('Mcp');
+    expect(items[2].querySelector('table.toon-table td.toon-file a.jb-link').textContent).toBe('src/B.kt:3');
+  });
+
   it('the scalars around the table stay readable as fields, and a flag reads as a mark', () => {
     const win = loadFrontend(['app-transcript.js']);
     const card = withOwnCall(
@@ -59,7 +87,7 @@ describe('a result from one of our own servers is drawn from its data, not paste
 
   it('rows with different shapes fall back to a list of field blocks', () => {
     const win = loadFrontend(['app-transcript.js']);
-    const card = withOwnCall(win, JSON.stringify({ items: [{ name: 'a', line: 1 }, { name: 'b' }] }));
+    const card = withOwnCall(win, JSON.stringify({ symbols: [{ name: 'a', line: 1 }, { name: 'b' }] }));
 
     expect(card.querySelector('table')).toBeNull();
     expect(card.querySelectorAll('.toon-list > li .toon-fields').length).toBe(2);

@@ -41,6 +41,11 @@ class GitHistoryService(private val project: Project) {
         return withPrimaryRoot(emptyList()) { root -> GitGateway.recentCommits(project, root, limit, scope) }
     }
 
+    fun commit(hash: String): GitCommitInfo? {
+        if (refusedOnEdt("commit()", "git log -n 1")) return null
+        return withPrimaryRoot<GitCommitInfo?>(null) { root -> GitGateway.commit(project, root, hash) }
+    }
+
     fun branchTopology(): GitBranchTopology {
         if (refusedOnEdt("branchTopology()", "git rev-list / git merge-base")) return GitBranchTopology.NONE
         return withPrimaryRoot(GitBranchTopology.NONE) { root -> GitGateway.branchTopology(project, root) }

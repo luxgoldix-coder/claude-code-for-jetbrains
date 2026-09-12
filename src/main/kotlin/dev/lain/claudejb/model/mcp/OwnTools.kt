@@ -3,6 +3,7 @@ package dev.lain.claudejb.model.mcp
 import dev.lain.claudejb.model.mcp.toon.Toon
 import dev.lain.claudejb.model.mcp.toon.ToonException
 import dev.lain.claudejb.model.mcp.toon.ToonOptions
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -21,6 +22,7 @@ object OwnTools {
 
     private val META_TOOL = Regex("^mcp__([a-z]+)__(domains|tools|run)$")
     private val EDITS = setOf("replace_text", "insert_text", "create_file", "write_file")
+    private val EDIT_LISTS = listOf("edits", "files")
 
     fun parse(toolName: String, input: JsonObject): Call? {
         val (server, meta) = META_TOOL.matchEntire(toolName)?.destructured ?: return null
@@ -35,12 +37,17 @@ object OwnTools {
     fun isOwn(toolName: String?): Boolean = toolName != null && META_TOOL.matches(toolName)
 
     fun label(call: Call, input: JsonObject = JsonObject(emptyMap())): String = when (call.meta) {
-        MetaTools.RUN.name -> call.server + " ▸ " + (call.argument ?: "?") + (path(input)?.let { " ▸ $it" } ?: "")
+        MetaTools.RUN.name -> call.server + " ▸ " + (call.argument ?: "?") + (subject(input)?.let { " ▸ $it" } ?: "")
         MetaTools.TOOLS.name -> call.server + " ▸ tools(" + (call.argument ?: "?") + ")"
         else -> call.server + " ▸ domains"
     }
 
     fun path(input: JsonObject): String? = args(input)?.let { text(it, "path") }
+
+    private fun subject(input: JsonObject): String? {
+        val args = args(input) ?: return null
+        return text(args, "path") ?: text(args, "name") ?: Batch.size(args)?.let { "$it items" }
+    }
 
     fun isEdit(call: Call): Boolean = call.meta == MetaTools.RUN.name && call.argument in EDITS
 
@@ -48,9 +55,15 @@ object OwnTools {
 
     fun argsToon(input: JsonObject): String? = args(input)?.let { Toon.encode(it) }
 
-    fun reviewAs(call: Call, input: JsonObject, projectRoot: String?): Review? {
-        if (!isEdit(call)) return null
-        val args = args(input) ?: return null
+    fun reviewsAs(call: Call, input: JsonObject, projectRoot: String?): List<Review> {
+        if (!isEdit(call)) return emptyList()
+        val args = args(input) ?: return emptyList()
+        val list = EDIT_LISTS.firstNotNullOfOrNull { args[it] as? JsonArray } ?: return listOfNotNull(review(call, args, projectRoot))
+        val shared = args.filterKeys { it !in EDIT_LISTS }
+        return list.mapNotNull { item -> (item as? JsonObject)?.let { review(call, JsonObject(shared + it), projectRoot) } }
+    }
+
+    private fun review(call: Call, args: JsonObject, projectRoot: String?): Review? {
         val path = text(args, "path") ?: return null
         val absolute = Path.of(path).let { if (it.isAbsolute || projectRoot == null) it else Path.of(projectRoot).resolve(it) }
         val reviewed = buildJsonObject {

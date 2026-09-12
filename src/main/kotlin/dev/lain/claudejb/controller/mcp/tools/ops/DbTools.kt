@@ -3,6 +3,7 @@ package dev.lain.claudejb.controller.mcp.tools.ops
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import dev.lain.claudejb.controller.db.DbGateway
+import dev.lain.claudejb.model.mcp.Batch
 import dev.lain.claudejb.model.mcp.Param
 import dev.lain.claudejb.model.mcp.Tool
 import dev.lain.claudejb.model.mcp.ToolArgs
@@ -23,7 +24,11 @@ internal class DbTools(project: Project, private val gateway: DbGateway = DbGate
         ToolDomain(
             "db",
             "The data sources of the Database tool window: list them, read the schema the IDE introspected, run SQL over its connection",
-            listOf(Tool(DB_CONNECTIONS, ::connections), Tool(DB_SCHEMA, ::schema), Tool(DB_QUERY, ::query)),
+            listOf(
+                Tool(DB_CONNECTIONS, ::connections),
+                Tool(DB_SCHEMA, ::schema),
+                Tool(DB_QUERY) { ToolResult.toon(Batch.run(it, QUERIES, ::queryOne)) },
+            ),
         )
     } else {
         null
@@ -86,29 +91,28 @@ internal class DbTools(project: Project, private val gateway: DbGateway = DbGate
         put("primary", column.primary)
     }
 
-    private suspend fun query(args: ToolArgs): ToolResult {
+    private suspend fun queryOne(args: ToolArgs): JsonObject {
         val connection = args.string("connection")
         val sql = args.string("code")
         val max = args.int("max", DEFAULT_MAX).coerceIn(1, MAX_ROWS)
         val result = runInterruptible(Dispatchers.IO) { gateway.query(connection, sql, max, QUERY_TIMEOUT_SECONDS) }
         val labels = labels(result.columns)
-        return ToolResult.toon(
-            buildJsonObject {
-                put("connection", connection)
-                put("count", result.rows.size)
-                put("truncated", result.truncated)
-                put("updated", result.updated)
-                put("columns", buildJsonArray { labels.forEach { add(JsonPrimitive(it)) } })
-                put(
-                    "rows",
-                    buildJsonArray {
-                        result.rows.forEach { cells ->
-                            add(buildJsonObject { labels.forEachIndexed { i, label -> put(label, cells[i].take(CELL_CHARS)) } })
-                        }
-                    },
-                )
-            },
-        )
+        return buildJsonObject {
+            put("connection", connection)
+            put("code", sql)
+            put("count", result.rows.size)
+            put("truncated", result.truncated)
+            put("updated", result.updated)
+            put("columns", buildJsonArray { labels.forEach { add(JsonPrimitive(it)) } })
+            put(
+                "rows",
+                buildJsonArray {
+                    result.rows.forEach { cells ->
+                        add(buildJsonObject { labels.forEachIndexed { i, label -> put(label, cells[i].take(CELL_CHARS)) } })
+                    }
+                },
+            )
+        }
     }
 
     companion object {
@@ -117,6 +121,7 @@ internal class DbTools(project: Project, private val gateway: DbGateway = DbGate
         private const val MAX_ROWS = 1000
         private const val CELL_CHARS = 200
         private const val MILLIS = 1000L
+        val QUERIES = Batch.Plural("queries", "code")
 
         val DB_CONNECTIONS = ToolSpec(
             "db_connections",
@@ -139,12 +144,13 @@ internal class DbTools(project: Project, private val gateway: DbGateway = DbGate
 
         val DB_QUERY = ToolSpec(
             "db_query",
-            "Runs one SQL statement on a data source through the IDE's own connection, driver and stored credentials, and " +
-                "returns its rows, or the update count when it returns none. Meant for read-only queries; anything that writes " +
-                "is a change the user approves.",
+            "Runs one SQL statement, or several in a row with queries, on a data source through the IDE's own connection, " +
+                "driver and stored credentials, and returns its rows, or the update count when it returns none. Meant for " +
+                "read-only queries; anything that writes is a change the user approves.",
             listOf(
                 Param("connection", "The data source name as db_connections lists it"),
-                Param("code", "The SQL statement to run"),
+                Param("code", "The SQL statement to run", required = false),
+                Batch.param(QUERIES, "Several SQL statements at once, one result each, on the same connection"),
                 Param("max", "Maximum rows to return (default $DEFAULT_MAX, at most $MAX_ROWS)", type = "integer", required = false),
             ),
             mutates = true,

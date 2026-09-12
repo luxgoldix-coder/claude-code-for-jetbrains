@@ -44,7 +44,7 @@ class VcsToolSpecsTest {
     fun `a filesystem location is always called path or paths, which is what the guard walks`() {
         val locations = all.flatMap { spec -> spec.params.filter { LOCATION.containsMatchIn(it.description) }.map { spec.name to it.name } }
         assertEquals(
-            listOf("git_diff" to "path", "git_stage" to "paths", "git_commit" to "paths", "vcs_open" to "path"),
+            listOf("git_diff" to "path", "git_diff" to "paths", "git_stage" to "paths", "git_commit" to "paths", "vcs_open" to "path"),
             locations,
         )
         all.flatMap { it.params }.map { it.name }.forEach { assertFalse(it in ALIASES, "$it is a location under another name") }

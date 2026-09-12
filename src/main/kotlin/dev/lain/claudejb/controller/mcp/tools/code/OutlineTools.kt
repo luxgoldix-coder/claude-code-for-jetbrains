@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import dev.lain.claudejb.controller.mcp.tools.code.Locations.place
+import dev.lain.claudejb.model.mcp.Batch
 import dev.lain.claudejb.model.mcp.Param
 import dev.lain.claudejb.model.mcp.Tool
 import dev.lain.claudejb.model.mcp.ToolArgs
@@ -32,10 +33,13 @@ internal class OutlineTools(private val project: Project) {
     fun domain(): ToolDomain = ToolDomain(
         "outline",
         "The structure of a file as the IDE's Structure view shows it, and what a symbol at a position is",
-        listOf(Tool(FILE_OUTLINE, ::fileOutline), Tool(SYMBOL_INFO, ::symbolInfo)),
+        listOf(
+            Tool(FILE_OUTLINE) { ToolResult.toon(Batch.run(it, Batch.PATHS, ::outlineOne)) },
+            Tool(SYMBOL_INFO) { ToolResult.toon(Batch.run(it, Batch.POSITIONS, ::symbolOne)) },
+        ),
     )
 
-    private suspend fun fileOutline(args: ToolArgs): ToolResult {
+    private suspend fun outlineOne(args: ToolArgs): JsonObject {
         val path = args.string("path")
         val depth = args.int("depth", DEFAULT_DEPTH)
         val psiFile = readAction { Locations.psiFile(project, path) }
@@ -50,12 +54,10 @@ internal class OutlineTools(private val project: Project) {
                 Disposer.dispose(model)
             }
         }
-        return ToolResult.toon(
-            buildJsonObject {
-                put("path", path)
-                put("items", items)
-            },
-        )
+        return buildJsonObject {
+            put("path", path)
+            put("symbols", items)
+        }
     }
 
     private fun children(element: TreeElement, depth: Int): JsonArray = buildJsonArray {
@@ -76,20 +78,18 @@ internal class OutlineTools(private val project: Project) {
         if (nested.isNotEmpty()) put("children", nested)
     }
 
-    private suspend fun symbolInfo(args: ToolArgs): ToolResult = readAction {
+    private suspend fun symbolOne(args: ToolArgs): JsonObject = readAction {
         val declaration = Locations.declarationAt(project, args)
-        ToolResult.toon(
-            buildJsonObject {
-                put("name", (declaration as? PsiNamedElement)?.name ?: declaration.text.take(SIGNATURE_CHARS))
-                put("kind", Locations.kind(declaration))
-                put("signature", signature(declaration))
-                (declaration as? NavigationItem)?.presentation?.let { presentation ->
-                    presentation.presentableText?.let { put("presentation", it) }
-                    presentation.locationString?.takeIf { it.isNotBlank() }?.let { put("in", it) }
-                }
-                place(project, declaration)
-            },
-        )
+        buildJsonObject {
+            put("name", (declaration as? PsiNamedElement)?.name ?: declaration.text.take(SIGNATURE_CHARS))
+            put("kind", Locations.kind(declaration))
+            put("signature", signature(declaration))
+            (declaration as? NavigationItem)?.presentation?.let { presentation ->
+                presentation.presentableText?.let { put("presentation", it) }
+                presentation.locationString?.takeIf { it.isNotBlank() }?.let { put("in", it) }
+            }
+            place(project, declaration)
+        }
     }
 
     private fun signature(element: PsiElement): String {
@@ -114,15 +114,17 @@ internal class OutlineTools(private val project: Project) {
             "file_outline",
             "The declarations of a file as a tree — classes, functions, fields — with their lines, like the Structure view.",
             listOf(
-                Param("path", "File path, absolute or relative to the project root"),
+                Param("path", "File path, absolute or relative to the project root", required = false),
+                Batch.paths("one outline each"),
                 Param("depth", "How many levels of nesting to return (default $DEFAULT_DEPTH)", type = "integer", required = false),
             ),
         )
 
         val SYMBOL_INFO = ToolSpec(
             "symbol_info",
-            "What the symbol at a position is: its kind, name, declaring signature and where it is declared.",
-            Locations.POSITION,
+            "What the symbol at a position is: its kind, name, declaring signature and where it is declared; several " +
+                "positions at once with positions.",
+            Locations.OPTIONAL_POSITION + Batch.positions("what each symbol is"),
         )
     }
 }

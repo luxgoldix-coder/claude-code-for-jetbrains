@@ -14,6 +14,7 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testIntegration.TestFramework
 import dev.lain.claudejb.controller.mcp.tools.code.Locations
+import dev.lain.claudejb.model.mcp.Batch
 import dev.lain.claudejb.model.mcp.Param
 import dev.lain.claudejb.model.mcp.Tool
 import dev.lain.claudejb.model.mcp.ToolArgs
@@ -25,6 +26,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -38,45 +40,49 @@ internal class TestTools(private val project: Project, scope: CoroutineScope) {
         "tests",
         "Tests through the IDE's test runner: run a file, the test at a line or a named configuration, and list the tests " +
             "the IDE recognises in a file",
-        listOf(Tool(RUN_TESTS, ::runTests), Tool(TESTS, ::tests)),
+        listOf(Tool(RUN_TESTS) { args -> ToolResult.toon(Batch.run(args, Batch.RUN_PATHS, runner(args))) }, Tool(TESTS, ::tests)),
     )
 
-    private suspend fun runTests(args: ToolArgs): ToolResult {
-        val tailLines = OutputTail.lines(args)
-        val max = args.int("max", DEFAULT_MAX)
-        val job = args.optionalString("job")?.let { jobs.find(it) } ?: start(args)
-        val outcome = jobs.await(job, Jobs.waitMillis(args))
-        val failures = outcome?.failures.orEmpty()
-        return ToolResult.toon(
-            buildJsonObject {
-                put("target", args.optionalString("name") ?: args.optionalString("path") ?: "")
-                outcome(Jobs.status(outcome), job.id, outcome?.exitCode, job.tail, tailLines)
-                put("tracked", outcome?.tracked ?: false)
-                put("passed", outcome?.passed ?: 0)
-                put("failed", outcome?.failed ?: 0)
-                put("ignored", outcome?.ignored ?: 0)
-                put("truncated", failures.size > max)
-                put(
-                    "failures",
-                    buildJsonArray {
-                        failures.take(max).forEach { row ->
-                            add(
-                                buildJsonObject {
-                                    put("test", row.test)
-                                    put("message", row.message)
-                                    put("at", row.at)
-                                },
-                            )
-                        }
-                    },
-                )
-            },
-        )
+    private fun runner(args: ToolArgs): suspend (ToolArgs) -> JsonObject {
+        val deadline = Jobs.deadline(args)
+        return { runOne(it, deadline) }
     }
 
-    private suspend fun start(args: ToolArgs): Job<TestOutcome> {
+    private suspend fun runOne(args: ToolArgs, deadline: Deadline): JsonObject {
+        val tailLines = OutputTail.lines(args)
+        val max = args.int("max", DEFAULT_MAX)
+        val job = args.optionalString("job")?.let { jobs.find(it) } ?: start(args, deadline)
+        val outcome = jobs.await(job, deadline.remaining())
+        val failures = outcome?.failures.orEmpty()
+        return buildJsonObject {
+            put("target", args.optionalString("name") ?: args.optionalString("path") ?: "")
+            outcome(Jobs.status(outcome), job.id, outcome?.exitCode, job.tail, tailLines)
+            put("tracked", outcome?.tracked ?: false)
+            put("passed", outcome?.passed ?: 0)
+            put("failed", outcome?.failed ?: 0)
+            put("ignored", outcome?.ignored ?: 0)
+            put("truncated", failures.size > max)
+            put(
+                "failures",
+                buildJsonArray {
+                    failures.take(max).forEach { row ->
+                        add(
+                            buildJsonObject {
+                                put("test", row.test)
+                                put("message", row.message)
+                                put("at", row.at)
+                            },
+                        )
+                    }
+                },
+            )
+        }
+    }
+
+    private suspend fun start(args: ToolArgs, deadline: Deadline): Job<TestOutcome> {
         val name = args.optionalString("name")
         val path = args.optionalString("path")
+        if (deadline.expired()) throw ToolException(Jobs.NOT_STARTED)
         val settings = when {
             name != null && path == null -> byName(name)
             path != null && name == null -> fromFile(path, args)
@@ -171,10 +177,11 @@ internal class TestTools(private val project: Project, scope: CoroutineScope) {
         val RUN_TESTS = ToolSpec(
             "run_tests",
             "Runs tests through the IDE's test runner and returns pass/fail/ignored counts with each failure's message and " +
-                "frame: a file (path), the test at a line (path + line) or a named run configuration (name). Output streams " +
-                "to the chat while it runs; status running means call again with job.",
+                "frame: a file (path), several files in a row (paths), the test at a line (path + line) or a named run " +
+                "configuration (name). Output streams to the chat while it runs; status running means call again with job.",
             listOf(
                 Param("path", "A test file, absolute or relative to the project root", required = false),
+                Batch.param(Batch.RUN_PATHS, "Several test files, run one after another within one wait, one result each"),
                 Param(
                     "line",
                     "1-based line of the test to run inside path (default: the file's first test class)",
