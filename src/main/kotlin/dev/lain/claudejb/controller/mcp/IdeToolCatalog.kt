@@ -12,6 +12,7 @@ import dev.lain.claudejb.controller.mcp.tools.code.InspectTools
 import dev.lain.claudejb.controller.mcp.tools.code.NavigateTools
 import dev.lain.claudejb.controller.mcp.tools.code.OutlineTools
 import dev.lain.claudejb.controller.mcp.tools.code.ReadTools
+import dev.lain.claudejb.controller.mcp.tools.code.RecentTools
 import dev.lain.claudejb.controller.mcp.tools.code.RefactorTools
 import dev.lain.claudejb.controller.mcp.tools.code.SearchTools
 import dev.lain.claudejb.controller.mcp.tools.ops.ActionTools
@@ -22,6 +23,7 @@ import dev.lain.claudejb.controller.mcp.tools.ops.NotifyTools
 import dev.lain.claudejb.controller.mcp.tools.ops.ProjectTools
 import dev.lain.claudejb.controller.mcp.tools.ops.ServiceTools
 import dev.lain.claudejb.controller.mcp.tools.ops.SshTools
+import dev.lain.claudejb.controller.mcp.tools.ops.WindowTools
 import dev.lain.claudejb.controller.mcp.tools.run.BreakpointTools
 import dev.lain.claudejb.controller.mcp.tools.run.BuildTools
 import dev.lain.claudejb.controller.mcp.tools.run.DebugTools
@@ -52,6 +54,7 @@ internal object IdeToolCatalog {
             { p, _ -> FormatTools(p).domain() },
             { p, s -> EditorTools(p, Reveal(p), IdeActions(p, s)).domain() },
             { p, _ -> HierarchyTools(p).domain() },
+            { p, s -> RecentTools(p, IdeActions(p, s)).domain() },
         ),
         IdeServer.RUN to listOf(
             { p, s -> BuildTools(p, s).domain() },
@@ -71,6 +74,7 @@ internal object IdeToolCatalog {
             { p, _ -> ProjectTools(p).domain() },
             { p, s -> IdeTools(p, IdeActions(p, s), s).domain() },
             { p, s -> ActionTools(p, IdeActions(p, s)).domain() },
+            { p, s -> WindowTools(p, IdeActions(p, s)).domain() },
             { p, _ -> NotifyTools(p).domain() },
             { p, _ -> DbTools(p).domain() },
             { p, s -> HttpTools(p, s, Reveal(p)).takeIf { it.available() }?.domain() },

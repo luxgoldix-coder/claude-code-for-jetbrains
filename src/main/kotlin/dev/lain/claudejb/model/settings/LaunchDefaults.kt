@@ -36,8 +36,8 @@ object LaunchDefaults {
 
     const val DEFAULT_IDE_RULES =
         "code.read,code.search,code.navigate,code.edit,code.edit_ops,code.refactor,code.format,code.diagnostics,code.editor," +
-            "run.build,run.run,run.terminal,run.debug,vcs.read,vcs.write,vcs.forge," +
-            "ops.services,ops.project,ops.ide,ops.actions,ops.data," +
+            "code.recent,run.build,run.run,run.terminal,run.debug,vcs.read,vcs.write,vcs.forge," +
+            "ops.services,ops.project,ops.ide,ops.actions,ops.window,ops.data," +
             "common.show,common.query,common.prs,common.batch,common.agents,common.tools,common.fallback,common.report"
 
     fun isValidMcpConfig(text: String): Boolean =

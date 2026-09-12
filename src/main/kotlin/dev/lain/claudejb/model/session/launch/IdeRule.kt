@@ -25,6 +25,12 @@ enum class IdeRule(val key: String, val server: IdeServer?, val label: String, v
         "Show the user what you touch",
         setOf("open_file", "active_file", "index_status", "editor_action"),
     ),
+    CODE_RECENT(
+        "code.recent",
+        IdeServer.CODE,
+        "Where the user has been, and the IDE's schemes",
+        setOf("recent", "navigate_history", "compare_clipboard", "scheme"),
+    ),
     RUN_BUILD("run.build", IdeServer.RUN, "Build and test through the IDE", setOf("build", "run_tests", "tests")),
     RUN_RUN(
         "run.run",
@@ -56,6 +62,7 @@ enum class IdeRule(val key: String, val server: IdeServer?, val label: String, v
     ),
     OPS_IDE("ops.ide", IdeServer.OPS, "Move the IDE for the user", setOf("tool_window", "settings_open", "ide_action", "notify")),
     OPS_ACTIONS("ops.actions", IdeServer.OPS, "Every menu entry is one action away", setOf("actions", "menu", "appearance", "ui")),
+    OPS_WINDOW("ops.window", IdeServer.OPS, "Tabs, layout, zoom and editor settings", setOf("tabs", "layout", "zoom", "editor_settings")),
     OPS_DATA(
         "ops.data",
         IdeServer.OPS,

@@ -36,6 +36,11 @@ internal object IdeRuleText {
             "index_status with wait and retry once it is ready. For the Code menu at a position (override, implement, " +
             "generate, surround, unwrap, comment, move statement or line, rearrange, fold, live templates, quick " +
             "documentation) call editor_action with path, line and column: the editor performs it with the caret there.",
+        IdeRule.CODE_RECENT to "To know where the user has been call recent: the files they opened last (kind=files) or " +
+            "changed last (kind=changed_files), from the IDE's editor history. To move their editor through that " +
+            "history when asked call navigate_history with back, forward, last_change or next_change. To show the " +
+            "clipboard against a file call compare_clipboard: the IDE's diff window opens without focus. To list or " +
+            "switch the theme, the color scheme, the keymap or the code style call scheme.",
         IdeRule.RUN_BUILD to "To build call build: the IDE's own build with the compiler's errors and their positions, shown " +
             "in the Build window. To run tests call run_tests with a path, a name or a class and read the tree it " +
             "returns; tests lists what the project has. Never a shell, a script or Gradle by hand to build or test.",
@@ -74,6 +79,10 @@ internal object IdeRuleText {
             "as the user sees it; then fire it with ide_action and a target. Call appearance to flip presentation, " +
             "distraction-free, full-screen, zen, compact or the Presentation Assistant, and ui to show or hide the " +
             "toolbar, navigation bar, tool window bars, status bar or main menu; both say the state they left.",
+        IdeRule.OPS_WINDOW to "Call tabs to see the editor's tab groups or to close, pin, split or move a tab as the Window " +
+            "menu would; layout to store, restore or hide the tool window layout; zoom to zoom the editor's font or the " +
+            "whole IDE; editor_settings to show or hide line numbers, whitespace, soft wraps or gutter icons in every " +
+            "editor, saying the state it left.",
         IdeRule.OPS_DATA to "Call db_connections, db_schema and db_query for the Database window's data sources; http_files " +
             "to find the HTTP Client's request files, http_run to run one with its response console and http_open to show " +
             "one in the editor; ssh_hosts for the configured SSH hosts. Never psql, curl or ssh from the command line.",

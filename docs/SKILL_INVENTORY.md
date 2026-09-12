@@ -100,6 +100,15 @@ Rules that hold for every tool:
 | `index_status` | Whether the IDE is indexing; `wait` blocks until it is done. | On an indexing error, before symbol tools. `code ▸ index_status {wait: true}` |
 | `editor_action` *mutates* | The Code menu at a position: override, implement, delegate, generate, surround, unwrap, comment_line/block, move_statement/element/line, rearrange, auto_indent, insert/save_template, fold/unfold (+recursively, +all), update_copyright, quick_doc/definition/type. Caret placed, file in a tab without focus. | "override toString here". `code ▸ editor_action {action: "override", path: "A.kt", line: 12}` |
 
+### recent
+
+| Tool | Capability | When · example |
+|---|---|---|
+| `recent` | Recently opened files (`kind=files`) or recently changed ones (`changed_files`), newest first. | "what was I working on". `code ▸ recent {kind: "changed_files"}` |
+| `navigate_history` *mutates* | Navigate ▸ Back, Forward, Last Edit Location, Next Edit Location on the user's editor. | "go back to where I was". `code ▸ navigate_history {direction: "back"}` |
+| `compare_clipboard` | View ▸ Compare with Clipboard against a file, in the IDE's diff window. | "diff this against what I copied". `code ▸ compare_clipboard {path: "A.kt"}` |
+| `scheme` *mutates* | List or set the theme, color scheme, keymap or code style, as Quick Switch Scheme does. | "switch to the dark theme". `code ▸ scheme {kind: "theme", action: "set", name: "Dark"}` |
+
 ## `run` — build, run, test, shell, debug
 
 | Tool | Capability | When · example |
@@ -149,6 +158,10 @@ Rules that hold for every tool:
 | `menu` | The main menu as the user sees it: top level, or the items of one menu by path. | "what is under Code ▸ Analyze". `ops ▸ menu {path: "Code/Analyze"}` |
 | `appearance` *mutates* | View ▸ Appearance modes: presentation, distraction_free, full_screen, zen, compact, assistant; toggle or set with `on`; returns the state. | "put the IDE in presentation mode". `ops ▸ appearance {mode: "presentation", on: true}` |
 | `ui` *mutates* | Show or hide the toolbar, navigation_bar, tool_window_bars, status_bar or main_menu; toggle or set with `on`. | "hide the status bar". `ops ▸ ui {part: "status_bar", on: false}` |
+| `tabs` *mutates* | The editor's tab groups with tabs, selection and pins; or close, close_others, close_all, pin, split_right, split_down, unsplit, move_to_opposite on a tab. | "split the editor with A.kt on the right". `ops ▸ tabs {action: "split_right", path: "A.kt"}` |
+| `layout` *mutates* | save_default, restore_default or hide_all for the tool window layout. | "hide everything". `ops ▸ layout {action: "hide_all"}` |
+| `zoom` *mutates* | in, out or reset on the selected editor's font (`scope=editor`) or the whole IDE (`ide`). | "make it bigger". `ops ▸ zoom {action: "in", scope: "ide"}` |
+| `editor_settings` *mutates* | line_numbers, whitespace, soft_wraps or gutter_icons in every editor; toggle or set with `on`. | "show whitespace". `ops ▸ editor_settings {setting: "whitespace", on: true}` |
 | `tool_window` *mutates* | Open, close or list tool windows. | "show the Problems view". `ops ▸ tool_window {action: "open", id: "Problems View"}` |
 | `settings_open` *mutates* | Settings at a page by display name. | "open the plugin settings". `ops ▸ settings_open {name: "Claude Code"}` |
 | `plugins` | The IDE's plugins with id, version and enabled; `filter`. | Before relying on a plugin; to know the IDE build (`com.intellij`). `ops ▸ plugins {filter: "database"}` |
@@ -202,8 +215,8 @@ mirrored in the IDE without taking the user's focus.
 | `ide_action` with a target: file/position, commit, Services node | `ide_action` +`path`/`line`/`column`/`hash`/`node` (`ide`), `TargetContext` | ☑ |
 | Code menu editing actions at a position | `editor_action` (`editor`) | ☑ |
 | Undo, redo, replace in path, line operations | `undo`, `redo`, `search_replace`, `line_ops` (`edit_ops`) | ☑ |
-| Recent files/locations/changes, back/forward, clipboard compare, schemes | `recent`, `navigate_history`, `compare_clipboard`, `scheme` (`recent`) | ☐ |
-| Editor tabs, layouts, zoom, editor settings | `tabs`, `layout`, `zoom`, `editor_settings` (`window`) | ☐ |
+| Recent files/locations/changes, back/forward, clipboard compare, schemes | `recent`, `navigate_history`, `compare_clipboard`, `scheme` (`recent`) | ☑ (locations stay out: `IdeDocumentHistory.getBackPlaces` is Internal) |
+| Editor tabs, layouts, zoom, editor settings | `tabs`, `layout`, `zoom`, `editor_settings` (`window`) | ☑ |
 | Every Git-menu dialog by name | `vcs_action` table extended (`forge`) | ☐ |
 
 ### P2 — Git as the log and the branches panel do it
