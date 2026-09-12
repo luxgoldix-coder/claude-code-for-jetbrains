@@ -29,6 +29,13 @@ internal class TabSessionCommands(
 
     fun newChat() = openChat(ChatSessionManager.getInstance(project).create())
 
+    fun newChatWith(title: String, prompt: String) {
+        val session = ChatSessionManager.getInstance(project).create()
+        session.title = title
+        openChat(session)
+        session.send(prompt)
+    }
+
     private fun activeSession(): ClaudeSession? = tabs.selectedChat?.session
 
     private data class RestoredSession(val id: String, val title: String?, val entries: List<EntryDTO>)

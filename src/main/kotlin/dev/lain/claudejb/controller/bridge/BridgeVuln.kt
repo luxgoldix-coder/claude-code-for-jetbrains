@@ -1,5 +1,6 @@
 package dev.lain.claudejb.controller.bridge
 
+import dev.lain.claudejb.controller.commands.PromptInNewChat
 import dev.lain.claudejb.controller.vuln.VulnPromptedActions
 import dev.lain.claudejb.controller.vuln.VulnService
 import dev.lain.claudejb.model.bridge.Msg
@@ -42,7 +43,7 @@ internal class BridgeVuln(private val panel: JcefChatPanel) {
             log.warn("Refusing to prompt for '$findingId': the advisory or the manifest carries unquotable text")
             return
         }
-        panel.session.send(text)
+        inNewChat(PromptInNewChat.title("Update", finding.component.name), text)
     }
 
     private fun plan(tiers: List<String>) {
@@ -57,6 +58,11 @@ internal class BridgeVuln(private val panel: JcefChatPanel) {
             log.warn("Refusing to plan: every finding carries text this build will not quote")
             return
         }
-        panel.session.send(text)
+        val subject = if (wanted.size == 1) "1 vulnerable dependency" else "${wanted.size} vulnerable dependencies"
+        inNewChat(PromptInNewChat.title("Plan", subject), text)
+    }
+
+    private fun inNewChat(title: String, text: String) {
+        if (!PromptInNewChat.open(panel.project, title, text)) panel.session.send(text)
     }
 }
