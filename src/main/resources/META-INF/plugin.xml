@@ -166,6 +166,11 @@
          gate every entry point, and `GitGateway` is the ONLY file that names a git4idea type, so nothing can be
          class-loaded when the dependency is unsatisfied. -->
     <depends optional="true" config-file="claude-git.xml">Git4Idea</depends>
+    <!-- Bundled GitHub plugin: grants runtime classloader access to `org.jetbrains.plugins.github.*` so the
+         pull-request tools can ask the IDE's own accounts and API. Optional like Git: `GitHubGateway` is the
+         only file naming those types and checks the plugin first, so a missing GitHub plugin degrades to
+         "not available". -->
+    <depends optional="true" config-file="claude-github.xml">org.jetbrains.plugins.github</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- Right-hand tool window, next to where the JetBrains AI Assistant lives. -->

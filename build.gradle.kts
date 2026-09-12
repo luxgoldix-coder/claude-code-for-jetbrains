@@ -103,6 +103,11 @@ dependencies {
         // without Git, or a project that is not a working copy, must still load the plugin; `GitGateway` is the
         // only file that names a git4idea type and it is never reached unless `GitAvailability` says yes.
         bundledPlugin("Git4Idea")
+        // Bundled GitHub plugin: compile-only coupling for the pull-request data (`GHAccountsUtil`, the API
+        // executor, `GHGQLRequests`). OPTIONAL in META-INF/plugin.xml (config-file claude-github.xml);
+        // `GitHubGateway` is the only file that names an org.jetbrains.plugins.github type and checks the
+        // plugin before touching it, so an IDE without it answers "not available" instead of dying.
+        bundledPlugin("org.jetbrains.plugins.github")
     }
 
     // JSON (de)serialization for the stream-json / control protocol.

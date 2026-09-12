@@ -139,6 +139,8 @@ Rules that hold for every tool:
 | `git_branch` *mutates* | Creates a branch or checks one out (`start_point` creates it there). Deleting is the user's. | "start a branch for". `vcs ▸ git_branch {action: "checkout", name: "feature/x", start_point: "develop"}` |
 | `git_remote` *mutates* | Fetch, pull or push with the IDE's credentials; returns upstream and ahead/behind. Push is the maintainer's call. | "fetch". `vcs ▸ git_remote {action: "fetch"}` |
 | `vcs_open` | Shows a VCS view: the Git log (at a `hash`, or only a `range` such as `v5.8.1..HEAD`), a file's history, the Commit window, or the pull-requests view. | "open the log", "compare the branch with the last release". `vcs ▸ vcs_open {view: "log", range: "v5.8.1..HEAD"}` |
+| `pull_requests` | The GitHub repository's pull requests through the IDE's account: number, title, state, draft, author, updated, url; `state` open/closed/merged/all. The Pull Requests view is shown. | "what PRs are open". `vcs ▸ pull_requests {state: "open"}` |
+| `pull_request` | One pull request by number with base, head, review decision and body; `open` shows the view and opens it in the browser. | "show me #42". `vcs ▸ pull_request {number: 42, open: true}` |
 | `vcs_action` *mutates* | Every entry of the Git menu and its GitHub/GitLab submenus by name: pull, push, fetch, merge, rebase (+abort/continue/skip), cherry-pick continue/abort, revert_abort, branches, new_branch, rename_branch, compare_with_branch, stash, unstash, stash_silently, show_stash, shelve, show_shelf, rollback, annotate, compare_same_version, file_history, tag, reset, resolve_conflicts, commit, update, unshallow, worktrees, new_worktree, configure_remotes, clone, init, create_pull_request, pull_requests, share_on_github, clone_github, sync_fork, create_gist, github_accounts, create_merge_request, merge_requests, clone_gitlab, create_snippet, gitlab_accounts; `path` or `hash` for entries that act on a file or a commit. | When the user must confirm in the IDE. `vcs ▸ vcs_action {action: "annotate", path: "A.kt"}` |
 
 ### log_ops
@@ -258,8 +260,8 @@ mirrored in the IDE without taking the user's focus.
 
 | Capability | Tools (domain) | Status |
 |---|---|---|
-| GitHub pull requests listed and opened through the IDE's GitHub plugin | `pull_requests`, `pull_request` (`forge`), `GitHubGateway` | ☐ |
-| GitLab merge requests: actions and view; data if a public path exists | `vcs_action`, `GitLabGateway` | ☐ |
+| GitHub pull requests listed and opened through the IDE's GitHub plugin | `pull_requests`, `pull_request` (`forge`), `GitHubGateway` | ☑ (data through the IDE's account; opening a request selects nothing in the IDE's view because `GHPRProjectViewModel` is Internal at 262, so `open` shows the view and the browser) |
+| GitLab merge requests: actions and view; data if a public path exists | `vcs_action`, `GitLabGateway` | ☑ actions only: `GitLabAccountManager` and `GitLabProjectViewModel` are Internal, so no data path exists; `vcs_action(merge_requests, create_merge_request, clone_gitlab, create_snippet, gitlab_accounts)` covers the submenu |
 
 ### P4 — analysis, views, files, refactorings
 

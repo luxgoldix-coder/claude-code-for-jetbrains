@@ -65,8 +65,10 @@ internal object IdeRuleText {
             "the Commit window or the Pull Requests view, without taking the focus; call vcs_action to open any entry of " +
             "the IDE's Git menu and its GitHub and GitLab submenus by name (pull, push, merge, rebase and their abort or " +
             "continue, branches, stash, shelve, tag, reset, worktrees, annotate, clone, pull and merge requests, gists, " +
-            "accounts) for the user to finish, with path or hash when the entry acts on a file or a commit. Never gh or " +
-            "glab.",
+            "accounts) for the user to finish, with path or hash when the entry acts on a file or a commit. For the pull " +
+            "requests of the GitHub repository call pull_requests (open, closed, merged or all) and pull_request with a " +
+            "number for its branches, review decision and description: both go through the IDE's GitHub account, and " +
+            "the Pull Requests view is shown. Never gh or glab.",
         IdeRule.VCS_LOG_OPS to "For what the Log's commit menu offers on a commit (cherry-pick, checkout, browse at revision, " +
             "compare with local, reset, revert, undo, reword, fixup, squash, drop, interactive rebase, push up to, new " +
             "branch or tag, copy revision, open in browser) call commit_action with the hash: the commit is selected in " +
@@ -108,8 +110,8 @@ internal object IdeRuleText {
             "what you opened; the user's focus stays where it was.",
         IdeRule.COMMON_QUERY to "Questions about the project or the IDE are answered from its tools, never from memory; " +
             "say what you looked at.",
-        IdeRule.COMMON_PRS to "Pull requests: open the IDE's own view with vcs_open(view=pull_requests), ask which one, " +
-            "review it there, report.",
+        IdeRule.COMMON_PRS to "Pull requests: list them with pull_requests, ask which one, read it with pull_request, review " +
+            "its branch with git_log and file_at, report; merge requests live in the IDE's GitLab view through vcs_action.",
         IdeRule.COMMON_BATCH to "One call carries the whole list: read_file(paths), write_file(files), replace_text(edits), " +
             "search_text(queries), git_commit(paths). Never one item per call; independent calls go out in one message.",
         IdeRule.COMMON_AGENTS to "Every agent you spawn receives this block verbatim and works the same way, in batches.",

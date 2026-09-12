@@ -121,9 +121,9 @@ class VcsToolSpecsTest {
                 "create_snippet" to "GitLab.Create.Snippet",
                 "gitlab_accounts" to "GitLab.Open.Settings",
             ),
-            ForgeTools.ACTIONS,
+            ForgeActions.ACTIONS,
         )
-        ForgeTools.ACTIONS.keys.forEach { assertTrue(it in ForgeTools.VCS_ACTION.description, "vcs_action does not list $it") }
+        ForgeActions.ACTIONS.keys.forEach { assertTrue(it in ForgeTools.VCS_ACTION.description, "vcs_action does not list $it") }
         assertEquals(listOf("action", "path", "line", "column", "hash", "node"), ForgeTools.VCS_ACTION.params.map { it.name })
     }
 
@@ -136,15 +136,15 @@ class VcsToolSpecsTest {
 
     @Test
     fun `a range is two refs as git takes them, the second defaulting to HEAD`() {
-        assertEquals(Pair("v5.8.1", "HEAD"), ForgeTools.refRange("v5.8.1"))
-        assertEquals(Pair("v5.8.1", "feature/x"), ForgeTools.refRange("v5.8.1..feature/x"))
-        assertEquals(Pair("abc123", "HEAD~2"), ForgeTools.refRange("abc123..HEAD~2"))
+        assertEquals(Pair("v5.8.1", "HEAD"), ForgeActions.refRange("v5.8.1"))
+        assertEquals(Pair("v5.8.1", "feature/x"), ForgeActions.refRange("v5.8.1..feature/x"))
+        assertEquals(Pair("abc123", "HEAD~2"), ForgeActions.refRange("abc123..HEAD~2"))
     }
 
     @Test
     fun `a range never reaches git as an option, a third ref or a blank`() {
         listOf("-x..HEAD", "HEAD..--all", "a..b..c", "a b", "", "..", "a..").forEach { range ->
-            assertThrows<ToolException>(range) { ForgeTools.refRange(range) }
+            assertThrows<ToolException>(range) { ForgeActions.refRange(range) }
         }
     }
 

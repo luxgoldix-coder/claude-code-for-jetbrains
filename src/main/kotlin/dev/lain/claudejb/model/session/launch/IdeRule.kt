@@ -47,7 +47,12 @@ enum class IdeRule(val key: String, val server: IdeServer?, val label: String, v
     ),
     VCS_READ("vcs.read", IdeServer.VCS, "Git through the IDE", setOf("git_status", "git_diff", "git_log", "git_branches")),
     VCS_WRITE("vcs.write", IdeServer.VCS, "Commit through the IDE", setOf("git_stage", "git_commit", "git_branch", "git_remote")),
-    VCS_FORGE("vcs.forge", IdeServer.VCS, "The forge through the IDE's views", setOf("vcs_open", "vcs_action")),
+    VCS_FORGE(
+        "vcs.forge",
+        IdeServer.VCS,
+        "The forge through the IDE's views",
+        setOf("vcs_open", "vcs_action", "pull_requests", "pull_request"),
+    ),
     VCS_LOG_OPS(
         "vcs.log_ops",
         IdeServer.VCS,
