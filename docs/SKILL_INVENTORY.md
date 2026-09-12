@@ -139,7 +139,7 @@ Rules that hold for every tool:
 | `git_branch` *mutates* | Creates a branch or checks one out (`start_point` creates it there). Deleting is the user's. | "start a branch for". `vcs ▸ git_branch {action: "checkout", name: "feature/x", start_point: "develop"}` |
 | `git_remote` *mutates* | Fetch, pull or push with the IDE's credentials; returns upstream and ahead/behind. Push is the maintainer's call. | "fetch". `vcs ▸ git_remote {action: "fetch"}` |
 | `vcs_open` | Shows a VCS view: the Git log (at a `hash`, or only a `range` such as `v5.8.1..HEAD`), a file's history, the Commit window, or the pull-requests view. | "open the log", "compare the branch with the last release". `vcs ▸ vcs_open {view: "log", range: "v5.8.1..HEAD"}` |
-| `vcs_action` *mutates* | Opens one of the IDE's Git, GitHub or GitLab dialogs (pull, push, merge, rebase, branches, stash, tag, reset, create_pull_request, …) for the user to finish. | When the user must confirm in the IDE. `vcs ▸ vcs_action {action: "branches"}` |
+| `vcs_action` *mutates* | Every entry of the Git menu and its GitHub/GitLab submenus by name: pull, push, fetch, merge, rebase (+abort/continue/skip), cherry-pick continue/abort, revert_abort, branches, new_branch, rename_branch, compare_with_branch, stash, unstash, stash_silently, show_stash, shelve, show_shelf, rollback, annotate, compare_same_version, file_history, tag, reset, resolve_conflicts, commit, update, unshallow, worktrees, new_worktree, configure_remotes, clone, init, create_pull_request, pull_requests, share_on_github, clone_github, sync_fork, create_gist, github_accounts, create_merge_request, merge_requests, clone_gitlab, create_snippet, gitlab_accounts; `path` or `hash` for entries that act on a file or a commit. | When the user must confirm in the IDE. `vcs ▸ vcs_action {action: "annotate", path: "A.kt"}` |
 
 ## `ops` — the Services panel, the project, the IDE, data
 
@@ -217,7 +217,7 @@ mirrored in the IDE without taking the user's focus.
 | Undo, redo, replace in path, line operations | `undo`, `redo`, `search_replace`, `line_ops` (`edit_ops`) | ☑ |
 | Recent files/locations/changes, back/forward, clipboard compare, schemes | `recent`, `navigate_history`, `compare_clipboard`, `scheme` (`recent`) | ☑ (locations stay out: `IdeDocumentHistory.getBackPlaces` is Internal) |
 | Editor tabs, layouts, zoom, editor settings | `tabs`, `layout`, `zoom`, `editor_settings` (`window`) | ☑ |
-| Every Git-menu dialog by name | `vcs_action` table extended (`forge`) | ☐ |
+| Every Git-menu dialog by name | `vcs_action` table extended (`forge`) | ☑ |
 
 ### P2 — Git as the log and the branches panel do it
 

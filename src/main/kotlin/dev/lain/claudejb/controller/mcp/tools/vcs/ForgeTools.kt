@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowId
 import dev.lain.claudejb.controller.mcp.IdeActions
 import dev.lain.claudejb.controller.mcp.Reveal
+import dev.lain.claudejb.controller.mcp.TargetContext
 import dev.lain.claudejb.model.mcp.Param
 import dev.lain.claudejb.model.mcp.Tool
 import dev.lain.claudejb.model.mcp.ToolArgs
@@ -65,11 +66,13 @@ internal class ForgeTools(private val project: Project, private val actions: Ide
     private suspend fun action(args: ToolArgs): ToolResult {
         val name = args.string("action")
         val id = ACTIONS[name] ?: throw ToolException("action must be one of ${ACTIONS.keys.joinToString()}")
-        actions.dispatch(id)
+        val target = TargetContext.target(args)
+        if (target.named) actions.dispatch(id, target) else actions.dispatch(id)
         return ToolResult.toon(
             buildJsonObject {
                 put("action", name)
                 put("id", id)
+                put("target", target.path ?: target.hash ?: target.node ?: "")
                 put("dispatched", true)
             },
         )
@@ -110,10 +113,43 @@ internal class ForgeTools(private val project: Project, private val actions: Ide
             "resolve_conflicts" to "Git.ResolveConflicts",
             "commit" to "CheckinProject",
             "update" to "Vcs.UpdateProject",
+            "unshallow" to "Git.Unshallow",
+            "merge_abort" to "Git.Merge.Abort",
+            "merge_commit" to "Git.Merge.Commit",
+            "rebase_abort" to "Git.Rebase.Abort",
+            "rebase_continue" to "Git.Rebase.Continue",
+            "rebase_skip" to "Git.Rebase.Skip",
+            "cherry_pick_continue" to "Git.CherryPick.Continue",
+            "cherry_pick_abort" to "Git.CherryPick.Abort",
+            "revert_abort" to "Git.Revert.Abort",
+            "new_branch" to "Git.CreateNewBranch",
+            "rename_branch" to "Git.Rename.Local.Branch",
+            "compare_with_branch" to "Git.CompareWithBranch",
+            "worktrees" to "Git.Show.WorkingTrees",
+            "new_worktree" to "Git.CreateNewWorkingTree",
+            "stash_silently" to "Git.Stash.Silently",
+            "show_stash" to "Git.Show.Stash",
+            "shelve" to "ChangesView.Shelve",
+            "show_shelf" to "Vcs.Show.Shelf",
+            "rollback" to "ChangesView.Revert",
+            "annotate" to "Annotate",
+            "compare_same_version" to "Compare.SameVersion",
+            "file_history" to "Vcs.ShowTabbedFileHistory",
+            "configure_remotes" to "Git.Configure.Remotes",
+            "clone" to "Git.Clone",
+            "init" to "Git.Init",
             "create_pull_request" to "Github.Create.Pull.Request",
             "pull_requests" to "Github.View.Pull.Request",
+            "share_on_github" to "Github.Share",
+            "clone_github" to "Github.Clone",
+            "sync_fork" to "Github.Sync.Fork",
+            "create_gist" to "Github.Create.Gist",
+            "github_accounts" to "Github.Open.Settings",
             "create_merge_request" to "GitLab.Merge.Request.Create",
             "merge_requests" to "GitLab.Merge.Request.Show.List",
+            "clone_gitlab" to "GitLab.Clone",
+            "create_snippet" to "GitLab.Create.Snippet",
+            "gitlab_accounts" to "GitLab.Open.Settings",
         )
 
         private val MISSING: Map<String, String> = mapOf(
@@ -144,11 +180,12 @@ internal class ForgeTools(private val project: Project, private val actions: Ide
 
         val VCS_ACTION = ToolSpec(
             "vcs_action",
-            "Opens one of the IDE's own Git, GitHub or GitLab dialogs (pull, push, fetch, merge, rebase, branches, stash, " +
-                "unstash, tag, reset, resolve_conflicts, commit, update, create_pull_request, pull_requests, create_merge_request, " +
-                "merge_requests) for the user to finish. It returns as soon as the dialog opens; nothing is changed until the " +
-                "user confirms there.",
-            listOf(Param("action", "One of the names above")),
+            "Opens one of the IDE's own Git, GitHub or GitLab menu entries (" + ACTIONS.keys.joinToString() + ") for the " +
+                "user to finish: every item of the Git menu and its GitHub and GitLab submenus, by name. Give path for " +
+                "the entries that act on a file (annotate, compare_same_version, file_history, shelve, rollback) or hash " +
+                "for one that acts on a commit. It returns as soon as the dialog opens; nothing is changed until the user " +
+                "confirms there.",
+            listOf(Param("action", "One of the names above")) + TargetContext.PARAMS,
             mutates = true,
         )
     }

@@ -47,7 +47,14 @@ class VcsToolSpecsTest {
     fun `a filesystem location is always called path or paths, which is what the guard walks`() {
         val locations = all.flatMap { spec -> spec.params.filter { LOCATION.containsMatchIn(it.description) }.map { spec.name to it.name } }
         assertEquals(
-            listOf("git_diff" to "path", "git_diff" to "paths", "git_stage" to "paths", "git_commit" to "paths", "vcs_open" to "path"),
+            listOf(
+                "git_diff" to "path",
+                "git_diff" to "paths",
+                "git_stage" to "paths",
+                "git_commit" to "paths",
+                "vcs_open" to "path",
+                "vcs_action" to "path",
+            ),
             locations,
         )
         all.flatMap { it.params }.map { it.name }.forEach { assertFalse(it in ALIASES, "$it is a location under another name") }
@@ -76,14 +83,48 @@ class VcsToolSpecsTest {
                 "resolve_conflicts" to "Git.ResolveConflicts",
                 "commit" to "CheckinProject",
                 "update" to "Vcs.UpdateProject",
+                "unshallow" to "Git.Unshallow",
+                "merge_abort" to "Git.Merge.Abort",
+                "merge_commit" to "Git.Merge.Commit",
+                "rebase_abort" to "Git.Rebase.Abort",
+                "rebase_continue" to "Git.Rebase.Continue",
+                "rebase_skip" to "Git.Rebase.Skip",
+                "cherry_pick_continue" to "Git.CherryPick.Continue",
+                "cherry_pick_abort" to "Git.CherryPick.Abort",
+                "revert_abort" to "Git.Revert.Abort",
+                "new_branch" to "Git.CreateNewBranch",
+                "rename_branch" to "Git.Rename.Local.Branch",
+                "compare_with_branch" to "Git.CompareWithBranch",
+                "worktrees" to "Git.Show.WorkingTrees",
+                "new_worktree" to "Git.CreateNewWorkingTree",
+                "stash_silently" to "Git.Stash.Silently",
+                "show_stash" to "Git.Show.Stash",
+                "shelve" to "ChangesView.Shelve",
+                "show_shelf" to "Vcs.Show.Shelf",
+                "rollback" to "ChangesView.Revert",
+                "annotate" to "Annotate",
+                "compare_same_version" to "Compare.SameVersion",
+                "file_history" to "Vcs.ShowTabbedFileHistory",
+                "configure_remotes" to "Git.Configure.Remotes",
+                "clone" to "Git.Clone",
+                "init" to "Git.Init",
                 "create_pull_request" to "Github.Create.Pull.Request",
                 "pull_requests" to "Github.View.Pull.Request",
+                "share_on_github" to "Github.Share",
+                "clone_github" to "Github.Clone",
+                "sync_fork" to "Github.Sync.Fork",
+                "create_gist" to "Github.Create.Gist",
+                "github_accounts" to "Github.Open.Settings",
                 "create_merge_request" to "GitLab.Merge.Request.Create",
                 "merge_requests" to "GitLab.Merge.Request.Show.List",
+                "clone_gitlab" to "GitLab.Clone",
+                "create_snippet" to "GitLab.Create.Snippet",
+                "gitlab_accounts" to "GitLab.Open.Settings",
             ),
             ForgeTools.ACTIONS,
         )
         ForgeTools.ACTIONS.keys.forEach { assertTrue(it in ForgeTools.VCS_ACTION.description, "vcs_action does not list $it") }
+        assertEquals(listOf("action", "path", "line", "column", "hash", "node"), ForgeTools.VCS_ACTION.params.map { it.name })
     }
 
     @Test

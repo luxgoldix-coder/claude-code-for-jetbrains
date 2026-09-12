@@ -62,8 +62,11 @@ internal object IdeRuleText {
             "push call git_remote. Each goes through the IDE's Git, signs as the IDE would and draws one card; the " +
             "commit message is read by the guard like any other text.",
         IdeRule.VCS_FORGE to "Call vcs_open to show the Log (at a hash, or only a range with range=A..B), a file's history, " +
-            "the Commit window or the Pull Requests view, without taking the focus; call vcs_action to open one of the " +
-            "IDE's own Git, GitHub or GitLab dialogs for the user to finish. Never gh or glab.",
+            "the Commit window or the Pull Requests view, without taking the focus; call vcs_action to open any entry of " +
+            "the IDE's Git menu and its GitHub and GitLab submenus by name (pull, push, merge, rebase and their abort or " +
+            "continue, branches, stash, shelve, tag, reset, worktrees, annotate, clone, pull and merge requests, gists, " +
+            "accounts) for the user to finish, with path or hash when the entry acts on a file or a commit. Never gh or " +
+            "glab.",
         IdeRule.OPS_SERVICES to "The Services window is the DevOps panel: call services to see its tree as the user does, " +
             "service_actions to see what the IDE offers on a node, service_action to perform one exactly as clicking it " +
             "would, service_open to reveal the node. Never kubectl, docker or podman.",
