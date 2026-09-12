@@ -1,5 +1,6 @@
 package dev.lain.claudejb.controller.db
 
+import com.intellij.execution.services.ServiceViewContributor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.project.Project
 import dev.lain.claudejb.model.mcp.ToolException
@@ -133,9 +134,16 @@ internal class DbGateway(private val project: Project) {
 
     private fun typeName(dataType: Any?): Any? = dataType?.javaClass?.getField("typeName")?.get(dataType)
 
-    private fun type(name: String): Class<*> {
-        val loader = PluginManagerCore.getPlugin(PluginIds.of(PLUGIN_ID))?.pluginClassLoader ?: throw ToolException(MISSING)
-        return runCatching { loader.loadClass(name) }.getOrElse { throw ToolException(notExposed(name), it) }
+    private fun type(name: String): Class<*> =
+        loaders().firstNotNullOfOrNull { loader -> runCatching { loader.loadClass(name) }.getOrNull() }
+            ?: throw ToolException(notExposed(name))
+
+    private fun loaders(): List<ClassLoader> {
+        val plugin = PluginManagerCore.getPlugin(PluginIds.of(PLUGIN_ID))?.pluginClassLoader ?: throw ToolException(MISSING)
+        val modules = ServiceViewContributor.CONTRIBUTOR_EP_NAME.extensionList
+            .filter { it.javaClass.name.startsWith(PACKAGE) }
+            .map { it.javaClass.classLoader }
+        return (listOf(plugin) + modules).distinct()
     }
 
     private fun static(type: Class<*>, name: String, vararg args: Any?): Any? {
@@ -171,6 +179,7 @@ internal class DbGateway(private val project: Project) {
     companion object {
 
         const val PLUGIN_ID = "com.intellij.database"
+        private const val PACKAGE = "com.intellij.database."
 
         private const val FACADE = "com.intellij.database.psi.DbPsiFacade"
         private const val DAS_UTIL = "com.intellij.database.util.DasUtil"
