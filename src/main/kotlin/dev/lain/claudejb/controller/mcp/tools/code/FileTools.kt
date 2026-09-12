@@ -119,7 +119,7 @@ internal class FileTools(private val project: Project, private val actions: IdeA
 
     private suspend fun deleteFile(args: ToolArgs): ToolResult {
         val paths = args.strings("paths")
-        val files = readAction { inside(paths.map { Locations.file(project, it) }) }
+        val files = readAction { inside(paths.map { Locations.any(project, it) }) }
         try {
             writeCommandAction(project, "Claude: delete ${paths.size} path(s)") { files.forEach { it.delete(this) } }
         } catch (e: IOException) {

@@ -44,10 +44,13 @@ internal object Locations {
     }
 
     fun file(project: Project, path: String): VirtualFile {
-        val file = LocalFileSystem.getInstance().findFileByNioFile(absolute(project, path)) ?: throw ToolException("no such path: " + path)
+        val file = any(project, path)
         if (file.isDirectory) throw ToolException(path + " is a directory")
         return file
     }
+
+    fun any(project: Project, path: String): VirtualFile =
+        LocalFileSystem.getInstance().findFileByNioFile(absolute(project, path)) ?: throw ToolException("no such path: " + path)
 
     fun lineText(document: Document, line: Int): String =
         document.immutableCharSequence.subSequence(document.getLineStartOffset(line), document.getLineEndOffset(line)).toString().trim()
