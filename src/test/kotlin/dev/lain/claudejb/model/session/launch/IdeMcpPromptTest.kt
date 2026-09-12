@@ -87,7 +87,8 @@ class IdeMcpPromptTest {
         val text = IdeMcpPrompt.rulesBlock(all, own)
         val expected = "never Bash|never grep|write_file(files)|one message|verbatim|in batches|never from memory|" +
             ".idea/runConfigurations|not even outside the project|never done natively|name it and stop|" +
-            "never through a new process|correct that text once|never focused|never switched while the user is in the Terminal"
+            "never through a new process|correct that text once|never focused|never switched while the user is in the Terminal|" +
+            "no command for which Bash is the right instrument|gh and glab"
         expected.split('|').forEach { assertTrue(text.contains(it), it) }
         listOf("ide_read_file", "jetbrains", "hechtcarmel", "apply_patch").forEach { assertFalse(text.contains(it), it) }
     }

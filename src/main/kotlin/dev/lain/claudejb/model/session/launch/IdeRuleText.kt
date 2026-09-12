@@ -100,7 +100,10 @@ internal object IdeRuleText {
             "what is running.",
         IdeRule.RUN_TERMINAL to "A command goes through shell, never Bash: it runs over the socket in the Terminal window " +
             "the user sees, in a tab named Claude, with its exit code and the end of its output, while a new process " +
-            "would cost a guard pass and a permission. Several commands go in one call, chained with ; or &&. The tab is " +
+            "would cost a guard pass and a permission. Every command line goes here, whatever it does: gh and glab, " +
+            "git, curl, jq, base64, grep or find over build reports, a pipeline, a script. There is no command for " +
+            "which Bash is the right instrument while this server answers, and a Bash call made while shell exists " +
+            "is the defect the last rule names. Several commands go in one call, chained with ; or &&. The tab is " +
             "shown without focus and never switched while the user is in the Terminal; terminal_tabs lists the window's " +
             "tabs and closes one of Claude's by name.",
         IdeRule.RUN_OPS to "Call edit_configuration to open the IDE's run configuration editor at a configuration for the " +
