@@ -1,15 +1,19 @@
 package dev.lain.claudejb.controller.mcp.tools.code
 
+import com.intellij.codeInsight.template.TemplateActionContext
 import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.impl.TemplateImpl
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateSettings
 import com.intellij.ide.fileTemplates.FileTemplate
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.fileTemplates.FileTemplateUtil
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.writeCommandAction
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiManager
@@ -85,7 +89,7 @@ internal class TemplateTools(private val project: Project, private val targets: 
         val target = TargetContext.target(args, preview = false)
         val context = targets.of(target)
         withContext(Dispatchers.EDT) {
-            val editor = CommonDataKeys.EDITOR.getData(context) ?: throw ToolException("no editor could be opened on ${target.path}")
+            val editor = applicableEditor(context, template, target)
             FocusKeeper.keeping(project) { TemplateManager.getInstance(project).startTemplate(editor, template) }
         }
         return ToolResult.toon(
@@ -97,6 +101,16 @@ internal class TemplateTools(private val project: Project, private val targets: 
                 put("started", true)
             },
         )
+    }
+
+    private fun applicableEditor(context: DataContext, template: TemplateImpl, target: TargetContext.Target): Editor {
+        val editor = CommonDataKeys.EDITOR.getData(context) ?: throw ToolException("no editor could be opened on ${target.path}")
+        val psiFile = CommonDataKeys.PSI_FILE.getData(context)
+        val applies = psiFile != null && TemplateManagerImpl.isApplicable(template, TemplateActionContext.expanding(psiFile, editor))
+        if (!applies) {
+            throw ToolException("the live template ${template.key} does not apply at ${target.path}:${target.line} (${template.groupName})")
+        }
+        return editor
     }
 
     private fun liveTemplate(key: String, group: String?): TemplateImpl =
