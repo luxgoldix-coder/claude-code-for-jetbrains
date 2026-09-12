@@ -26,6 +26,7 @@ class LoginCoordinatorHeadlessTest : BasePlatformTestCase() {
         private val feed = PipedOutputStream()
         private val out = PipedInputStream(feed, 1 shl 16)
         val typed = ByteArrayOutputStream()
+
         @Volatile var exit = 0
         override fun getOutputStream(): OutputStream = typed
         override fun getInputStream(): InputStream = out
@@ -44,9 +45,15 @@ class LoginCoordinatorHeadlessTest : BasePlatformTestCase() {
         val urls = ArrayList<String>()
         var codeRequests = 0
         val results = ArrayList<Pair<Boolean, String>>()
-        override fun onAuthUrl(url: String) { urls += url }
-        override fun onCodeRequested() { codeRequests++ }
-        override fun onLoginResult(success: Boolean, message: String) { results += success to message }
+        override fun onAuthUrl(url: String) {
+            urls += url
+        }
+        override fun onCodeRequested() {
+            codeRequests++
+        }
+        override fun onLoginResult(success: Boolean, message: String) {
+            results += success to message
+        }
     }
 
     private lateinit var home: File

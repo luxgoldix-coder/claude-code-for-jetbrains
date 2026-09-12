@@ -22,9 +22,9 @@ internal object MarketplaceGateway {
         val range: String,
     )
 
-    fun updates(pluginId: Int, max: Int): List<Update> {
+    fun updates(pluginId: Int, max: Int, fetch: (String) -> String = ::fetch): List<Update> {
         val text = try {
-            HttpRequests.request("$MARKETPLACE/api/plugins/$pluginId/updates?size=$max").readString(null)
+            fetch("$MARKETPLACE/api/plugins/$pluginId/updates?size=$max")
         } catch (e: IOException) {
             throw ToolException("Marketplace did not answer: ${e.message}", e)
         }
@@ -43,6 +43,8 @@ internal object MarketplaceGateway {
     )
 
     private fun text(row: JsonObject, key: String): String = row[key]?.jsonPrimitive?.content.orEmpty()
+
+    private fun fetch(url: String): String = HttpRequests.request(url).readString(null)
 
     private const val MARKETPLACE = "https://plugins.jetbrains.com"
 }

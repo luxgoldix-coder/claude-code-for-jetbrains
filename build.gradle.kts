@@ -631,6 +631,12 @@ kover {
             // other IDE process, which this build never instruments.
             disabledForTestTasks.add("uiTest")
         }
+        // The `uiTest` source set is a custom one, so kover reads it as code to measure rather than as tests
+        // that measure: its RemoteRobot suites showed up as a package `dev.lain.claudejb.ui` at 0% and failed the
+        // floor. They drive an external IDE and are never code under test.
+        sources {
+            excludedSourceSets.add("uiTest")
+        }
     }
     reports {
         filters {
@@ -700,6 +706,10 @@ kover {
                     "dev.lain.claudejb.controller.mcp.tools.*",
                     "dev.lain.claudejb.controller.db.*",
                 )
+                // The GitHub plugin's gateway: every call needs the plugin loaded, an account in the IDE's safe and
+                // GitHub itself — the same grounds as `controller.db.*`. Its availability check and the Marketplace
+                // gateway stay measured: the first runs headless, the second takes its fetch as a parameter.
+                classes("dev.lain.claudejb.controller.github.GitHubGateway*")
             }
         }
         verify {
