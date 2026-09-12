@@ -49,6 +49,7 @@ enum class IdeRule(val key: String, val server: IdeServer?, val label: String, v
         setOf("project", "modules", "dependencies", "dependency_add", "plugins"),
     ),
     OPS_IDE("ops.ide", IdeServer.OPS, "Move the IDE for the user", setOf("tool_window", "settings_open", "ide_action", "notify")),
+    OPS_ACTIONS("ops.actions", IdeServer.OPS, "Every menu entry is one action away", setOf("actions", "menu", "appearance", "ui")),
     OPS_DATA(
         "ops.data",
         IdeServer.OPS,

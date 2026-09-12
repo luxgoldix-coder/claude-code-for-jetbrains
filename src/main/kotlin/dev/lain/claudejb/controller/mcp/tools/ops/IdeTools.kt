@@ -10,6 +10,7 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import dev.lain.claudejb.controller.mcp.FocusKeeper
 import dev.lain.claudejb.controller.mcp.IdeActions
+import dev.lain.claudejb.controller.mcp.TargetContext
 import dev.lain.claudejb.model.mcp.Param
 import dev.lain.claudejb.model.mcp.Tool
 import dev.lain.claudejb.model.mcp.ToolArgs
@@ -41,10 +42,12 @@ internal class IdeTools(private val project: Project, private val actions: IdeAc
 
     private suspend fun ideAction(args: ToolArgs): ToolResult {
         val id = args.string("action_id")
-        actions.dispatch(id)
+        val target = TargetContext.target(args)
+        if (target.named) actions.dispatch(id, target) else actions.dispatch(id)
         return ToolResult.toon(
             buildJsonObject {
                 put("action_id", id)
+                put("target", target.path ?: target.hash ?: target.node ?: "")
                 put("dispatched", true)
             },
         )
@@ -143,10 +146,13 @@ internal class IdeTools(private val project: Project, private val actions: IdeAc
         val IDE_ACTION = ToolSpec(
             "ide_action",
             "Performs one registered IDE action by its id, exactly as its menu entry or shortcut would, with the project and " +
-                "the repository root as context. Use it for what no other tool covers, such as InvalidateCaches or " +
-                "Synchronize; it returns as soon as the action is dispatched, and an action that opens a dialog leaves " +
+                "the repository root as context, or with a target: a file (path, line, column: the action sees the file, " +
+                "its PSI and an editor on it, as the editor's context menu would), a commit (hash: selected in the Git Log, " +
+                "as the log's context menu would) or a Services node (node). Use it for what no other tool covers; actions " +
+                "lists the ids. It returns as soon as the action is dispatched, and an action that opens a dialog leaves " +
                 "it for the user. Refused when the IDE has no such action or it is not enabled in this context.",
-            listOf(Param("action_id", "The action id as registered in the IDE, e.g. ShowSettings, Synchronize, CloseAllEditors")),
+            listOf(Param("action_id", "The action id as registered in the IDE, e.g. ShowSettings, Synchronize, CloseAllEditors")) +
+                TargetContext.PARAMS,
             mutates = true,
         )
 

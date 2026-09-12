@@ -28,8 +28,10 @@ class ToolArgs(val json: JsonObject, val toolUseId: String? = null) {
         return raw.toIntOrNull() ?: throw ToolException("argument $key must be an integer")
     }
 
-    fun boolean(key: String, default: Boolean): Boolean = when (optionalString(key)) {
-        null -> default
+    fun boolean(key: String, default: Boolean): Boolean = optionalBoolean(key) ?: default
+
+    fun optionalBoolean(key: String): Boolean? = when (optionalString(key)) {
+        null -> null
         "true" -> true
         "false" -> false
         else -> throw ToolException("argument $key must be a boolean")

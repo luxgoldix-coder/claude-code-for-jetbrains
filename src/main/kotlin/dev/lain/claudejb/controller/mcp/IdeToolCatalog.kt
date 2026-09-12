@@ -13,6 +13,7 @@ import dev.lain.claudejb.controller.mcp.tools.code.OutlineTools
 import dev.lain.claudejb.controller.mcp.tools.code.ReadTools
 import dev.lain.claudejb.controller.mcp.tools.code.RefactorTools
 import dev.lain.claudejb.controller.mcp.tools.code.SearchTools
+import dev.lain.claudejb.controller.mcp.tools.ops.ActionTools
 import dev.lain.claudejb.controller.mcp.tools.ops.DbTools
 import dev.lain.claudejb.controller.mcp.tools.ops.HttpTools
 import dev.lain.claudejb.controller.mcp.tools.ops.IdeTools
@@ -67,6 +68,7 @@ internal object IdeToolCatalog {
             { p, s -> ServiceTools(p, s, Reveal(p)).domain() },
             { p, _ -> ProjectTools(p).domain() },
             { p, s -> IdeTools(p, IdeActions(p, s), s).domain() },
+            { p, s -> ActionTools(p, IdeActions(p, s)).domain() },
             { p, _ -> NotifyTools(p).domain() },
             { p, _ -> DbTools(p).domain() },
             { p, s -> HttpTools(p, s, Reveal(p)).takeIf { it.available() }?.domain() },

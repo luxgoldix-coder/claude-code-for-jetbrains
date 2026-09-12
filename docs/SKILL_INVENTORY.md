@@ -129,7 +129,11 @@ Rules that hold for every tool:
 | `modules` | The modules as Project Structure shows them. | "how is the project split". `ops ▸ modules {}` |
 | `dependencies` | One module's order entries in classpath order, with scope. | "what does the main module depend on". `ops ▸ dependencies {module: "app.main"}` |
 | `dependency_add` *mutates* | Adds an existing library to a module through the project model (not for Gradle/Maven, which edit the build file). | Plain IntelliJ projects only. `ops ▸ dependency_add {module: "app", library: "junit", scope: "test"}` |
-| `ide_action` *mutates* | Any registered IDE action by id, as its menu entry would. | What no other tool covers. `ops ▸ ide_action {action_id: "Git.CompareWithBranch"}` |
+| `ide_action` *mutates* | Any registered IDE action by id, as its menu entry would; with a target it runs as that context menu would: a file (`path`, `line`, `column` — file, PSI and an editor on it), a commit (`hash` — selected in the Git Log), a Services node (`node`). | What no other tool covers. `ops ▸ ide_action {action_id: "Git.CompareWithBranch"}` · `ops ▸ ide_action {action_id: "Vcs.CherryPick", hash: "d20afbe"}` · `ops ▸ ide_action {action_id: "OverrideMethods", path: "src/A.kt", line: 12}` |
+| `actions` | Every action the IDE registers, plugins included: id, menu text, description, group, enabled in the project context; `query` on id or text. | To find the id for `ide_action`. `ops ▸ actions {query: "cherry"}` |
+| `menu` | The main menu as the user sees it: top level, or the items of one menu by path. | "what is under Code ▸ Analyze". `ops ▸ menu {path: "Code/Analyze"}` |
+| `appearance` *mutates* | View ▸ Appearance modes: presentation, distraction_free, full_screen, zen, compact, assistant; toggle or set with `on`; returns the state. | "put the IDE in presentation mode". `ops ▸ appearance {mode: "presentation", on: true}` |
+| `ui` *mutates* | Show or hide the toolbar, navigation_bar, tool_window_bars, status_bar or main_menu; toggle or set with `on`. | "hide the status bar". `ops ▸ ui {part: "status_bar", on: false}` |
 | `tool_window` *mutates* | Open, close or list tool windows. | "show the Problems view". `ops ▸ tool_window {action: "open", id: "Problems View"}` |
 | `settings_open` *mutates* | Settings at a page by display name. | "open the plugin settings". `ops ▸ settings_open {name: "Claude Code"}` |
 | `plugins` | The IDE's plugins with id, version and enabled; `filter`. | Before relying on a plugin; to know the IDE build (`com.intellij`). `ops ▸ plugins {filter: "database"}` |
@@ -178,9 +182,9 @@ mirrored in the IDE without taking the user's focus.
 
 | Capability | Tools (domain) | Status |
 |---|---|---|
-| The action catalogue of the user's IDE, enabled-in-context; the main menu tree | `actions`, `menu` (`actions`) | ☐ |
-| Appearance and UI toggles | `appearance`, `ui` (`actions`) | ☐ |
-| `ide_action` with a target: file/position, commit, Services node | `ide_action` +`path`/`line`/`column`/`hash`/`node` (`ide`) | ☐ |
+| The action catalogue of the user's IDE, enabled-in-context; the main menu tree | `actions`, `menu` (`actions`) | ☑ |
+| Appearance and UI toggles | `appearance`, `ui` (`actions`) | ☑ |
+| `ide_action` with a target: file/position, commit, Services node | `ide_action` +`path`/`line`/`column`/`hash`/`node` (`ide`), `TargetContext` | ☑ |
 | Code menu editing actions at a position | `editor_action` (`editor`) | ☐ |
 | Undo, redo, replace in path, line operations | `undo`, `redo`, `search_replace`, `line_ops` (`edit_ops`) | ☐ |
 | Recent files/locations/changes, back/forward, clipboard compare, schemes | `recent`, `navigate_history`, `compare_clipboard`, `scheme` (`recent`) | ☐ |

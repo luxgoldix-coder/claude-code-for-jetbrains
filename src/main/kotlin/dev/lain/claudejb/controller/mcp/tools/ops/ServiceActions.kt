@@ -80,7 +80,7 @@ internal class ServiceActions(private val project: Project, private val node: Se
         }
     }
 
-    private fun context(): DataContext {
+    fun context(): DataContext {
         val roots: Set<ServiceViewContributor<*>> = ServiceViewContributor.CONTRIBUTOR_EP_NAME.extensionList.toSet()
         val base = SimpleDataContext.builder()
             .add(CommonDataKeys.PROJECT, project)

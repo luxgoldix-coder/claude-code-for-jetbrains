@@ -63,6 +63,11 @@ internal object IdeRuleText {
         IdeRule.OPS_IDE to "Call tool_window to open or close a tool window without taking the focus, settings_open to open " +
             "Settings at a page, ide_action to perform any registered action by id when no other tool covers it, and " +
             "notify to raise a notification the user sees.",
+        IdeRule.OPS_ACTIONS to "Every entry of the IDE's menus is an action: call actions with a fragment of its text or id to " +
+            "find it, plugins included, and menu with a path such as Code/Analyze or Git/GitHub to walk the main menu " +
+            "as the user sees it; then fire it with ide_action and a target. Call appearance to flip presentation, " +
+            "distraction-free, full-screen, zen, compact or the Presentation Assistant, and ui to show or hide the " +
+            "toolbar, navigation bar, tool window bars, status bar or main menu; both say the state they left.",
         IdeRule.OPS_DATA to "Call db_connections, db_schema and db_query for the Database window's data sources; http_files " +
             "to find the HTTP Client's request files, http_run to run one with its response console and http_open to show " +
             "one in the editor; ssh_hosts for the configured SSH hosts. Never psql, curl or ssh from the command line.",
