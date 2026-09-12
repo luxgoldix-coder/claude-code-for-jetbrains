@@ -2,11 +2,13 @@ package dev.lain.claudejb.controller.mcp.tools.run
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.filters.TextConsoleBuilderFactory
 import com.intellij.execution.process.ColoredProcessHandler
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutputType
+import com.intellij.execution.ui.ConsoleView
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
@@ -15,7 +17,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.terminal.TerminalExecutionConsole
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.content.ContentManager
@@ -133,7 +134,7 @@ internal class TerminalTools(private val project: Project, scope: CoroutineScope
         return exited.await()
     }
 
-    private class Tab(val console: TerminalExecutionConsole, @Volatile var handler: ProcessHandler)
+    private class Tab(val console: ConsoleView, @Volatile var handler: ProcessHandler)
 
     private fun show(handler: ProcessHandler) {
         val window = ToolWindowManager.getInstance(project).getToolWindow(TERMINAL_WINDOW) ?: return
@@ -148,11 +149,13 @@ internal class TerminalTools(private val project: Project, scope: CoroutineScope
     private fun reuse(content: Content, handler: ProcessHandler) {
         val tab = content.getUserData(TAB) ?: return
         tab.handler = handler
+        tab.console.clear()
         tab.console.attachToProcess(handler)
     }
 
     private fun open(window: ToolWindow, handler: ProcessHandler): Content {
-        val console = TerminalExecutionConsole(project, handler).withConvertLfToCrlfForNonPtyProcess(true)
+        val console = TextConsoleBuilderFactory.getInstance().createBuilder(project).console
+        console.attachToProcess(handler)
         val tab = Tab(console, handler)
         val content = ContentFactory.getInstance().createContent(console.component, TAB_TITLE, false)
         content.putUserData(TAB, tab)
