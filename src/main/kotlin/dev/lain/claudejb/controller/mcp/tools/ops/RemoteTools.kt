@@ -128,27 +128,27 @@ internal class RemoteTools(private val project: Project, private val actions: Id
             "com.jetbrains.plugins.webDeployment",
             "Deployment",
             linkedMapOf(
-                "upload" to listOf("PublishGroup.Upload", "Upload"),
-                "download" to listOf("PublishGroup.Download", "Download"),
-                "sync" to listOf("PublishGroup.Sync", "Sync"),
-                "compare" to listOf("PublishGroup.Compare", "CompareWithDeployed"),
-                "browse" to listOf("PublishGroup.BrowseRemoteHost", "RemoteHost"),
-                "configure" to listOf("PublishGroup.Configure", "ConfigureDeployment", "Deployment"),
+                "upload" to listOf("PublishGroup.Upload", "PublishGroup.UploadTo"),
+                "download" to listOf("PublishGroup.Download", "PublishGroup.DownloadFrom"),
+                "sync" to listOf("PublishGroup.SyncLocalVsRemote", "PublishGroup.SyncLocalVsRemoteWith"),
+                "compare" to listOf("PublishGroup.CompareLocalVsRemote", "PublishGroup.CompareLocalVsRemoteWith"),
+                "browse" to listOf("WebDeployment.BrowseServers", "ActivateRemoteHostToolWindow"),
+                "configure" to listOf("WebDeployment.Configuration", "PublishGroup.Configure"),
             ),
         )
 
         private val SSH_PLUGIN = Closed(
-            "com.jetbrains.plugins.remotesdk",
+            "intellij.ssh.plugin",
             "SSH",
-            linkedMapOf("session" to listOf("StartSshSession", "SshSession", "Ssh")),
+            linkedMapOf("session" to listOf("com.jetbrains.plugins.remotesdk.console.RunSshConsoleAction", "RunSshConsoleAction")),
         )
 
         private val QODANA_PLUGIN = Closed(
             "org.intellij.qodana",
             "Qodana",
             linkedMapOf(
-                "run" to listOf("Qodana.RunAction", "QodanaRun", "Qodana"),
-                "open" to listOf("Qodana.Open", "QodanaOpen", "Qodana"),
+                "run" to listOf("Qodana.RunQodanaAction", "Qodana.RunAction"),
+                "open" to listOf("Qodana.OpenReportAction", "Qodana.SarifFileReportAction"),
             ),
         )
 
