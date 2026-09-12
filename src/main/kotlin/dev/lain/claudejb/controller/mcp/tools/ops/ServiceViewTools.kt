@@ -100,7 +100,9 @@ internal class ServiceViewTools(private val project: Project, scope: CoroutineSc
         val done = CompletableDeferred<Unit>()
         withContext(Dispatchers.EDT) {
             FocusKeeper.keeping(project) {
-                act(ServiceViewManager.getInstance(project), node)
+                val manager = ServiceViewManager.getInstance(project)
+                manager.select(node.value, node.root.javaClass, true, false)
+                    .thenAsync { act(manager, node) }
                     .onSuccess { done.complete(Unit) }
                     .onError { done.completeExceptionally(ToolException("the Services view could not $verb ${node.path}: ${it.message}")) }
             }
