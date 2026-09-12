@@ -201,6 +201,24 @@ Rules that hold for every tool:
 |---|---|---|
 | `workspace` | The workspace model's modules, content roots, source roots, libraries or SDKs, with their entity source. | "what did Gradle import". `code ▸ workspace {entity_type: "source_root"}` |
 
+### markup
+
+| Tool | Capability | When · example |
+|---|---|---|
+| `mark_add` *mutates* | A highlight, warning or error range over lines, or a gutter icon with a tooltip; returns an id. | "show me where the bug is". `code ▸ mark_add {path: "A.kt", line: 12, to_line: 14, kind: "warning", tooltip: "null here"}` |
+| `mark_remove` *mutates* | Remove a mark or hint by id. | `code ▸ mark_remove {id: 3}` |
+| `marks` | The marks of the session, all or for a file. | `code ▸ marks {path: "A.kt"}` |
+| `hint_add` *mutates* | An inline hint before or after a position, as parameter hints look. | "annotate what this returns". `code ▸ hint_add {path: "A.kt", line: 12, column: 20, text: ": Int"}` |
+
+### presence
+
+| Tool | Capability | When · example |
+|---|---|---|
+| `banner_show` *mutates* | A banner over a file's editor with action labels; the click is reported by `banner_clear`. | A choice tied to a file. `code ▸ banner_show {path: "A.kt", text: "Migrate this?", actions: ["Yes", "Later"]}` |
+| `banner_clear` *mutates* | Removes the banner; returns the chosen action. | `code ▸ banner_clear {path: "A.kt"}` |
+| `status` *mutates* | Text in the status bar. | "tell me when it's done". `code ▸ status {text: "Claude: tests green"}` |
+| `scratch_create` *mutates* | A scratch file with a language and content, opened. | Notes, queries, drafts. `code ▸ scratch_create {name: "plan.md", content: "# Plan"}` |
+
 ### recent
 
 | Tool | Capability | When · example |
@@ -390,9 +408,9 @@ mirrored in the IDE without taking the user's focus.
 
 | Capability | Tools (domain) | Status |
 |---|---|---|
-| Editor markup: highlights, gutter icons, inline hints (S1) | `mark_add`, `mark_remove`, `marks`, `hint_add` (`markup`) | ☐ |
-| Banners, status bar, scratches (S2, S3) | `banner_show`, `banner_clear`, `status`, `scratch_create` (`presence`) | ☐ |
-| One edit, one undo entry, one history label (S4) | `edit` domain | ☐ |
+| Editor markup: highlights, gutter icons, inline hints (S1) | `mark_add`, `mark_remove`, `marks`, `hint_add` (`markup`) | ☑ (document markup model + inlays; ids live with the server) |
+| Banners, status bar, scratches (S2, S3) | `banner_show`, `banner_clear`, `status`, `scratch_create` (`presence`) | ☑ (`BannerProvider` editor notification + `BannerRegistry` service) |
+| One edit, one undo entry, one history label (S4) | `edit` domain | ☑ (every `replace_text`/`insert_text`/`write_file` is one write command and puts a Local History label named after it) |
 
 ### P7 — Services in depth, the closed plugins
 

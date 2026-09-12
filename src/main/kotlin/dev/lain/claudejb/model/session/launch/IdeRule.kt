@@ -62,6 +62,13 @@ enum class IdeRule(val key: String, val server: IdeServer?, val label: String, v
     CODE_INDEX("code.index", IdeServer.CODE, "The indexes by name", setOf("index_keys", "index_query", "stub_query")),
     CODE_UAST("code.uast", IdeServer.CODE, "The unified AST", setOf("uast_tree", "uast_at")),
     CODE_WORKSPACE("code.workspace", IdeServer.CODE, "The workspace model", setOf("workspace")),
+    CODE_MARKUP("code.markup", IdeServer.CODE, "Marks in the editor", setOf("mark_add", "mark_remove", "marks", "hint_add")),
+    CODE_PRESENCE(
+        "code.presence",
+        IdeServer.CODE,
+        "Banners, status, scratches",
+        setOf("banner_show", "banner_clear", "status", "scratch_create"),
+    ),
     CODE_RECENT(
         "code.recent",
         IdeServer.CODE,

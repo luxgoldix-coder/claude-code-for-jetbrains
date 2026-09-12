@@ -177,6 +177,8 @@
     <depends optional="true" config-file="claude-java.xml">com.intellij.modules.java</depends>
 
     <extensions defaultExtensionNs="com.intellij">
+        <!-- The banner Claude can show over a file's editor (presence ▸ banner_show); it reads BannerRegistry. -->
+        <editorNotificationProvider implementation="dev.lain.claudejb.controller.mcp.tools.code.BannerProvider"/>
         <!-- Right-hand tool window, next to where the JetBrains AI Assistant lives. -->
         <toolWindow id="Claude Code"
                     anchor="right"

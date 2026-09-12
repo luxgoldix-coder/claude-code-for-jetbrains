@@ -16,8 +16,10 @@ import dev.lain.claudejb.controller.mcp.tools.code.IndexTools
 import dev.lain.claudejb.controller.mcp.tools.code.InspectTools
 import dev.lain.claudejb.controller.mcp.tools.code.JavaAvailability
 import dev.lain.claudejb.controller.mcp.tools.code.LanguageTools
+import dev.lain.claudejb.controller.mcp.tools.code.MarkupTools
 import dev.lain.claudejb.controller.mcp.tools.code.NavigateTools
 import dev.lain.claudejb.controller.mcp.tools.code.OutlineTools
+import dev.lain.claudejb.controller.mcp.tools.code.PresenceTools
 import dev.lain.claudejb.controller.mcp.tools.code.PsiTools
 import dev.lain.claudejb.controller.mcp.tools.code.ReadTools
 import dev.lain.claudejb.controller.mcp.tools.code.RecentTools
@@ -83,6 +85,8 @@ internal object IdeToolCatalog {
             { p, _ -> IndexTools(p).domain() },
             { p, _ -> if (JavaAvailability.isEnabled()) UastTools(p).domain() else null },
             { p, _ -> WorkspaceTools(p).domain() },
+            { p, _ -> MarkupTools(p, TargetContext(p), Reveal(p)).domain() },
+            { p, _ -> PresenceTools(p, Reveal(p)).domain() },
         ),
         IdeServer.RUN to listOf(
             { p, s -> BuildTools(p, s).domain() },

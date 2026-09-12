@@ -1,5 +1,6 @@
 package dev.lain.claudejb.controller.mcp.tools.code
 
+import com.intellij.history.LocalHistory
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.writeCommandAction
@@ -117,12 +118,14 @@ internal class EditTools(private val project: Project, private val reveal: Revea
             val file = ReadTools.resolveFile(project, path)
             file to Locations.document(project, file)
         }
-        val (before, outcome) = writeCommandAction(project, "Claude: $verb ${file.name}") {
+        val label = "Claude: $verb ${file.name}"
+        val (before, outcome) = writeCommandAction(project, label) {
             val before = document.immutableCharSequence.toString()
             val outcome = change(before)
             apply(file, document, outcome.text)
             before to outcome
         }
+        LocalHistory.getInstance().putSystemLabel(project, label)
         withContext(Dispatchers.EDT) {
             DiffEditors.openTextDiff(
                 project,

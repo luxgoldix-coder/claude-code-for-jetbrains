@@ -78,6 +78,12 @@ internal object IdeRuleText {
             "shape across those languages, with lines and source text.",
         IdeRule.CODE_WORKSPACE to "Call workspace for the IDE's workspace model entities (modules, content roots, source roots, " +
             "libraries, SDKs) with the source that created them, read-only.",
+        IdeRule.CODE_MARKUP to "To point the user at code without editing it call mark_add: a highlighted, warning or error " +
+            "range, or a gutter icon with a tooltip, in every editor of the file, which the IDE shows in the preview tab; call hint_add " +
+            "for an inline hint at a position, marks to list what you left and mark_remove to take one back.",
+        IdeRule.CODE_PRESENCE to "To ask the user something about a file where they read it call banner_show: a banner over " +
+            "its editor with action labels, and banner_clear reports which they chose. Call status to put a short text in " +
+            "the IDE's status bar and scratch_create for a scratch file that opens in the editor and is never committed.",
         IdeRule.CODE_RECENT to "To know where the user has been call recent: the files they opened last (kind=files) or " +
             "changed last (kind=changed_files), from the IDE's editor history. To move their editor through that " +
             "history when asked call navigate_history with back, forward, last_change or next_change. To show the " +
