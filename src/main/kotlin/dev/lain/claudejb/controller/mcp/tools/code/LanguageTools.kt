@@ -1,11 +1,9 @@
 package dev.lain.claudejb.controller.mcp.tools.code
 
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.lang.Language
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.command.writeCommandAction
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.util.PsiTreeUtil
@@ -141,9 +139,10 @@ internal class LanguageTools(private val project: Project, private val actions: 
 internal class IntelliLangGateway(private val project: Project) {
 
     suspend fun inject(host: PsiLanguageInjectionHost, languageId: String): Boolean {
-        val plugin = PluginManagerCore.getPlugin(PluginId.getId(PLUGIN_ID))?.takeIf { InstalledPlugins.isEnabled(PLUGIN_ID) }
-        val loader = plugin?.pluginClassLoader
-            ?: throw ToolException("the IntelliLang plugin ($PLUGIN_ID) is not installed or is disabled, so nothing injects languages")
+        if (!InstalledPlugins.isEnabled(PLUGIN_ID)) {
+            throw ToolException("the IntelliLang plugin ($PLUGIN_ID) is not installed or is disabled, so nothing injects languages")
+        }
+        val loader = javaClass.classLoader
         return writeCommandAction(project, "Claude: inject $languageId") {
             runCatching {
                 val registryClass = Class.forName(REGISTRY, true, loader)

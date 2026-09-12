@@ -139,11 +139,10 @@ internal class DbGateway(private val project: Project) {
             ?: throw ToolException(notExposed(name))
 
     private fun loaders(): List<ClassLoader> {
-        val plugin = PluginManagerCore.getPlugin(PluginIds.of(PLUGIN_ID))?.pluginClassLoader ?: throw ToolException(MISSING)
         val modules = ServiceViewContributor.CONTRIBUTOR_EP_NAME.extensionList
             .filter { it.javaClass.name.startsWith(PACKAGE) }
             .map { it.javaClass.classLoader }
-        return (listOf(plugin) + modules).distinct()
+        return (listOf(javaClass.classLoader) + modules).distinct()
     }
 
     private fun static(type: Class<*>, name: String, vararg args: Any?): Any? {

@@ -175,6 +175,8 @@
          it. Optional: PyCharm and the other IDEs without Java load this plugin without the uast domain;
          `JavaAvailability` gates the only file that names those types. -->
     <depends optional="true" config-file="claude-java.xml">com.intellij.modules.java</depends>
+    <depends optional="true" config-file="claude-intellilang.xml">org.intellij.intelliLang</depends>
+    <depends optional="true" config-file="claude-database.xml">com.intellij.database</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- The banner Claude can show over a file's editor (presence ▸ banner_show); it reads BannerRegistry. -->

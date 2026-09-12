@@ -4,7 +4,7 @@ import com.intellij.execution.RunManager
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.configurations.ConfigurationType
-import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
@@ -35,7 +35,7 @@ internal object HttpClientGateway {
 
     private fun configurationType(): ConfigurationType? =
         ConfigurationType.CONFIGURATION_TYPE_EP.extensionList.firstOrNull { type ->
-            PluginManager.getPluginByClass(type.javaClass)?.pluginId?.idString == PLUGIN_ID &&
+            (type.javaClass.classLoader as? PluginAwareClassLoader)?.pluginId?.idString == PLUGIN_ID &&
                 (type.id.contains(HTTP, ignoreCase = true) || type.displayName.contains(HTTP, ignoreCase = true))
         }
 

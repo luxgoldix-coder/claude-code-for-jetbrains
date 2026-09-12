@@ -1,6 +1,6 @@
 package dev.lain.claudejb.model.session.launch
 
-import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.util.SystemInfo
 import dev.lain.claudejb.util.thisLogger
 import java.io.File
@@ -80,7 +80,8 @@ object SessionLauncher {
         )
 
     fun resolveHelper(): McpConfigBuilder.HelperParams? {
-        val lib = PluginManager.getPluginByClass(McpConfigBuilder::class.java)?.pluginPath?.resolve("lib")?.toFile()
+        val loader = McpConfigBuilder::class.java.classLoader as? PluginAwareClassLoader
+        val lib = loader?.pluginDescriptor?.pluginPath?.resolve("lib")?.toFile()
         if (lib == null || !lib.isDirectory) return null
         return McpConfigBuilder.HelperParams(javaBin(), lib)
     }
