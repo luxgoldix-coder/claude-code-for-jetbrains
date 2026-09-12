@@ -8,7 +8,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemDescriptorUtil
 import com.intellij.codeInspection.ex.InspectionToolWrapper
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.profile.codeInspection.InspectionProfileManager
@@ -21,15 +21,12 @@ import dev.lain.claudejb.model.mcp.ToolDomain
 import dev.lain.claudejb.model.mcp.ToolException
 import dev.lain.claudejb.model.mcp.ToolResult
 import dev.lain.claudejb.model.mcp.ToolSpec
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
-internal class InspectTools(private val project: Project, private val io: CoroutineDispatcher = Dispatchers.IO) {
+internal class InspectTools(private val project: Project) {
 
     fun domain(): ToolDomain = ToolDomain(
         "inspect",
@@ -73,12 +70,10 @@ internal class InspectTools(private val project: Project, private val io: Corout
         val context = InspectionManager.getInstance(project).createNewGlobalContext()
         val rows = ArrayList<JsonObject>()
         try {
-            withContext(io) {
-                for (tool in tools) {
-                    if (rows.size >= max) break
-                    val problems = coroutineToIndicator { _ -> run(psiFile, tool, context) }
-                    rows += readAction { problems.take(max - rows.size).map { row(tool, it) } }
-                }
+            for (tool in tools) {
+                if (rows.size >= max) break
+                val problems = smartReadAction(project) { run(psiFile, tool, context) }
+                rows += readAction { problems.take(max - rows.size).map { row(tool, it) } }
             }
         } finally {
             context.cleanup()
