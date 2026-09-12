@@ -53,12 +53,18 @@ code**, because it loses signatures, and an approximate signature is indistingui
 | The content factory's nested service holder | deprecated for removal | its instance getter |
 | The todo search helper's find-files | deprecated | its processing form |
 | The editor notifications' per-provider refresh, and its nested provider class | deprecated | refresh-all, and the provider extension point |
+| The plugin manager's descriptor lookups: by class, by id, and the plugin arrays | internal since 262 | the plugin-aware class loader's descriptor and id for the plugin a class came from; an optional dependency in `plugin.xml` for the classes of another plugin, loaded through this plugin's own class loader; the installed and loaded checks, which stay public |
+| The terminal tool window manager's shell widget creator | deprecated since 261 | the terminal tool window tabs manager's tab builder, and the view's send-text builder |
+| The breakpoint manager's five-argument add-line-breakpoint | deprecated for removal since 262 | the four-argument form, then the breakpoint's temporary setter |
 
 ## Tolerated, because experimental is not a promise broken
 
 The project task execution environment factory; the file editor manager's current-file and can-open checks;
 the project-scoped JDK table getter; the module manager's all-module descriptions; the service view
-descriptor's unique id; and the bookmarks manager.
+descriptor's unique id; the bookmarks manager; and the terminal tool window tabs manager with its builders.
+
+One deprecation is tolerated because the platform forces it: the composite debugger node's single-argument
+too-many-children is abstract and deprecated at once, so any implementation of that interface overrides it.
 
 ## Watch list
 
