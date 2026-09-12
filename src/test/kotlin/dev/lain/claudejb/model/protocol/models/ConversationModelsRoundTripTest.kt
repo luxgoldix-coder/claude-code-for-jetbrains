@@ -12,7 +12,10 @@ import org.junit.jupiter.api.Test
 
 class ConversationModelsRoundTripTest {
 
-    private val block = buildJsonObject { put("type", "text"); put("text", "hi") }
+    private val block = buildJsonObject {
+        put("type", "text")
+        put("text", "hi")
+    }
 
     @Test
     fun `the system init and its server statuses survive a round trip, full and empty`() {
@@ -75,9 +78,12 @@ class ConversationModelsRoundTripTest {
     @Test
     fun `ask questions are parsed from the input, and a malformed list is no questions`() {
         val questions = buildJsonObject {
-            put("questions", ClaudeJson.encodeToJsonElement(AskQuestion.serializer(), AskQuestion("q", "h", listOf(AskOption("a")))).let {
-                kotlinx.serialization.json.JsonArray(listOf(it))
-            })
+            put(
+                "questions",
+                ClaudeJson.encodeToJsonElement(AskQuestion.serializer(), AskQuestion("q", "h", listOf(AskOption("a")))).let {
+                    kotlinx.serialization.json.JsonArray(listOf(it))
+                },
+            )
         }
         assertEquals(listOf(AskQuestion("q", "h", listOf(AskOption("a")))), parseAskQuestions(questions))
         assertTrue(parseAskQuestions(buildJsonObject { put("questions", "nope") }).isEmpty())
