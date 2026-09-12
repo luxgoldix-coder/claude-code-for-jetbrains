@@ -34,11 +34,11 @@ internal class RefactorOpsTools(private val actions: IdeActions) {
         val id = table[name] ?: throw ToolException("$key must be one of ${table.keys.joinToString()}")
         val target = TargetContext.target(args, preview = false)
         if (target.path == null) throw ToolException("$name needs path, line and column")
-        actions.dispatch(id, target)
+        val fired = dispatchFirstEnabled(listOf(id) + ALTERNATIVES[id].orEmpty(), target)
         return ToolResult.toon(
             buildJsonObject {
                 put("refactoring", name)
-                put("id", id)
+                put("id", fired)
                 put("path", target.path)
                 put("line", target.line)
                 put("column", target.column)
@@ -48,9 +48,24 @@ internal class RefactorOpsTools(private val actions: IdeActions) {
         )
     }
 
+    private suspend fun dispatchFirstEnabled(ids: List<String>, target: TargetContext.Target): String {
+        var refused: ToolException? = null
+        for (id in ids) {
+            try {
+                actions.dispatch(id, target)
+                return id
+            } catch (e: ToolException) {
+                refused = e
+            }
+        }
+        throw refused ?: ToolException("no refactoring action to fire")
+    }
+
     companion object {
 
         private const val INLINE_ACTION = "Inline"
+
+        private val ALTERNATIVES: Map<String, List<String>> = mapOf("ExtractMethod" to listOf("ExtractFunction"))
 
         val INTRODUCE_ACTIONS: Map<String, String> = linkedMapOf(
             "variable" to "IntroduceVariable",
