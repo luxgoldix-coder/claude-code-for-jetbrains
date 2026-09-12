@@ -54,7 +54,8 @@
         block.setAttribute('data-out-id', pid);
         out.appendChild(block);
       }
-      TX.renderToon(block, entry.text == null ? '' : String(entry.text));
+      const value = TX.renderToon(block, entry.text == null ? '' : String(entry.text));
+      setFoot(card, foot(value));
       return true;
     }
     if (!block) {
@@ -110,19 +111,62 @@
     return true;
   };
 
-  function setLiveTail(card: RowEl, raw: string): void {
+  function tailRow(card: RowEl): HTMLElement {
     let tail = card.__liveTail || null;
     if (!tail) {
       tail = el('div', { class: 'tool-live-tail' });
+      tail.appendChild(el('span', { class: 'tool-foot' }));
+      tail.appendChild(el('span', { class: 'tool-last' }));
       const out = card.__outNode || card.querySelector<HTMLElement>('.tool-out');
       if (out && out.parentNode) out.parentNode.insertBefore(tail, out);
       else card.appendChild(tail);
       card.__liveTail = tail;
     }
+    return tail;
+  }
+
+  function setTailPart(card: RowEl, part: string, text: string): void {
+    const tail = tailRow(card);
+    const span = tail.querySelector<HTMLElement>('.' + part);
+    if (span) span.textContent = text;
+    tail.hidden = !tail.textContent;
+  }
+
+  function setLiveTail(card: RowEl, raw: string): void {
     const lines = raw.split('\n');
     let last = '';
     for (let i = lines.length - 1; i >= 0 && !last; i--) last = lines[i].trim();
-    tail.textContent = last;
+    setTailPart(card, 'tool-last', last);
+  }
+
+  function setFoot(card: RowEl, text: string): void {
+    if (text || card.__liveTail) setTailPart(card, 'tool-foot', text);
+  }
+
+  const FOOT_KEYS = [
+    'status',
+    'exit_code',
+    'passed',
+    'failed',
+    'ignored',
+    'errors_count',
+    'warnings_count',
+    'lines',
+  ];
+
+  function foot(value: unknown): string {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return '';
+    const row = value as Record<string, unknown>;
+    const parts: string[] = [];
+    if (Array.isArray(row.items) && typeof row.count === 'number') parts.push(row.count + ' items');
+    FOOT_KEYS.forEach(function (key) {
+      const v = row[key];
+      if (v == null || v === '' || (key !== 'status' && typeof v !== 'number')) return;
+      if (key === 'status') parts.push(String(v));
+      else if (key === 'exit_code') parts.push('exit ' + v);
+      else parts.push(v + ' ' + key.replace('_count', '').replace('_', ' '));
+    });
+    return parts.join(' · ');
   }
 
   TX.scrollLiveToEnd = function (card: HTMLElement): void {

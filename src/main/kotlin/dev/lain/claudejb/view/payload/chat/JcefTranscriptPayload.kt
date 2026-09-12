@@ -36,7 +36,7 @@ object JcefTranscriptPayload {
     }
 
     private fun kotlinx.serialization.json.JsonObjectBuilder.cardFlags(e: TranscriptEntry) {
-        if (e.speaker == Speaker.TOOL && e.toolUseId != null && e.meta in REVIEWABLE_TOOLS) put("reviewable", true)
+        if (e.speaker == Speaker.TOOL && e.toolUseId != null && e.reviewable) put("reviewable", true)
     }
 
     private val REVIEWABLE_TOOLS = setOf("Edit", "Write", "MultiEdit")

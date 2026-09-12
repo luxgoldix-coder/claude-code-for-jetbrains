@@ -69,4 +69,13 @@ class JcefTranscriptPayloadTest {
         assertFalse(JcefTranscriptPayload.entryJson(bash, 0).toString().contains("\"open\""))
         assertFalse(JcefTranscriptPayload.entryJson(output, 1).toString().contains("\"open\""))
     }
+
+    @Test
+    fun `a card is reviewable when its entry says so, whatever tool it names`() {
+        val own = TranscriptEntry(1, Speaker.TOOL, "code ▸ replace_text ▸ A.kt", meta = "mcp__code__run", toolUseId = "tu_1", reviewable = true)
+        val edit = TranscriptEntry(2, Speaker.TOOL, "Edit(A.kt)", meta = "Edit", toolUseId = "tu_2")
+
+        assertTrue(JcefTranscriptPayload.entryJson(own, 0).toString().contains("\"reviewable\":true"))
+        assertFalse(JcefTranscriptPayload.entryJson(edit, 0).toString().contains("reviewable"))
+    }
 }

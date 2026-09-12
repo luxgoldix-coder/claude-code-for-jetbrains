@@ -21,6 +21,7 @@ class TranscriptEntry(
     val blockedRule: String? = null,
     val bypassedRule: String? = null,
     val bypassAction: String? = null,
+    val reviewable: Boolean = false,
 ) {
     var text: String = text
         internal set
@@ -85,10 +86,11 @@ class TranscriptModel {
         blockedRule: String? = null,
         bypassedRule: String? = null,
         bypassAction: String? = null,
+        reviewable: Boolean = false,
     ): TranscriptEntry {
         val entry = TranscriptEntry(
             nextId++, speaker, text, meta, toolUseId, parentToolUseId, toolState, filePath, commandText,
-            messageText, blockedRule, bypassedRule, bypassAction,
+            messageText, blockedRule, bypassedRule, bypassAction, reviewable,
         )
         if (speaker == Speaker.TOOL && toolUseId != null) {
             byToolUseId[toolUseId] = entry

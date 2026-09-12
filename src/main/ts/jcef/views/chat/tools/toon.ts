@@ -212,15 +212,16 @@
     return el('span', { class: 'toon-scalar', text: scalar(value) });
   }
 
-  TX.renderToon = function (root: HTMLElement, json: string): void {
+  TX.renderToon = function (root: HTMLElement, json: string): unknown {
     root.innerHTML = '';
     let value: unknown;
     try {
       value = JSON.parse(json);
     } catch (e) {
       root.appendChild(el('pre', { text: json }));
-      return;
+      return undefined;
     }
     root.appendChild(render(value));
+    return value;
   };
 })();

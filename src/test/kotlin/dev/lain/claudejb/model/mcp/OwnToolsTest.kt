@@ -56,8 +56,12 @@ class OwnToolsTest {
         assertEquals("/abs/B.kt", OwnTools.reviewsAs(OwnTools.parse("mcp__code__run", write)!!, write, null).single().input["file_path"]!!.jsonPrimitive.content)
         val insert = input("""{"tool":"insert_text","args":{"path":"C.kt","line":3,"content":"y"}}""")
         assertEquals("InsertText", OwnTools.reviewsAs(OwnTools.parse("mcp__code__run", insert)!!, insert, "/p").single().toolName)
-        val inserted = OwnTools.reviewsAs(OwnTools.parse("mcp__code__run", insert)!!, insert, "/p").single().input
-        assertEquals("a\nb\ny\nc\n", OwnTools.insertedText(inserted, "a\nb\nc\n"))
+        val inserted = OwnTools.reviewsAs(OwnTools.parse("mcp__code__run", insert)!!, insert, "/p").single()
+        val asWrite = OwnTools.asWrite(inserted, "a\nb\nc\n")!!
+        assertEquals("Write", asWrite.toolName)
+        assertEquals("/p/C.kt", asWrite.input["file_path"]!!.jsonPrimitive.content)
+        assertEquals("a\nb\ny\nc\n", asWrite.input["content"]!!.jsonPrimitive.content)
+        assertNull(asWrite.input["line"])
 
         val read = input("""{"tool":"read_file","args":{"path":"src/A.kt"}}""")
         val reading = OwnTools.parse("mcp__code__run", read)!!

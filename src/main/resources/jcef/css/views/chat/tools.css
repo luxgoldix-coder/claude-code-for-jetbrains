@@ -172,9 +172,15 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.tool-live-tail:empty,
 .tool.open > .tool-live-tail {
   display: none;
+}
+.tool-live-tail .tool-foot {
+  color: var(--text);
+}
+.tool-live-tail .tool-foot:not(:empty) + .tool-last:not(:empty)::before {
+  content: ' · ';
+  color: var(--dim);
 }
 .tool-out pre,
 .tool-cmd pre.command-src,

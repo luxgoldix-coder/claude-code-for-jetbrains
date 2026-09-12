@@ -66,8 +66,9 @@ object OwnTools {
     private fun review(call: Call, args: JsonObject, projectRoot: String?): Review? {
         val path = text(args, "path") ?: return null
         val absolute = Path.of(path).let { if (it.isAbsolute || projectRoot == null) it else Path.of(projectRoot).resolve(it) }
+            .normalize().toString()
         val reviewed = buildJsonObject {
-            put("file_path", absolute.normalize().toString())
+            put("file_path", absolute)
             args.filterKeys { it != "path" }.forEach { (key, value) -> put(key, value) }
         }
         val kind = when (call.argument) {
@@ -80,6 +81,18 @@ object OwnTools {
 
     const val INSERT = "InsertText"
 
+    fun asWrite(review: Review, before: String): Review? {
+        val line = (review.input["line"] as? JsonPrimitive)?.content?.toIntOrNull() ?: return null
+        val after = runCatching { TextEdit.insertAt(before, line, text(review.input, "content") ?: "").text }.getOrNull() ?: return null
+        return Review(
+            "Write",
+            buildJsonObject {
+                put("file_path", review.input.getValue("file_path"))
+                put("content", after)
+            },
+        )
+    }
+
     fun decodeResult(text: String): JsonElement? = try {
         Toon.decode(text, ToonOptions(strict = false))
     } catch (ignored: ToonException) {
@@ -87,11 +100,6 @@ object OwnTools {
     }
 
     fun readText(decoded: JsonElement?): String? = (decoded as? JsonObject)?.let { text(it, "text") }
-
-    fun insertedText(input: JsonObject, before: String): String? {
-        val line = (input["line"] as? JsonPrimitive)?.content?.toIntOrNull() ?: return null
-        return runCatching { TextEdit.insertAt(before, line, text(input, "content") ?: "").text }.getOrNull()
-    }
 
     private fun args(input: JsonObject): JsonObject? = (input["args"] as? JsonObject)?.takeIf { it.isNotEmpty() }
 

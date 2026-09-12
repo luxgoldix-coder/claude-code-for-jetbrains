@@ -64,7 +64,7 @@ class ToolEvents(
         }
         s.reconciler.onMessageBoundary()
         val own = OwnTools.parse(event.name, event.input)
-        val reviews = own?.let { OwnTools.reviewsAs(it, event.input, s.project.basePath) }.orEmpty()
+        val reviews = own?.let { OwnTools.reviewsAs(it, event.input, s.project.basePath) }.orEmpty().mapNotNull(::asWrite)
         s.transcript.add(
             Speaker.TOOL,
             own?.let { OwnTools.label(it, event.input) } ?: ToolNaming.formatToolUse(event.name, event.input, s.project.basePath),
@@ -75,6 +75,7 @@ class ToolEvents(
             filePath = ownPath(own, event),
             commandText = ToolInputScanner.commandText(event.input),
             messageText = ownMessage(own, reviews.isNotEmpty(), event.input),
+            reviewable = reviews.size == 1 || event.name in DiffPresenter.REVIEWABLE_TOOLS,
         )
         if (own != null) ownCalls[event.id] = Own(own, reviews.size)
         flushEarly(event.id)
@@ -85,6 +86,13 @@ class ToolEvents(
             s.diffs.captureForReview(event.name, event.input, event.id)
             s.prompts.bindTool(event.id)
         }
+    }
+
+    private fun asWrite(review: OwnTools.Review): OwnTools.Review? {
+        if (review.toolName != OwnTools.INSERT) return review
+        val path = DiffPresenter.filePathOf(review.input) ?: return null
+        val before = DiffPresenter.readCurrent(path, s.project.basePath) ?: return null
+        return OwnTools.asWrite(review, before)
     }
 
     private fun snapshotKeys(toolUseId: String, edits: Int): List<String> =
@@ -127,19 +135,14 @@ class ToolEvents(
         recordOutput(event, own?.call, onlyFailures = diffs.isNotEmpty())
     }
 
-    private fun diffOf(snap: EditSnapshot): String? =
-        proposed(snap)?.let { DiffPresenter.unifiedDiff(snap.beforeText, it) }?.takeIf { it.isNotBlank() }
+    private fun diffOf(snap: EditSnapshot): String? = DiffPresenter.proposedContent(snap.toolName, snap.input, snap.beforeText)
+        ?.let { DiffPresenter.unifiedDiff(snap.beforeText, it) }
+        ?.takeIf { it.isNotBlank() }
 
     private fun headed(snap: EditSnapshot, diff: String): String {
         val root = s.project.basePath
         val path = if (root != null && snap.filePath.startsWith("$root/")) snap.filePath.removePrefix("$root/") else snap.filePath
         return "@@ $path @@\n$diff"
-    }
-
-    private fun proposed(snap: EditSnapshot): String? = when (snap.toolName) {
-        OwnTools.INSERT -> OwnTools.insertedText(snap.input, snap.beforeText)
-        in DiffPresenter.REVIEWABLE_TOOLS -> DiffPresenter.proposedContent(snap.toolName, snap.input, snap.beforeText)
-        else -> null
     }
 
     private fun recordOutput(event: ClaudeEvent.ToolResult, own: OwnTools.Call?, onlyFailures: Boolean) {

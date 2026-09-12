@@ -257,6 +257,56 @@ describe('tool output — live lines pushed while an own tool runs', () => {
     card.querySelector('.tool-head').dispatchEvent(new win.Event('click', { bubbles: true }));
     expect(card.classList.contains('open')).toBe(true);
   });
+
+  it('a finished long tool keeps its outcome in the collapsed row, beside the last live line', () => {
+    const win = loadFrontend(['app-transcript.js']);
+    win.cc.batch([
+      row(357, 0, 'TOOL', 'run ▸ run_tests', { meta: 'mcp__run__run', toolUseId: 'tu-foot' }),
+      row(358, 1, 'TOOL_OUTPUT', 'BUILD SUCCESSFUL', { meta: 'live', toolUseId: 'tu-foot' }),
+      row(
+        359,
+        2,
+        'TOOL_OUTPUT',
+        JSON.stringify({
+          status: 'finished',
+          exit_code: 0,
+          lines: 12,
+          passed: 40,
+          failed: 1,
+          ignored: 0,
+          failures: [],
+        }),
+        { meta: 'toon', toolUseId: 'tu-foot' }
+      ),
+    ]);
+
+    const tail = win.document.querySelector('.tool > .tool-live-tail');
+    expect(tail.querySelector('.tool-foot').textContent).toBe(
+      'finished · exit 0 · 40 passed · 1 failed · 0 ignored · 12 lines'
+    );
+    expect(tail.querySelector('.tool-last').textContent).toBe('BUILD SUCCESSFUL');
+    expect(tail.hidden).toBe(false);
+  });
+
+  it('a batch answer sums itself up in the collapsed row, and a plain table has no row at all', () => {
+    const win = loadFrontend(['app-transcript.js']);
+    const batch = JSON.stringify({ count: 2, failed: 1, items: [{ path: 'a' }, { path: 'b', error: 'x' }] });
+    win.cc.batch([
+      row(360, 0, 'TOOL', 'code ▸ read_file ▸ 2 items', { meta: 'mcp__code__run', toolUseId: 'tu-b' }),
+      row(361, 1, 'TOOL_OUTPUT', batch, { meta: 'toon', toolUseId: 'tu-b' }),
+      row(362, 2, 'TOOL', 'vcs ▸ git_status', { meta: 'mcp__vcs__run', toolUseId: 'tu-t' }),
+      row(363, 3, 'TOOL_OUTPUT', JSON.stringify({ branch: 'main', count: 3, changes: [] }), {
+        meta: 'toon',
+        toolUseId: 'tu-t',
+      }),
+    ]);
+
+    const cards = win.document.querySelectorAll('.tool');
+    expect(cards[0].querySelector(':scope > .tool-live-tail .tool-foot').textContent).toBe(
+      '2 items · 1 failed'
+    );
+    expect(cards[1].querySelector(':scope > .tool-live-tail')).toBeNull();
+  });
 });
 
 describe('tool output — the message a call SENDS is shown without expanding the card', () => {

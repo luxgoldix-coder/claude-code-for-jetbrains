@@ -65,7 +65,7 @@ internal class ProcessRun(private val project: Project) {
 
         override fun processStarting(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler) {
             if (env.runnerAndConfigurationSettings !== settings) return
-            if (handler.javaClass.name == ExternalTaskOutput.HANDLER_CLASS) pending.external.set(ExternalTaskOutput.attach(handler, tail))
+            pending.external.set(ExternalTaskOutput.attach(handler, tail))
             if (pending.external.get() == null) handler.addProcessListener(textListener(tail))
             onHandler(handler)
             pending.started.complete(Unit)

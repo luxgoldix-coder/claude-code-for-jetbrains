@@ -81,7 +81,7 @@ interface TranscriptNs {
   scrollLiveToEnd(card: HTMLElement): void;
   renderCommandBlock(cmdNode: HTMLElement | null | undefined, commandText: unknown): void;
   jbHref(relPath: unknown, line?: unknown): string;
-  renderToon(root: HTMLElement, json: string): void;
+  renderToon(root: HTMLElement, json: string): unknown;
   renderToolLabel(nameEl: HTMLElement | null, text: unknown, filePath: unknown): void;
   requestLinks(rec: RowRec, entry: TranscriptEntry): void;
   runSearch(q: string | null | undefined, silent: boolean): void;

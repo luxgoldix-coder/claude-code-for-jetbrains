@@ -19,8 +19,6 @@ internal class ExternalTaskOutput private constructor(private val tail: OutputTa
 
     companion object {
 
-        const val HANDLER_CLASS = "com.intellij.openapi.externalSystem.service.execution.ExternalSystemProcessHandler"
-
         fun attach(handler: ProcessHandler, tail: OutputTail): ExternalTaskOutput? {
             val id = (handler as? ExternalSystemProcessHandler)?.task?.id ?: return null
             return ExternalTaskOutput(tail).also { ExternalSystemProgressNotificationManager.getInstance().addNotificationListener(id, it) }
