@@ -2,9 +2,9 @@ package dev.lain.claudejb.controller.process
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
 import dev.lain.claudejb.util.InstalledPlugins
 import dev.lain.claudejb.util.thisLogger
-import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 
 object TerminalLauncher {
 
@@ -37,9 +37,14 @@ object TerminalLauncher {
     }
 
     private fun openWithShellCommand(project: Project, argv: List<String>, tabName: String): Boolean {
-        val widget = TerminalToolWindowManager.getInstance(project)
-            .createShellWidget(project.basePath, tabName, true, false)
-        widget.sendCommandToExecute(commandLine(argv.first(), argv.drop(1)))
+        val tab = TerminalToolWindowTabsManager.getInstance(project)
+            .createTabBuilder()
+            .workingDirectory(project.basePath)
+            .tabName(tabName)
+            .requestFocus(true)
+            .deferSessionStartUntilUiShown(false)
+            .createTab()
+        tab.view.createSendTextBuilder().shouldExecute().send(commandLine(argv.first(), argv.drop(1)))
         return true
     }
 }

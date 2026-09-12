@@ -53,24 +53,25 @@ class TerminalLauncherTest {
 class TerminalApiContractTest {
 
     @Test
-    fun `the public tab creation API the launcher calls exists on this platform`() {
-        val cls = Class.forName("org.jetbrains.plugins.terminal.TerminalToolWindowManager")
-        val m = cls.getMethod(
-            "createShellWidget",
-            String::class.java,
-            String::class.java,
-            java.lang.Boolean.TYPE,
-            java.lang.Boolean.TYPE,
-        )
-        assertEquals(
-            "com.intellij.terminal.ui.TerminalWidget",
-            m.returnType.name,
-            "createShellWidget must return the widget the launcher sends the command to",
-        )
-        assertTrue(
-            m.returnType.methods.any { it.name == "sendCommandToExecute" && it.parameterCount == 1 },
-            "TerminalWidget.sendCommandToExecute is how the command reaches the shell",
-        )
+    fun `the tab creation API the launcher calls exists on this platform and is not deprecated`() {
+        val manager = Class.forName("com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager")
+        val builder = manager.getMethod("createTabBuilder").returnType
+        for (name in listOf("workingDirectory", "tabName")) {
+            assertEquals(builder, builder.getMethod(name, String::class.java).returnType, "$name must chain")
+        }
+        for (name in listOf("requestFocus", "deferSessionStartUntilUiShown")) {
+            assertEquals(builder, builder.getMethod(name, java.lang.Boolean.TYPE).returnType, "$name must chain")
+        }
+        val tab = builder.getMethod("createTab").returnType
+        val view = tab.getMethod("getView").returnType
+        val sendText = view.getMethod("createSendTextBuilder").returnType
+        assertEquals(sendText, sendText.getMethod("shouldExecute").returnType, "shouldExecute must chain")
+        assertEquals(Void.TYPE, sendText.getMethod("send", String::class.java).returnType)
+        val deprecated = listOf(manager, builder, tab, view, sendText)
+            .flatMap { it.methods.toList() }
+            .filter { it.isAnnotationPresent(java.lang.Deprecated::class.java) }
+            .map { it.name }
+        assertEquals(emptyList<String>(), deprecated, "the launcher's terminal API must carry no deprecated method")
     }
 
     @Test
@@ -84,8 +85,9 @@ class TerminalApiContractTest {
             "TerminalLauncher went back to reflection; the five-argument createNewSession is @ApiStatus.Internal"
         }
         assertTrue(
-            source.contains("createShellWidget("),
-            "TerminalLauncher must call the public createShellWidget",
+            source.contains("createTabBuilder()"),
+            "TerminalLauncher must open its tab through TerminalToolWindowTabsManager; createShellWidget is deprecated since 261",
         )
+        assertFalse(source.contains("createShellWidget("), "createShellWidget is deprecated since 261")
     }
 }
