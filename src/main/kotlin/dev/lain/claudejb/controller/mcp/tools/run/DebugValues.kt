@@ -31,7 +31,7 @@ internal class RenderedText : ColoredTextContainer, XValuePresentation.XValueTex
 
     private val out = StringBuilder()
 
-    val text: String get() = out.toString()
+    val text: String get() = out.toString().trim()
 
     override fun append(fragment: String, attributes: SimpleTextAttributes) {
         out.append(fragment)
