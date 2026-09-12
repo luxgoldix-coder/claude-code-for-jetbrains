@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import dev.lain.claudejb.controller.git.GitHistoryService
+import dev.lain.claudejb.controller.mcp.Reveal
 import dev.lain.claudejb.model.git.GitCommitInfo
 import dev.lain.claudejb.model.git.GitLogScope
 import dev.lain.claudejb.model.git.GitRefInfo
@@ -28,7 +29,11 @@ import kotlinx.serialization.json.put
 import java.time.Instant
 import kotlin.coroutines.resume
 
-internal class GitReadTools(private val project: Project, private val io: CoroutineDispatcher = Dispatchers.IO) {
+internal class GitReadTools(
+    private val project: Project,
+    private val reveal: Reveal,
+    private val io: CoroutineDispatcher = Dispatchers.IO,
+) {
 
     private val history: GitHistoryService get() = project.service()
 
@@ -87,6 +92,7 @@ internal class GitReadTools(private val project: Project, private val io: Corout
     private suspend fun commitOne(hash: String): JsonObject {
         if (!HASH.matches(hash)) throw ToolException("hash must be $MIN_HASH_LENGTH to $MAX_HASH_LENGTH hexadecimal characters")
         val commit = withContext(io) { history.commit(hash) } ?: throw ToolException("no commit $hash in this repository")
+        if (reveal.mirroring) reveal.commit(hash)
         return buildJsonObject {
             commitRow(commit).forEach { (key, value) -> put(key, value) }
             put("paths", buildJsonArray { commit.changedPaths.forEach { add(JsonPrimitive(it)) } })

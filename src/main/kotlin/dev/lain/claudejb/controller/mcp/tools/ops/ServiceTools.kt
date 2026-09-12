@@ -2,6 +2,7 @@ package dev.lain.claudejb.controller.mcp.tools.ops
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
+import dev.lain.claudejb.controller.mcp.Reveal
 import dev.lain.claudejb.model.mcp.Param
 import dev.lain.claudejb.model.mcp.Tool
 import dev.lain.claudejb.model.mcp.ToolArgs
@@ -16,7 +17,7 @@ import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
-internal class ServiceTools(private val project: Project, private val scope: CoroutineScope) {
+internal class ServiceTools(private val project: Project, private val scope: CoroutineScope, private val reveal: Reveal) {
 
     private val tree = ServiceTree(project)
 
@@ -59,6 +60,7 @@ internal class ServiceTools(private val project: Project, private val scope: Cor
         val max = args.int("max", DEFAULT_MAX)
         val node = withContext(Dispatchers.Default) { tree.find(path) }
         val entries = withContext(Dispatchers.EDT) { ServiceActions(project, node).list() }
+        mirror(node)
         val rows = entries.take(max)
         return ToolResult.toon(
             buildJsonObject {
@@ -87,6 +89,7 @@ internal class ServiceTools(private val project: Project, private val scope: Cor
         val path = args.string("path")
         val action = args.string("action")
         val node = withContext(Dispatchers.Default) { tree.find(path) }
+        mirror(node)
         val entry = withContext(Dispatchers.EDT) { ServiceActions(project, node).perform(action, scope) }
         return ToolResult.toon(
             buildJsonObject {
@@ -109,6 +112,11 @@ internal class ServiceTools(private val project: Project, private val scope: Cor
                 put("window", window)
             },
         )
+    }
+
+    private suspend fun mirror(node: ServiceNode) {
+        if (!reveal.mirroring) return
+        runCatching { withContext(Dispatchers.EDT) { ServiceActions(project, node).reveal() } }
     }
 
     companion object {

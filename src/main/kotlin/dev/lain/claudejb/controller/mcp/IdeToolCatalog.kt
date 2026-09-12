@@ -38,11 +38,11 @@ internal object IdeToolCatalog {
 
     private val DOMAINS: Map<IdeServer, List<(Project, CoroutineScope) -> ToolDomain?>> = mapOf(
         IdeServer.CODE to listOf(
-            { p, _ -> ReadTools(p).domain() },
+            { p, _ -> ReadTools(p, Reveal(p)).domain() },
             { p, _ -> SearchTools(p).domain() },
             { p, _ -> NavigateTools(p).domain() },
             { p, _ -> OutlineTools(p).domain() },
-            { p, _ -> DiagnosticsTools(p).domain() },
+            { p, _ -> DiagnosticsTools(p, Reveal(p)).domain() },
             { p, _ -> InspectTools(p).domain() },
             { p, _ -> EditTools(p, Reveal(p)).domain() },
             { p, _ -> RefactorTools(p).domain() },
@@ -59,12 +59,12 @@ internal object IdeToolCatalog {
             { p, _ -> BreakpointTools(p).domain() },
         ),
         IdeServer.VCS to listOf(
-            { p, _ -> GitReadTools(p).domain() },
+            { p, _ -> GitReadTools(p, Reveal(p)).domain() },
             { p, _ -> GitWriteTools(p).domain() },
             { p, s -> ForgeTools(p, IdeActions(p, s), Reveal(p)).domain() },
         ),
         IdeServer.OPS to listOf(
-            { p, s -> ServiceTools(p, s).domain() },
+            { p, s -> ServiceTools(p, s, Reveal(p)).domain() },
             { p, _ -> ProjectTools(p).domain() },
             { p, s -> IdeTools(p, IdeActions(p, s), s).domain() },
             { p, _ -> NotifyTools(p).domain() },

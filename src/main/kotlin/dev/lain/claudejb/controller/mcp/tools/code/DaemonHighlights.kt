@@ -8,6 +8,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import dev.lain.claudejb.model.mcp.Param
@@ -40,7 +41,8 @@ internal class DaemonHighlights(private val project: Project) {
         val connection = project.messageBus.connect()
         try {
             val editors = withContext(Dispatchers.EDT) {
-                val opened = FileEditorManager.getInstance(project).openFile(file, false).toList()
+                val descriptor = OpenFileDescriptor(project, file).setUsePreviewTab(true)
+                val opened = FileEditorManager.getInstance(project).openFileEditor(descriptor, false)
                 connection.subscribe(
                     DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC,
                     object : DaemonCodeAnalyzer.DaemonListener {

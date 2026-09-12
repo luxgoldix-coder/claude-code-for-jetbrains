@@ -9,6 +9,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
+import dev.lain.claudejb.controller.mcp.Reveal
 import dev.lain.claudejb.model.mcp.Batch
 import dev.lain.claudejb.model.mcp.Param
 import dev.lain.claudejb.model.mcp.Tool
@@ -24,7 +25,11 @@ import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
-internal class DiagnosticsTools(private val project: Project, private val daemon: DaemonHighlights = DaemonHighlights(project)) {
+internal class DiagnosticsTools(
+    private val project: Project,
+    private val reveal: Reveal,
+    private val daemon: DaemonHighlights = DaemonHighlights(project),
+) {
 
     fun domain(): ToolDomain = ToolDomain(
         "diagnostics",
@@ -78,6 +83,7 @@ internal class DiagnosticsTools(private val project: Project, private val daemon
             val matching = all.filter { group == null || it.group?.contains(group, ignoreCase = true) == true }
             matching.take(max).map(::row) to matching.size
         }
+        if (reveal.mirroring) reveal.problems("")
         return ToolResult.toon(
             buildJsonObject {
                 put("count", total)
@@ -91,7 +97,7 @@ internal class DiagnosticsTools(private val project: Project, private val daemon
         val wanted = args.optionalString("tab")
         val tabs = withContext(Dispatchers.EDT) { tabs() }
         val chosen = wanted?.let { name -> tab(tabs, name) }
-        chosen?.let { ProblemsViewToolWindowUtils.selectTabAsync(project, it.id) }
+        chosen?.let { reveal.problems(it.id) }
         val selected = withContext(Dispatchers.EDT) { ProblemsViewToolWindowUtils.getSelectedTab(project)?.getTabId() ?: "" }
         return ToolResult.toon(
             buildJsonObject {

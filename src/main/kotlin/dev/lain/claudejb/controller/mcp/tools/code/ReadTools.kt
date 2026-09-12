@@ -5,6 +5,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import dev.lain.claudejb.controller.mcp.Reveal
 import dev.lain.claudejb.model.mcp.Batch
 import dev.lain.claudejb.model.mcp.Param
 import dev.lain.claudejb.model.mcp.Tool
@@ -18,7 +19,7 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import java.nio.file.Path
 
-internal class ReadTools(private val project: Project) {
+internal class ReadTools(private val project: Project, private val reveal: Reveal) {
 
     fun domain(): ToolDomain = ToolDomain(
         "read",
@@ -33,8 +34,8 @@ internal class ReadTools(private val project: Project) {
         val offset = args.int("offset", 1)
         val limit = args.int("limit", DEFAULT_LIMIT)
         if (offset < 1 || limit < 1) throw ToolException("offset and limit start at 1")
-        return readAction {
-            val file = resolveFile(project, path)
+        val file = readAction { resolveFile(project, path) }
+        val (row, from) = readAction {
             val text = FileDocumentManager.getInstance().getDocument(file)?.immutableCharSequence?.toString()
                 ?: String(file.contentsToByteArray(), file.charset)
             val lines = text.lines()
@@ -46,8 +47,10 @@ internal class ReadTools(private val project: Project) {
                 put("from", from)
                 put("to", to)
                 put("text", lines.subList(from - 1, to).joinToString("\n"))
-            }
+            } to from
         }
+        if (reveal.mirroring) reveal.file(file, from, preview = true)
+        return row
     }
 
     companion object {
@@ -77,7 +80,7 @@ internal class ReadTools(private val project: Project) {
         val READ_FILE = ToolSpec(
             "read_file",
             "Reads a text file through the IDE, so unsaved editor changes are included, or several files at once with " +
-                "paths. Use offset and limit for large files.",
+                "paths. Use offset and limit for large files. The file is shown in the editor's preview tab, without focus.",
             listOf(
                 Param("path", "File path, absolute or relative to the project root", required = false),
                 Batch.paths("offset and limit apply to each"),

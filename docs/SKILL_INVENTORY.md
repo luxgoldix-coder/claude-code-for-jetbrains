@@ -170,7 +170,7 @@ mirrored in the IDE without taking the user's focus.
 | The rules block has no length limit; the test asserts coverage and prints the size | `IdeMcpPrompt`, `IdeRule`, `IdeMcpPromptTest` | ☐ |
 | 250 lines per file, imports not counted | `FileSizeContractTest` | ☑ |
 | Reveal without focus on every existing tool; `FocusKeeper` returns the focus the platform steals; the terminal is never focused nor its tab switched | `FocusKeeper`, every domain, `FocusContractTest` | ☑ |
-| Live mirror with one switch (Settings ▸ Claude Code, ON): reads in the preview tab, edits in a real tab, commits in the log, nodes in Services, problems in their tab, runs in their window | `Reveal`, `IdeMcpState.mirror`, Settings section | ◐ switch and `Reveal` landed; reads, problems, git_log, services, build/run/tests and debug still to call it |
+| Live mirror with one switch (Settings ▸ Claude Code, ON): reads in the preview tab, edits in a real tab, commits in the log, nodes in Services, problems in their tab, runs in their window | `Reveal`, `IdeMcpState.mirror`, Settings section | ☑ (build, run, tests and debug are shown by the platform itself, focus-free by default) |
 | `vcs_open(log, range)` off the deprecated `openLogTab` | `GitLogNavigator` | ☑ |
 | `run_tests(path)` prefers the framework producer over Gradle | `TestTools` | ☐ |
 
