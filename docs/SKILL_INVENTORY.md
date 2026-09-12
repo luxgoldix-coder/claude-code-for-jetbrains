@@ -364,7 +364,7 @@ mirrored in the IDE without taking the user's focus.
 
 | Capability | Where | Status |
 |---|---|---|
-| An own call made by a subagent gets its card, nested under the agent | `ToolEvents` | ☐ |
+| An own call made by a subagent gets its card, nested under the agent | `ToolEvents` | ☑ |
 | Permission popup, approval rows and guard log name the tool (`code ▸ read_file ▸ path`), not `run` | `OwnTools.display` on every surface | ☑ |
 | An agent still reasoning is never shown as completed | `AgentEnding` | ☑ |
 | The rules block has no length limit; the test asserts coverage and prints the size | `IdeMcpPrompt`, `IdeRuleText`, `IdeRule`, `IdeMcpPromptTest`, `IdeRuleCoverageContractTest` | ☑ |
