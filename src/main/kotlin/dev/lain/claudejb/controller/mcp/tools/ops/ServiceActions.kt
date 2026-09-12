@@ -3,6 +3,7 @@ package dev.lain.claudejb.controller.mcp.tools.ops
 import com.intellij.execution.services.ServiceViewActionUtils
 import com.intellij.execution.services.ServiceViewContributor
 import com.intellij.execution.services.ServiceViewManager
+import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -21,6 +22,8 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.util.ui.UIUtil
 import dev.lain.claudejb.controller.mcp.FocusKeeper
 import dev.lain.claudejb.model.mcp.ToolException
 import kotlinx.coroutines.CompletableDeferred
@@ -28,6 +31,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import javax.swing.JTree
 
 internal class ServiceActions(private val project: Project, private val node: ServiceNode) {
 
@@ -89,11 +93,24 @@ internal class ServiceActions(private val project: Project, private val node: Se
             .add(ServiceViewActionUtils.CONTRIBUTORS_KEY, roots)
             .build()
         val rootDescriptor = node.root.getViewDescriptor(project)
-        return CustomizedDataContext.withSnapshot(base) { sink ->
+        val shown = viewContext()
+        return CustomizedDataContext.withSnapshot(shown ?: base) { sink ->
+            if (shown != null) {
+                sink[PlatformCoreDataKeys.SELECTED_ITEM] = node.value
+                sink[PlatformCoreDataKeys.SELECTED_ITEMS] = arrayOf(node.value)
+                sink[ServiceViewActionUtils.CONTRIBUTORS_KEY] = roots
+            }
             (rootDescriptor as? UiDataProvider)?.let(sink::uiDataSnapshot)
             (node.descriptor as? UiDataProvider)?.let(sink::uiDataSnapshot)
             node.descriptor.navigatable?.let { sink[CommonDataKeys.NAVIGATABLE] = it }
         }
+    }
+
+    private fun viewContext(): DataContext? {
+        val id = ServiceViewManager.getInstance(project).getToolWindowId(node.root.javaClass) ?: ToolWindowId.SERVICES
+        val component = ToolWindowManager.getInstance(project).getToolWindow(id)?.contentManager?.selectedContent?.component ?: return null
+        val tree = UIUtil.findComponentOfType(component, JTree::class.java) ?: return null
+        return DataManager.getInstance().getDataContext(tree)
     }
 
     private companion object {

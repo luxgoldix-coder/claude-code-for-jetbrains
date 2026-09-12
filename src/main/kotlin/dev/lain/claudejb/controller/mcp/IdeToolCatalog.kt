@@ -111,7 +111,7 @@ internal object IdeToolCatalog {
             { p, s -> HistoryTools(p, IdeActions(p, s), Reveal(p)).domain() },
         ),
         IdeServer.OPS to listOf(
-            { p, s -> ServiceTools(p, s, Reveal(p)).domain() },
+            { p, s -> ServiceTools(p, s).domain() },
             { p, _ -> ProjectTools(p).domain() },
             { p, s -> IdeTools(p, IdeActions(p, s), s).domain() },
             { p, s -> ActionTools(p, IdeActions(p, s)).domain() },
