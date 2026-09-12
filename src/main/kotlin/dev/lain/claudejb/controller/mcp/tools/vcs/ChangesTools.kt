@@ -2,6 +2,7 @@ package dev.lain.claudejb.controller.mcp.tools.vcs
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
@@ -23,9 +24,11 @@ import dev.lain.claudejb.model.mcp.ToolDomain
 import dev.lain.claudejb.model.mcp.ToolException
 import dev.lain.claudejb.model.mcp.ToolResult
 import dev.lain.claudejb.model.mcp.ToolSpec
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
@@ -142,17 +145,27 @@ internal class ChangesTools(
     private suspend fun rollback(args: ToolArgs): ToolResult {
         val paths = args.strings("paths")
         if (paths.isEmpty()) throw ToolException("paths must name at least one changed file")
+        withContext(Dispatchers.EDT) { FileDocumentManager.getInstance().saveAllDocuments() }
         val changes = changes(paths)
         if (changes.isEmpty()) throw ToolException("none of the paths has an uncommitted change")
-        withContext(Dispatchers.EDT) {
-            FocusKeeper.keeping(project) { RollbackWorker(project, "Claude: rollback", false).doRollback(changes, false) }
-        }
+        rollBack(changes)
         return ToolResult.toon(
             buildJsonObject {
                 put("count", changes.size)
                 put("paths", buildJsonArray { paths.forEach { add(JsonPrimitive(it)) } })
             },
         )
+    }
+
+    private suspend fun rollBack(changes: List<Change>) {
+        val refreshed = CompletableDeferred<Unit>()
+        withContext(Dispatchers.EDT) {
+            FocusKeeper.keeping(project) {
+                RollbackWorker(project, "Claude: rollback", false).doRollback(changes, false, { refreshed.complete(Unit) }, null)
+            }
+        }
+        withTimeoutOrNull(ROLLBACK_TIMEOUT_MILLIS) { refreshed.await() }
+            ?: throw ToolException("the rollback did not finish within ${ROLLBACK_TIMEOUT_MILLIS / MILLIS} s; check the Commit window")
     }
 
     private fun changes(paths: List<String>): List<Change> {
@@ -173,6 +186,8 @@ internal class ChangesTools(
     companion object {
 
         private const val OUTPUT_CHARS = 2_000
+        private const val ROLLBACK_TIMEOUT_MILLIS = 30_000L
+        private const val MILLIS = 1000L
         private const val DEFAULT_SHELF = "Claude"
         private const val APPLY_PATCH = "ChangesView.ApplyPatch"
 
