@@ -33,6 +33,21 @@ object JcefTranscriptPayload {
         put("state", e.toolState.name)
         put("elapsed", e.elapsedSeconds)
         cardFlags(e)
+        if (e.places.isNotEmpty()) {
+            put(
+                "places",
+                buildJsonArray {
+                    e.places.forEach { place ->
+                        add(
+                            buildJsonObject {
+                                put("label", place.label)
+                                put("href", place.href)
+                            },
+                        )
+                    }
+                },
+            )
+        }
     }
 
     private fun kotlinx.serialization.json.JsonObjectBuilder.cardFlags(e: TranscriptEntry) {

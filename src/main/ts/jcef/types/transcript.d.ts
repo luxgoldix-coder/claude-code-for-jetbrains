@@ -12,11 +12,17 @@ interface TranscriptEntry {
   message?: string | null;
   elapsed?: number | null;
   reviewable?: boolean;
+  places?: CardPlace[] | null;
   parent?: string | null;
   order?: number | null;
   blockedRule?: string | null;
   bypassedRule?: string | null;
   bypassAction?: string | null;
+}
+
+interface CardPlace {
+  label?: string;
+  href?: string;
 }
 
 interface BodyEl extends HTMLElement {
@@ -36,6 +42,8 @@ interface RowEl extends HTMLElement {
   __filePath?: string | null;
   __diffBtn?: HTMLElement | null;
   __restoreBtn?: HTMLElement | null;
+  __placesNode?: HTMLElement | null;
+  __placesKey?: string;
   __label?: HTMLElement | null;
   __order?: number | null;
   __autoOpenedOnError?: boolean;
@@ -80,6 +88,7 @@ interface TranscriptNs {
   routeToolOutput(entry: TranscriptEntry, cards?: Map<string, RowEl>): boolean;
   scrollLiveToEnd(card: HTMLElement): void;
   renderCommandBlock(cmdNode: HTMLElement | null | undefined, commandText: unknown): void;
+  renderPlaces(node: RowEl, places: CardPlace[] | null | undefined): void;
   jbHref(relPath: unknown, line?: unknown): string;
   renderToon(root: HTMLElement, json: string): unknown;
   renderToolLabel(nameEl: HTMLElement | null, text: unknown, filePath: unknown): void;

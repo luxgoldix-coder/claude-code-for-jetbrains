@@ -85,7 +85,10 @@
       node.classList.toggle('open');
       if (node.classList.contains('open')) TX.scrollLiveToEnd(node);
     });
+    const places = el('div', { class: 'tool-places' });
+    places.hidden = true;
     node.appendChild(head);
+    node.appendChild(places);
     node.appendChild(msg);
     node.appendChild(cmd);
     node.appendChild(out);
@@ -101,7 +104,28 @@
     node.__childrenNode = children;
     node.__elapsedNode = elapsed;
     node.__diffBtn = diffBtn;
+    node.__placesNode = places;
     return { el: node, bodyNode: name, kind: 'tool', outNode: out };
+  };
+
+  TX.renderPlaces = function (node: RowEl, places: CardPlace[] | null | undefined): void {
+    const host = node.__placesNode;
+    if (!host) return;
+    const list = Array.isArray(places) ? places.filter((p) => p && p.href && p.label) : [];
+    const key = JSON.stringify(list);
+    if (node.__placesKey === key) return;
+    node.__placesKey = key;
+    host.innerHTML = '';
+    list.forEach(function (place) {
+      host.appendChild(
+        el('a', {
+          class: 'jb-link tool-place',
+          text: String(place.label),
+          attrs: { href: String(place.href) },
+        })
+      );
+    });
+    host.hidden = list.length === 0;
   };
 
   function formatElapsed(secs: unknown): string {

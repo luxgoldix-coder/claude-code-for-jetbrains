@@ -10,27 +10,37 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
+import dev.lain.claudejb.controller.mcp.IdePlaces
 import dev.lain.claudejb.model.diff.DiffPresenter
 import java.io.File
 import java.net.URLDecoder
 
 internal class LinkNavigator(private val project: Project) {
 
+    private companion object {
+        const val JB = "jb://"
+    }
+
     fun open(url: String) {
         val u = url.trim()
         when {
             u.lowercase().startsWith("https://") -> BrowserUtil.browse(u)
-            u.startsWith("jb://open") -> openJbLink(u)
+            u.startsWith(JB) -> openJbLink(u)
             LinkResolver.isFilePathHref(u) -> openPath(u.substringBefore('#').trim())
         }
     }
 
     private fun openJbLink(url: String) {
+        val verb = url.removePrefix(JB).substringBefore('?')
         val params = url.substringAfter('?', "").split('&').mapNotNull {
             val k = it.substringBefore('=', "")
             val v = it.substringAfter('=', "")
             if (k.isEmpty()) null else k to runCatching { URLDecoder.decode(v, Charsets.UTF_8) }.getOrDefault(v)
         }.toMap()
+        if (verb != "open") {
+            IdePlaces(project).open(verb, params)
+            return
+        }
         val raw = params["file"] ?: return
         openPath(raw, params["line"]?.toIntOrNull() ?: 1)
     }

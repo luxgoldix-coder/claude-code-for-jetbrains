@@ -122,7 +122,7 @@ class PackageDependencyContractTest {
             SESSION to MODEL,
             C_PROCESS to MODEL,
             C_VULN to MODEL,
-            C_CONTEXT to MODEL,
+            C_CONTEXT to MODEL + setOf(C_MCP),
             C_GIT to MODEL,
             C_SESSION to MODEL + setOf(C_PROCESS, C_VULN, C_GIT, C_CONTEXT, C_MCP, V_DIFF),
             V_DIFF to MODEL,

@@ -163,6 +163,20 @@
 .tool.open > .tool-out {
   display: block;
 }
+.tool-places {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  padding: 2px 12px 6px;
+  font-size: 12px;
+}
+.tool-places .tool-place {
+  color: var(--accent);
+  text-decoration: none;
+}
+.tool-places .tool-place:hover {
+  text-decoration: underline;
+}
 .tool-live-tail {
   padding: 4px 12px 6px;
   font-family: var(--mono);

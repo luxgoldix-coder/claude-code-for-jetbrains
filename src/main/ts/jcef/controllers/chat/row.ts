@@ -95,6 +95,7 @@
       if (rec.el.__restoreBtn) {
         rec.el.__restoreBtn.hidden = !entry.reviewable;
       }
+      TX.renderPlaces(rec.el, entry.places);
     }
     if (rec.speaker === 'MEMORY' && rec.el.__label) {
       const title = entry.meta && String(entry.meta).trim() ? String(entry.meta) : '🧠 Recalled memories';

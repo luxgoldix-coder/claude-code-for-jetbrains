@@ -35,6 +35,9 @@ class TranscriptEntry(
     var toolTitle: String? = null
         internal set
 
+    var places: List<CardPlace> = emptyList()
+        internal set
+
     var trimmed: Boolean = false
         internal set
 }
@@ -181,6 +184,13 @@ class TranscriptModel {
         val entry = byToolUseId[toolUseId] ?: return
         entry.toolState = state
         if (elapsedSeconds != null) entry.elapsedSeconds = elapsedSeconds
+        listeners.forEach { it.onUpdated(entry) }
+    }
+
+    fun setToolPlaces(toolUseId: String, places: List<CardPlace>) {
+        val entry = byToolUseId[toolUseId] ?: return
+        if (entry.places == places) return
+        entry.places = places
         listeners.forEach { it.onUpdated(entry) }
     }
 

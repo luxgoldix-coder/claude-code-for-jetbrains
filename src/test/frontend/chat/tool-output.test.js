@@ -288,6 +288,24 @@ describe('tool output — live lines pushed while an own tool runs', () => {
     expect(tail.hidden).toBe(false);
   });
 
+  it('a card with a place in the IDE shows it as a link under its head, and drops it when the host withdraws it', () => {
+    const win = loadFrontend(['app-transcript.js']);
+    const places = [{ label: 'View commit', href: 'jb://commit?hash=abc123' }];
+    win.cc.batch([
+      row(364, 0, 'TOOL', 'vcs ▸ git_commit', { meta: 'mcp__vcs__run', toolUseId: 'tu-p', places }),
+    ]);
+
+    const card = win.document.querySelector('.tool');
+    const link = card.querySelector(':scope > .tool-places > a.tool-place.jb-link');
+    expect(link.textContent).toBe('View commit');
+    expect(link.getAttribute('href')).toBe('jb://commit?hash=abc123');
+    expect(card.querySelector(':scope > .tool-places').hidden).toBe(false);
+
+    win.cc.batch([row(364, 0, 'TOOL', 'vcs ▸ git_commit', { meta: 'mcp__vcs__run', toolUseId: 'tu-p' })]);
+    expect(card.querySelector(':scope > .tool-places').hidden).toBe(true);
+    expect(card.querySelectorAll('.tool-place').length).toBe(0);
+  });
+
   it('a batch answer sums itself up in the collapsed row, and a plain table has no row at all', () => {
     const win = loadFrontend(['app-transcript.js']);
     const batch = JSON.stringify({ count: 2, failed: 1, items: [{ path: 'a' }, { path: 'b', error: 'x' }] });
