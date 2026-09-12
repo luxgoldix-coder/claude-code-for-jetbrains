@@ -106,7 +106,8 @@ internal class TestTools(private val project: Project, scope: CoroutineScope) {
                 found(psiFile).firstOrNull { it.kind == "class" }?.element
             }
             val context = ConfigurationContext.createEmptyContextForLocation(PsiLocation(project, element ?: psiFile))
-            context.configurationsFromContext?.firstOrNull()?.configurationSettings
+            val offered = context.configurationsFromContext.orEmpty()
+            (offered.firstOrNull { it.configurationType.id != GRADLE_TYPE } ?: offered.firstOrNull())?.configurationSettings
         } ?: throw ToolException("the IDE offers no test run for $path; is it a test file, and is its framework's plugin enabled?")
         withContext(Dispatchers.EDT) {
             val manager = RunManager.getInstance(project)
@@ -176,6 +177,8 @@ internal class TestTools(private val project: Project, scope: CoroutineScope) {
 
     companion object {
 
+        private const val GRADLE_TYPE = "GradleRunConfiguration"
+
         private const val DEFAULT_MAX = 50
         private const val FINISH_GRACE_MILLIS = 5_000L
 
@@ -183,7 +186,9 @@ internal class TestTools(private val project: Project, scope: CoroutineScope) {
             "run_tests",
             "Runs tests through the IDE's test runner and returns pass/fail/ignored counts with each failure's message and " +
                 "frame: a file (path), several files in a row (paths), the test at a line (path + line) or a named run " +
-                "configuration (name). Output streams to the chat while it runs; status running means call again with job.",
+                "configuration (name). A path runs through the test framework's own runner when the IDE offers one, and " +
+                "through Gradle only when nothing else does. Output streams to the chat while it runs; status running means " +
+                "call again with job.",
             listOf(
                 Param("path", "A test file, absolute or relative to the project root", required = false),
                 Batch.param(Batch.RUN_PATHS, "Several test files, run one after another within one wait, one result each"),
