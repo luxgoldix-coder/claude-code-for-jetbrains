@@ -26,7 +26,7 @@
 
   function scalar(value: unknown): string {
     if (value === true) return '✓';
-    if (value === false) return '—';
+    if (value === false) return '✗';
     if (value == null) return '';
     return String(value);
   }

@@ -83,6 +83,9 @@ describe('a result from one of our own servers is drawn from its data, not paste
     const keys = [...card.querySelectorAll('.toon-fields .toon-key')].map((k) => k.textContent);
     expect(keys).toEqual(['path', 'count', 'truncated', 'problems']);
     expect(card.querySelector('.toon-truncated').textContent).toBe('✓');
+
+    const off = withOwnCall(win, JSON.stringify({ rows: [{ id: 'a', enabled: false }] }));
+    expect(off.querySelector('table.toon-table td.toon-enabled').textContent).toBe('✗');
   });
 
   it('rows with different shapes fall back to a list of field blocks', () => {
