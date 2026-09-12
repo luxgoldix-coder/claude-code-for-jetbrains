@@ -14,6 +14,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiManager
 import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToHash
 import com.intellij.vcs.log.impl.VcsProjectLog
@@ -61,7 +62,10 @@ internal class TargetContext(private val project: Project) {
 
     private suspend fun file(target: Target): DataContext {
         val path = target.path.orEmpty()
-        val (file, psiFile) = readAction { Locations.file(project, path).let { it to Locations.psiFile(project, path) } }
+        val located = readAction { Locations.any(project, path) }
+        if (located.isDirectory) return directory(located)
+        val psiFile = readAction { Locations.psiFile(project, path) }
+        val file = located
         return FocusKeeper.keep(project) {
             val descriptor = OpenFileDescriptor(project, file, target.line - 1, target.column - 1).setUsePreviewTab(target.preview)
             val editor = FileEditorManager.getInstance(project).openTextEditor(descriptor, false)
@@ -77,6 +81,16 @@ internal class TargetContext(private val project: Project) {
                 .add(CommonDataKeys.PSI_ELEMENT, element ?: psiFile)
                 .build()
         }
+    }
+
+    private suspend fun directory(dir: VirtualFile): DataContext {
+        val psi = readAction { PsiManager.getInstance(project).findDirectory(dir) }
+        return SimpleDataContext.builder()
+            .setParent(project())
+            .add(CommonDataKeys.VIRTUAL_FILE, dir)
+            .add(CommonDataKeys.VIRTUAL_FILE_ARRAY, arrayOf(dir))
+            .add(CommonDataKeys.PSI_ELEMENT, psi)
+            .build()
     }
 
     private fun select(editor: Editor, target: Target, selection: Selection) {
