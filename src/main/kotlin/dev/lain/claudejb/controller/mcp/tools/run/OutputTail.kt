@@ -17,7 +17,7 @@ internal class OutputTail(private val publish: (String) -> Unit = {}) {
 
     fun text(chunk: String) {
         if (chunk.isEmpty()) return
-        chunk.removeSuffix("\n").removeSuffix("\r").split('\n').forEach(::line)
+        chunk.removeSuffix("\n").removeSuffix("\r").split('\n').filterNot { it.startsWith(SERVICE_MESSAGE) }.forEach(::line)
     }
 
     fun line(text: String) {
@@ -35,6 +35,7 @@ internal class OutputTail(private val publish: (String) -> Unit = {}) {
 
         const val KEEP = 200
         private const val DEFAULT_TAIL = 40
+        private const val SERVICE_MESSAGE = "##teamcity["
 
         val TAIL = Param(
             "tail",

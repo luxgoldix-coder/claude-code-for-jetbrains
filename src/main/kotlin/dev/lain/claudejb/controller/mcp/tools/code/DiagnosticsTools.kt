@@ -5,7 +5,6 @@ import com.intellij.analysis.problemsView.Problem
 import com.intellij.analysis.problemsView.ProblemsCollector
 import com.intellij.analysis.problemsView.toolWindow.ProblemsViewTab
 import com.intellij.analysis.problemsView.toolWindow.ProblemsViewToolWindowUtils
-import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
@@ -39,7 +38,7 @@ internal class DiagnosticsTools(private val project: Project, private val daemon
 
     private suspend fun problemsOne(args: ToolArgs): JsonObject {
         val path = args.string("path")
-        val severity = severity(args.optionalString("severity") ?: "warning")
+        val severity = Severities.minimum(args)
         val max = args.int("max", DEFAULT_MAX)
         val (file, document) = readAction {
             val file = ReadTools.resolveFile(project, path)
@@ -141,14 +140,6 @@ internal class DiagnosticsTools(private val project: Project, private val daemon
         put("message", problem.text)
     }
 
-    private fun severity(name: String): HighlightSeverity? = when (name.lowercase()) {
-        "error" -> HighlightSeverity.ERROR
-        "warning" -> HighlightSeverity.WARNING
-        "weak" -> HighlightSeverity.WEAK_WARNING
-        "all" -> null
-        else -> throw ToolException("severity must be error, warning, weak or all")
-    }
-
     companion object {
 
         private const val DEFAULT_MAX = 100
@@ -161,7 +152,7 @@ internal class DiagnosticsTools(private val project: Project, private val daemon
             listOf(
                 Param("path", "File path, absolute or relative to the project root", required = false),
                 Batch.paths("every touched file in one call"),
-                Param("severity", "Minimum severity: error, warning (default), weak or all", required = false),
+                Severities.PARAM,
                 Param("max", "Maximum problems to return (default $DEFAULT_MAX)", type = "integer", required = false),
             ),
         )

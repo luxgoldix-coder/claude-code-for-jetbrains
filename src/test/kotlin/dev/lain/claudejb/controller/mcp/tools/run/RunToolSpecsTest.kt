@@ -50,6 +50,15 @@ class RunToolSpecsTest {
         assertTrue(TestTools.RUN_TESTS.params.none { it.required })
     }
 
+    @Test
+    fun `the runner's service messages never reach the tail, the PASS and FAIL lines do`() {
+        val tail = OutputTail()
+        tail.text("##teamcity[testStarted id='x' name='a test']\nPASS a test\n##teamcity[testFinished id='x']\n")
+        tail.line("FAIL other — boom")
+        assertEquals(2, tail.lines)
+        assertEquals("PASS a test\nFAIL other — boom", tail.tail(10))
+    }
+
     private companion object {
         const val MILLIS = 1000L
         val COMMAND_KEYS = setOf(

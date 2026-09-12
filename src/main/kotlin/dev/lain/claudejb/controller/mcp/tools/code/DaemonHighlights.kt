@@ -10,12 +10,28 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import dev.lain.claudejb.model.mcp.Param
+import dev.lain.claudejb.model.mcp.ToolArgs
+import dev.lain.claudejb.model.mcp.ToolException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 
 internal class Highlight(val line: Int, val column: Int, val severity: String, val message: String, val inspection: String?)
+
+internal object Severities {
+
+    val PARAM = Param("severity", "Minimum severity: error, warning (default), weak or all", required = false)
+
+    fun minimum(args: ToolArgs): HighlightSeverity? = when (val name = (args.optionalString("severity") ?: "warning").lowercase()) {
+        "error" -> HighlightSeverity.ERROR
+        "warning" -> HighlightSeverity.WARNING
+        "weak" -> HighlightSeverity.WEAK_WARNING
+        "all" -> null
+        else -> throw ToolException("severity must be error, warning, weak or all, not " + name)
+    }
+}
 
 internal class DaemonHighlights(private val project: Project) {
 

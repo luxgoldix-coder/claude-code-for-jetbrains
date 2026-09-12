@@ -9,6 +9,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.PsiTreeUtil
@@ -158,10 +159,14 @@ internal class TestTools(private val project: Project, scope: CoroutineScope) {
     private fun found(psiFile: PsiFile): List<Found> {
         val frameworks = TestFramework.EXTENSION_NAME.extensionList
         return PsiTreeUtil.collectElementsOfType(psiFile, PsiNamedElement::class.java).mapNotNull { element ->
-            frameworks.firstOrNull { it.isTestClass(element) }?.let { Found(element, "class", it.name) }
-                ?: frameworks.firstOrNull { it.isTestMethod(element) }?.let { Found(element, "method", it.name) }
+            frameworks.firstOrNull { it.isTestMethod(element) }?.let { Found(element, "method", it.name) }
+                ?: frameworks.firstOrNull { it.isTestClass(element) && !insideTestClass(element, it) }
+                    ?.let { Found(element, "class", it.name) }
         }
     }
+
+    private fun insideTestClass(element: PsiElement, framework: TestFramework): Boolean =
+        generateSequence(element.parent) { it.parent }.any { it is PsiNamedElement && framework.isTestClass(it) }
 
     private suspend fun <T> indexed(body: () -> T): T = try {
         readAction(body)

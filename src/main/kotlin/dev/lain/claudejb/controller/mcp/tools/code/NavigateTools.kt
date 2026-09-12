@@ -45,7 +45,7 @@ internal class NavigateTools(private val project: Project) {
         val rows = indexed {
             val scope = if (libraries) GlobalSearchScope.allScope(project) else GlobalSearchScope.projectScope(project)
             val parameters = FindSymbolParameters.simple(project, libraries)
-            val items = ArrayList<NavigationItem>()
+            val items = LinkedHashSet<NavigationItem>()
             for (contributor in contributors()) {
                 val names = LinkedHashSet<String>()
                 contributor.processNames(
@@ -126,6 +126,7 @@ internal class NavigateTools(private val project: Project) {
     private fun contributors(): List<ChooseByNameContributorEx> =
         (ChooseByNameContributor.CLASS_EP_NAME.extensionList + ChooseByNameContributor.SYMBOL_EP_NAME.extensionList)
             .filterIsInstance<ChooseByNameContributorEx>()
+            .distinct()
 
     private suspend fun <T> indexed(body: () -> T): T = try {
         readAction(body)

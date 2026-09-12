@@ -7,6 +7,7 @@ import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemDescriptorUtil
 import com.intellij.codeInspection.ex.InspectionToolWrapper
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.project.IndexNotReadyException
@@ -63,17 +64,18 @@ internal class InspectTools(private val project: Project) {
     private suspend fun inspectOne(args: ToolArgs): JsonObject {
         val path = args.string("path")
         val only = args.optionalString("inspection")
+        val minimum = Severities.minimum(args)
         val max = args.int("max", DEFAULT_MAX)
         val psiFile = readAction { Locations.psiFile(project, path) }
-        val tools = readAction { applicable(psiFile, only) }
+        val tools = readAction { applicable(psiFile, only, minimum) }
         if (tools.isEmpty()) throw ToolException(missing(only, path))
         val context = InspectionManager.getInstance(project).createNewGlobalContext()
         val rows = ArrayList<JsonObject>()
         try {
-            for (tool in tools) {
+            for (applicable in tools) {
                 if (rows.size >= max) break
-                val problems = smartReadAction(project) { run(psiFile, tool, context) }
-                rows += readAction { problems.take(max - rows.size).map { row(tool, it) } }
+                val problems = smartReadAction(project) { run(psiFile, applicable.tool, context) }
+                rows += readAction { problems.take(max - rows.size).map { row(applicable, it) } }
             }
         } finally {
             context.cleanup()
@@ -89,17 +91,22 @@ internal class InspectTools(private val project: Project) {
     private fun missing(only: String?, path: String): String =
         if (only == null) "no inspection applies to " + path else "no enabled inspection named " + only + " applies to " + path
 
-    private fun applicable(psiFile: PsiFile, only: String?): List<InspectionToolWrapper<*, *>> {
+    private class Applicable(val tool: InspectionToolWrapper<*, *>, val severity: String)
+
+    private fun applicable(psiFile: PsiFile, only: String?, minimum: HighlightSeverity?): List<Applicable> {
         val profile = InspectionProfileManager.getInstance(project).currentProfile
         return profile.getInspectionTools(psiFile)
-            .filter { tool ->
-                if (only != null) {
-                    tool.shortName.equals(only, true)
-                } else {
-                    profile.isToolEnabled(HighlightDisplayKey.find(tool.shortName), psiFile)
-                }
-            }
             .filter { it.isApplicable(psiFile.language) }
+            .mapNotNull { tool ->
+                val key = HighlightDisplayKey.find(tool.shortName) ?: return@mapNotNull null
+                val severity = profile.getErrorLevel(key, psiFile).severity
+                val wanted = when {
+                    only != null -> tool.shortName.equals(only, true)
+                    !profile.isToolEnabled(key, psiFile) -> false
+                    else -> minimum == null || severity >= minimum
+                }
+                if (wanted) Applicable(tool, severity.name) else null
+            }
     }
 
     private fun run(psiFile: PsiFile, tool: InspectionToolWrapper<*, *>, context: GlobalInspectionContext): List<ProblemDescriptor> =
@@ -109,10 +116,10 @@ internal class InspectTools(private val project: Project) {
             throw ToolException("the IDE is still indexing; retry in a moment", e)
         }
 
-    private fun row(tool: InspectionToolWrapper<*, *>, problem: ProblemDescriptor): JsonObject = buildJsonObject {
+    private fun row(applicable: Applicable, problem: ProblemDescriptor): JsonObject = buildJsonObject {
         put("line", problem.lineNumber + 1)
-        put("inspection", tool.shortName)
-        put("type", problem.highlightType.name)
+        put("inspection", applicable.tool.shortName)
+        put("severity", applicable.severity)
         put("message", ProblemDescriptorUtil.renderDescriptionMessage(problem, problem.psiElement))
     }
 
@@ -133,11 +140,12 @@ internal class InspectTools(private val project: Project) {
         val INSPECT = ToolSpec(
             "inspect",
             "Runs the profile's enabled inspections on one file, or a single inspection by id, and returns each finding " +
-                "with its line and message.",
+                "with its line, severity and message; the profile's information-level hints stay out unless severity=all.",
             listOf(
                 Param("path", "File path, absolute or relative to the project root", required = false),
                 Batch.paths("one result each"),
                 Param("inspection", "Run only this inspection id (default: every enabled inspection)", required = false),
+                Severities.PARAM,
                 Param("max", "Maximum findings to return (default $DEFAULT_MAX)", type = "integer", required = false),
             ),
         )
