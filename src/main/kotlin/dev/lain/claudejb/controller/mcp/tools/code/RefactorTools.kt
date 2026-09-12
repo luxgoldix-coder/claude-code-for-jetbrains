@@ -129,6 +129,8 @@ internal class RefactorTools(private val project: Project, private val refactori
                 throw ToolException("the IDE cannot safe-delete this ${Locations.kind(element)}")
             }
             val refactoring = RefactoringFactory.getInstance(project).createSafeDelete(arrayOf(element))
+            refactoring.isSearchInComments = false
+            refactoring.isSearchInNonJavaFiles = false
             refactoring.setInteractive(null)
             refactoring.setPreviewUsages(false)
             refactorings.name(element) to refactoring
