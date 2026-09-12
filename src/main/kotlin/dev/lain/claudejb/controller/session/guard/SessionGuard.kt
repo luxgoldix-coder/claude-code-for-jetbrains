@@ -54,7 +54,9 @@ class SessionGuard(
         projectRoot = project.basePath,
         isRemembered = { toolName, _ -> alwaysAllowed(toolName) },
         forceAsk = { session.gitIntegration },
-        sensitiveDecision = { input -> ClaudeSettings.getInstance(project).sensitiveDecision(input, project.basePath) },
+        sensitiveDecision = { input ->
+            ClaudeSettings.getInstance(project).sensitiveDecision(OwnTools.guardInput(input), project.basePath)
+        },
         isGuardCommandApproved = { rule, command -> approvals.isApproved(rule, command) },
         onSensitiveDenied = ::onDenied,
         onSensitiveBypassed = ::onBypassed,

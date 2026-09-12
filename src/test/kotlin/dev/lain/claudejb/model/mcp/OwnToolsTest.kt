@@ -35,6 +35,19 @@ class OwnToolsTest {
     }
 
     @Test
+    fun `the guard sees a run call flat, with the tool name kept and every argument at the top level`() {
+        val flat = OwnTools.guardInput(input("""{"tool":"write_file","args":{"path":"/home/u/.bash_aliases","content":"alias"}}"""))
+        assertEquals("write_file", flat["tool"]!!.jsonPrimitive.content)
+        assertEquals("/home/u/.bash_aliases", flat["path"]!!.jsonPrimitive.content)
+        assertEquals("alias", flat["content"]!!.jsonPrimitive.content)
+        assertNull(flat["args"])
+        val bash = input("""{"command":"ls"}""")
+        assertEquals(bash, OwnTools.guardInput(bash))
+        val noArgs = input("""{"tool":"x"}""")
+        assertEquals(noArgs, OwnTools.guardInput(noArgs))
+    }
+
+    @Test
     fun `every surface that names a call gets the same display name, and a foreign tool gets none`() {
         val commit = input("""{"tool":"git_commit","args":{"message":"m","paths":["A.kt"]}}""")
         assertEquals("vcs ▸ git_commit", OwnTools.display("mcp__vcs__run", commit))

@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNamedElement
 import com.intellij.util.DocumentUtil
+import dev.lain.claudejb.model.diff.DiffPresenter
 import dev.lain.claudejb.model.mcp.Param
 import dev.lain.claudejb.model.mcp.ToolArgs
 import dev.lain.claudejb.model.mcp.ToolException
@@ -41,6 +42,12 @@ internal object Locations {
     fun absolute(project: Project, path: String): Path {
         val base = project.basePath ?: throw ToolException("this project has no directory on disk")
         return Path.of(path).let { if (it.isAbsolute) it else Path.of(base).resolve(it) }.normalize()
+    }
+
+    fun inside(project: Project, path: String): Path {
+        val absolute = absolute(project, path)
+        if (!DiffPresenter.isWithinRoot(absolute.toString(), project.basePath)) throw ToolException("$path is outside the project")
+        return absolute
     }
 
     fun file(project: Project, path: String): VirtualFile {

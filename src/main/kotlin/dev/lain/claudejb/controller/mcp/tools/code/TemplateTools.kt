@@ -177,6 +177,7 @@ internal class TemplateTools(private val project: Project, private val targets: 
             ?: throw ToolException("no file template named $name; file_templates lists them")
 
     private suspend fun directory(dir: String): PsiDirectory = readAction {
+        Locations.inside(project, dir)
         PsiManager.getInstance(project).findDirectory(ReadTools.resolveDirectory(project, dir))
             ?: throw ToolException("$dir is not a directory of this project")
     }

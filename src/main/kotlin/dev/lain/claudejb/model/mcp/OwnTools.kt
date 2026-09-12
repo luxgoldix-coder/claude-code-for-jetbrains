@@ -40,6 +40,13 @@ object OwnTools {
 
     fun argsOf(input: JsonObject): JsonObject = (input["args"] as? JsonObject) ?: JsonObject(emptyMap())
 
+    fun guardInput(input: JsonObject): JsonObject {
+        val tool = input["tool"] as? JsonPrimitive ?: return input
+        val args = input["args"] as? JsonObject ?: return input
+        if (!tool.isString) return input
+        return JsonObject(args + ("tool" to tool))
+    }
+
     fun label(call: Call, args: JsonObject = JsonObject(emptyMap())): String = when (call.meta) {
         MetaTools.RUN.name -> call.server + " ▸ " + (call.argument ?: "?") + (subject(args)?.let { " ▸ $it" } ?: "")
         MetaTools.TOOLS.name -> call.server + " ▸ tools(" + (call.argument ?: "?") + ")"

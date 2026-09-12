@@ -88,7 +88,7 @@ internal class RefactorTools(private val project: Project, private val refactori
     private suspend fun moveFile(args: ToolArgs): ToolResult {
         val path = args.string("path")
         val destination = args.string("destination")
-        val target = Locations.absolute(project, destination)
+        val target = Locations.inside(project, destination)
         val (file, psiFile) = readAction { source(path, target, destination) }
         val directory = edtWriteAction { createDirectories(target) }
         val psiDirectory = readAction { destinationOf(directory, file.name, destination) }

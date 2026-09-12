@@ -11,10 +11,15 @@ import java.nio.file.Path
 internal object VcsPaths {
 
     fun filePath(project: Project, path: String): FilePath {
+        val absolute = inside(project, path)
+        return VcsUtil.getFilePath(absolute, Files.isDirectory(absolute))
+    }
+
+    fun inside(project: Project, path: String): Path {
         val base = base(project)
         val absolute = Path.of(path).let { if (it.isAbsolute) it else base.resolve(it) }.normalize()
         if (!absolute.startsWith(base)) throw ToolException("$path is outside the project; only paths under $base are accepted")
-        return VcsUtil.getFilePath(absolute, Files.isDirectory(absolute))
+        return absolute
     }
 
     fun base(project: Project): Path = Path.of(project.basePath ?: throw ToolException("this project has no directory on disk"))

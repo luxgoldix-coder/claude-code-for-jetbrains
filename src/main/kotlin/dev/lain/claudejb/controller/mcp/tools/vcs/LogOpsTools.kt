@@ -68,7 +68,7 @@ internal class LogOpsTools(
 
     private suspend fun worktrees(args: ToolArgs): ToolResult {
         val action = args.optionalString("action") ?: "list"
-        val path = args.optionalString("path")
+        val path = args.optionalString("path")?.let { if (action == "add") VcsPaths.inside(project, it).toString() else it }
         val branch = args.optionalString("branch")
         val output = progress("Claude: git worktree $action") { git.worktrees(action, path, branch) }
         val listed = if (action == "list") output else git.worktrees("list", null, null)

@@ -76,7 +76,7 @@ internal class EditTools(private val project: Project, private val reveal: Revea
     private suspend fun createOne(args: ToolArgs): JsonObject {
         val path = args.string("path")
         val content = args.string("content")
-        val absolute = Locations.absolute(project, path)
+        val absolute = Locations.inside(project, path)
         if (exists(absolute)) throw ToolException("$path already exists; use write_file, replace_text or insert_text to change it")
         create(path, absolute, content)
         return buildJsonObject {
@@ -88,7 +88,7 @@ internal class EditTools(private val project: Project, private val reveal: Revea
     private suspend fun writeOne(args: ToolArgs): JsonObject {
         val path = args.string("path")
         val content = args.string("content")
-        val absolute = Locations.absolute(project, path)
+        val absolute = Locations.inside(project, path)
         val existed = exists(absolute)
         if (existed) edit(path, "write") { TextEdit.whole(it, content) } else create(path, absolute, content)
         return buildJsonObject {
@@ -114,6 +114,7 @@ internal class EditTools(private val project: Project, private val reveal: Revea
         VfsUtil.createDirectories(absolute.parent.toString()).findOrCreateFile(absolute.fileName.toString()).also { it.writeText(content) }
 
     private suspend fun edit(path: String, verb: String, change: (String) -> TextEdit.Outcome): TextEdit.Outcome {
+        Locations.inside(project, path)
         val (file, document) = readAction {
             val file = ReadTools.resolveFile(project, path)
             file to Locations.document(project, file)
