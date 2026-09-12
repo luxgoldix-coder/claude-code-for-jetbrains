@@ -1,11 +1,2 @@
-<!--
-  Optional-dependency descriptor, loaded by the IntelliJ Platform ONLY when the Java plugin module
-  (`com.intellij.modules.java`) is present. It satisfies the `config-file` requirement of the optional <depends>
-  in plugin.xml, which grants runtime classloader access to UAST (`org.jetbrains.uast.*`), packaged inside the
-  Java plugin (the Gradle `bundledPlugin("com.intellij.java")` dependency only covers compilation).
-
-  DELIBERATELY OPTIONAL: PyCharm, WebStorm and the other IDEs without Java must still load this plugin; the uast
-  domain is simply absent there (see JavaAvailability). No extensions are registered here on purpose.
--->
 <idea-plugin>
 </idea-plugin>
