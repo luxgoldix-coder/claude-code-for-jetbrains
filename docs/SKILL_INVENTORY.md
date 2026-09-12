@@ -145,6 +145,62 @@ Rules that hold for every tool:
 | `inline` *mutates* | Refactor ▸ Inline at a position. | "inline this variable". `code ▸ inline {path: "A.kt", line: 9, column: 5}` |
 | `members` *mutates* | pull_up, push_down, change_signature, move, encapsulate_fields, make_static, convert_to_instance, inheritance_to_delegation, anonymous_to_inner, method_object. | "change the signature". `code ▸ members {action: "change_signature", path: "A.kt", line: 20, column: 9}` |
 
+### templates
+
+| Tool | Capability | When · example |
+|---|---|---|
+| `templates` | The live templates: key, group, description, text; `query`. | Before `template_apply`. `code ▸ templates {query: "main"}` |
+| `template_apply` *mutates* | Expands a live template at a position, as key + Tab would; the user fills the variables. | "put a for loop here". `code ▸ template_apply {key: "fori", path: "A.kt", line: 12}` |
+| `file_templates` | The file templates: name, extension, text. | Before `file_from_template`. `code ▸ file_templates {query: "Kotlin"}` |
+| `file_from_template` *mutates* | New ▸ template in a directory with `props`; the file opens. | "create a Kotlin class Foo in x". `code ▸ file_from_template {template: "Kotlin Class", dir: "src/main/kotlin/x", name: "Foo"}` |
+
+### language
+
+| Tool | Capability | When · example |
+|---|---|---|
+| `injections` | The language fragments injected into a file's literals. | "is that SQL recognised". `code ▸ injections {path: "Dao.kt"}` |
+| `inject_at` *mutates* | Inject a language into the literal at a position (IntelliLang). | "treat this string as JSON". `code ▸ inject_at {path: "A.kt", line: 9, column: 20, language: "JSON"}` |
+| `docs` | The quick documentation popup for a symbol. | "what does this do". `code ▸ docs {path: "A.kt", line: 9, column: 5}` |
+
+### bookmarks
+
+| Tool | Capability | When · example |
+|---|---|---|
+| `bookmarks` | Every bookmark: group, file, line, mnemonic, description. | "where did I leave marks". `code ▸ bookmarks {}` |
+| `bookmark_add` *mutates* | A bookmark on a file or a line, in a group, with a description. | "remember this spot". `code ▸ bookmark_add {path: "A.kt", line: 40, description: "fix here"}` |
+| `bookmark_remove` *mutates* | Remove the bookmarks of a file, or the one on a line. | `code ▸ bookmark_remove {path: "A.kt", line: 40}` |
+| `project_view` | Select a file in the Project window, switching pane if asked. | "show it in the tree". `code ▸ project_view {path: "A.kt"}` |
+
+### psi
+
+| Tool | Capability | When · example |
+|---|---|---|
+| `psi_tree` | The syntax tree of a file or of the element at a line, to a depth. | When text is not enough. `code ▸ psi_tree {path: "A.kt", line: 12, depth: 2}` |
+| `psi_at` | The leaf at a position and its parents. | "what is this token". `code ▸ psi_at {path: "A.kt", line: 12, column: 9}` |
+| `psi_replace` *mutates* | Replace the element (or a parent) with text parsed in the file's language, reformatted. | Structural edits. `code ▸ psi_replace {path: "A.kt", line: 12, column: 9, parent: 1, text: "foo(1)"}` |
+| `psi_insert` *mutates* | Insert parsed text before or after the element. | `code ▸ psi_insert {path: "A.kt", line: 12, text: "val x = 1", where: "after"}` |
+
+### index
+
+| Tool | Capability | When · example |
+|---|---|---|
+| `index_keys` | The keys of a file-based index by name. | `code ▸ index_keys {index: "TodoIndex"}` |
+| `index_query` | The files behind one key. | `code ▸ index_query {index: "filetypes", key: "Kotlin"}` |
+| `stub_query` | A stub index's keys, or the elements behind a key. | "every class named Foo". `code ▸ stub_query {index: "java.class.shortname", key: "Foo"}` |
+
+### uast (IDEs with the Java plugin)
+
+| Tool | Capability | When · example |
+|---|---|---|
+| `uast_tree` | The unified AST of a JVM-language file to a depth. | Cross-language analysis. `code ▸ uast_tree {path: "A.kt", depth: 2}` |
+| `uast_at` | The UAST node at a position and its parents. | `code ▸ uast_at {path: "A.kt", line: 12, column: 9}` |
+
+### workspace
+
+| Tool | Capability | When · example |
+|---|---|---|
+| `workspace` | The workspace model's modules, content roots, source roots, libraries or SDKs, with their entity source. | "what did Gradle import". `code ▸ workspace {entity_type: "source_root"}` |
+
 ### recent
 
 | Tool | Capability | When · example |
@@ -322,13 +378,13 @@ mirrored in the IDE without taking the user's focus.
 
 | Capability | Tools (domain) | Status |
 |---|---|---|
-| Live and file templates (R1) | `templates`, `template_apply`, `file_templates`, `file_from_template` (`templates`) | ☐ |
-| Injected languages, quick documentation (R2; `docs` reveals the popup, `DocumentationTarget` is override-only) | `injections`, `inject_at`, `docs` (`language`) | ☐ |
-| Bookmarks and the project view (R3; Structure follows the caret) | `bookmarks`, `bookmark_add`, `bookmark_remove`, `project_view` (`bookmarks`) | ☐ |
-| The workspace model, read-only (R4) | `workspace` (`workspace`) | ☐ |
-| PSI as a tree (R5) | `psi_tree`, `psi_at`, `psi_replace`, `psi_insert` (`psi`) | ☐ |
-| The IDE's indexes (R6) | `index_keys`, `index_query`, `stub_query` (`index`) | ☐ |
-| UAST (R7) | `uast_tree`, `uast_at` (`uast`) | ☐ |
+| Live and file templates (R1) | `templates`, `template_apply`, `file_templates`, `file_from_template` (`templates`) | ☑ |
+| Injected languages, quick documentation (R2; `docs` reveals the popup, `DocumentationTarget` is override-only) | `injections`, `inject_at`, `docs` (`language`) | ☑ (`inject_at` goes through IntelliLang's `TemporaryPlacesRegistry` by reflection in that plugin's loader) |
+| Bookmarks and the project view (R3; Structure follows the caret) | `bookmarks`, `bookmark_add`, `bookmark_remove`, `project_view` (`bookmarks`) | ☑ |
+| The workspace model, read-only (R4) | `workspace` (`workspace`) | ☑ |
+| PSI as a tree (R5) | `psi_tree`, `psi_at`, `psi_replace`, `psi_insert` (`psi`) | ☑ |
+| The IDE's indexes (R6) | `index_keys`, `index_query`, `stub_query` (`index`) | ☑ |
+| UAST (R7) | `uast_tree`, `uast_at` (`uast`) | ☑ (UAST ships inside the Java plugin: optional dependency `claude-java.xml`, the domain is absent on IDEs without Java) |
 
 ### P6 — roadmap horizon 3, presence
 

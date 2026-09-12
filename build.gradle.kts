@@ -108,6 +108,11 @@ dependencies {
         // `GitHubGateway` is the only file that names an org.jetbrains.plugins.github type and checks the
         // plugin before touching it, so an IDE without it answers "not available" instead of dying.
         bundledPlugin("org.jetbrains.plugins.github")
+        // Bundled Java plugin: compile-only coupling for UAST (the unified AST over Java, Kotlin, Scala, Groovy),
+        // which ships inside it. OPTIONAL in META-INF/plugin.xml (config-file claude-java.xml): PyCharm and the
+        // other IDEs without Java load the plugin without the uast domain; UastTools is the only file naming
+        // org.jetbrains.uast and the catalog row checks JavaAvailability before touching it.
+        bundledPlugin("com.intellij.java")
     }
 
     // JSON (de)serialization for the stream-json / control protocol.

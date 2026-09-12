@@ -45,6 +45,23 @@ enum class IdeRule(val key: String, val server: IdeServer?, val label: String, v
         "The rest of the Refactor menu",
         setOf("introduce", "extract", "inline", "members"),
     ),
+    CODE_TEMPLATES(
+        "code.templates",
+        IdeServer.CODE,
+        "Live and file templates",
+        setOf("templates", "template_apply", "file_templates", "file_from_template"),
+    ),
+    CODE_LANGUAGE("code.language", IdeServer.CODE, "Injected languages and docs", setOf("injections", "inject_at", "docs")),
+    CODE_BOOKMARKS(
+        "code.bookmarks",
+        IdeServer.CODE,
+        "Bookmarks and the project view",
+        setOf("bookmarks", "bookmark_add", "bookmark_remove", "project_view"),
+    ),
+    CODE_PSI("code.psi", IdeServer.CODE, "The syntax tree", setOf("psi_tree", "psi_at", "psi_replace", "psi_insert")),
+    CODE_INDEX("code.index", IdeServer.CODE, "The indexes by name", setOf("index_keys", "index_query", "stub_query")),
+    CODE_UAST("code.uast", IdeServer.CODE, "The unified AST", setOf("uast_tree", "uast_at")),
+    CODE_WORKSPACE("code.workspace", IdeServer.CODE, "The workspace model", setOf("workspace")),
     CODE_RECENT(
         "code.recent",
         IdeServer.CODE,

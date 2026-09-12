@@ -59,6 +59,25 @@ internal object IdeRuleText {
             "(pull_up, push_down, change_signature, move, encapsulate_fields and the other member refactorings) at a " +
             "position or on a selection given with to_line: the IDE's own refactoring runs with its dialog or in-place " +
             "editor for the user to finish, in a tab that never takes the focus.",
+        IdeRule.CODE_TEMPLATES to "Call templates to see the IDE's live templates and template_apply to expand one at a position, " +
+            "as its key and Tab would, in the file's tab without focus; call file_templates to see the file templates and " +
+            "file_from_template to create a file from one in a directory, as New would, shown in the editor.",
+        IdeRule.CODE_LANGUAGE to "Call injections to see the language fragments the IDE injects into a file's literals, inject_at " +
+            "to inject a language into a literal through IntelliLang's temporary injections, and docs to show the IDE's " +
+            "quick documentation popup for a symbol without taking the focus.",
+        IdeRule.CODE_BOOKMARKS to "Call bookmarks, bookmark_add and bookmark_remove for the IDE's bookmarks on files and lines, " +
+            "shown in the Bookmarks window; call project_view to select a file in the Project window's pane without " +
+            "taking the focus.",
+        IdeRule.CODE_PSI to "When the text is not enough call psi_tree for the IDE's syntax tree of a file and psi_at for the " +
+            "element under a position with its parents; to change code structurally call psi_replace or psi_insert with " +
+            "text parsed in the file's language: the PSI keeps references and formatting consistent, one undoable " +
+            "command, the file shown in the editor.",
+        IdeRule.CODE_INDEX to "Call index_keys and index_query for a file-based index by name, and stub_query for a stub " +
+            "index's keys or elements: the IDE's indexes answer without reading files.",
+        IdeRule.CODE_UAST to "For Java, Kotlin, Scala or Groovy call uast_tree and uast_at: the IDE's unified AST, the same " +
+            "shape across those languages, with lines and source text.",
+        IdeRule.CODE_WORKSPACE to "Call workspace for the IDE's workspace model entities (modules, content roots, source roots, " +
+            "libraries, SDKs) with the source that created them, read-only.",
         IdeRule.CODE_RECENT to "To know where the user has been call recent: the files they opened last (kind=files) or " +
             "changed last (kind=changed_files), from the IDE's editor history. To move their editor through that " +
             "history when asked call navigate_history with back, forward, last_change or next_change. To show the " +
