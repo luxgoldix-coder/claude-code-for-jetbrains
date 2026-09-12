@@ -47,23 +47,33 @@ internal class ServiceTree(private val project: Project) {
         fun roots() {
             for (root in ServiceViewContributor.CONTRIBUTOR_EP_NAME.extensionList) {
                 if (done()) return
+                val services = servicesOf(root)
+                if (services.isEmpty()) continue
                 val descriptor = runCatching { root.getViewDescriptor(project) }.getOrNull() ?: continue
                 val node = add("", descriptor, root, root)
-                descend(root, root, node.path, 1)
+                descend(root, root, services, node.path, 1)
             }
         }
 
-        private fun descend(contributor: ServiceViewContributor<*>, root: ServiceViewContributor<*>, parentPath: String, depth: Int) {
+        private fun descend(
+            contributor: ServiceViewContributor<*>,
+            root: ServiceViewContributor<*>,
+            services: List<Any>,
+            parentPath: String,
+            depth: Int,
+        ) {
             if (depth > MAX_DEPTH) return
-            val services = runCatching { contributor.getServices(project) }.getOrDefault(emptyList())
-            for (service in services.filterNotNull()) {
+            for (service in services) {
                 if (done()) return
                 val descriptor = runCatching { descriptorOf(contributor, service) }.getOrNull() ?: continue
                 val value = if (service is ServiceViewProvidingContributor<*, *>) service.asService() else service
                 val node = add(parentPath, descriptor, value, root)
-                if (service is ServiceViewContributor<*>) descend(service, root, node.path, depth + 1)
+                if (service is ServiceViewContributor<*>) descend(service, root, servicesOf(service), node.path, depth + 1)
             }
         }
+
+        private fun servicesOf(contributor: ServiceViewContributor<*>): List<Any> =
+            runCatching { contributor.getServices(project) }.getOrDefault(emptyList()).filterNotNull()
 
         private fun add(parentPath: String, descriptor: ServiceViewDescriptor, value: Any, root: ServiceViewContributor<*>): ServiceNode {
             val presentation = descriptor.presentation
