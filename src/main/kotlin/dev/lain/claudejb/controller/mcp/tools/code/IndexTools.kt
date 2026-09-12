@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
+import com.intellij.psi.stubs.StubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.ID
@@ -73,7 +74,7 @@ internal class IndexTools(private val project: Project) {
         val name = args.string("index")
         val key = args.optionalString("key")
         val max = args.int("max", DEFAULT_MAX)
-        val indexKey = StubIndexKey.createIndexKey<String, PsiElement>(name)
+        val indexKey = stubIndex(name)
         val rows = smartReadAction(project) {
             val stubs = StubIndex.getInstance()
             if (key == null) {
@@ -100,6 +101,14 @@ internal class IndexTools(private val project: Project) {
             },
         )
     }
+
+    private fun stubIndex(name: String): StubIndexKey<String, PsiElement> {
+        @Suppress("UNCHECKED_CAST")
+        return StubIndexExtension.EP_NAME.extensionList.firstOrNull { it.key.name == name }?.key as StubIndexKey<String, PsiElement>?
+            ?: throw ToolException("no stub index named $name; the registered ones are ${stubIndexNames()}")
+    }
+
+    private fun stubIndexNames(): String = StubIndexExtension.EP_NAME.extensionList.joinToString { it.key.name }
 
     companion object {
 
