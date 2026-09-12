@@ -4,6 +4,7 @@ internal object IdeRulesAdoption {
 
     fun adopt(s: ClaudeSettings.State) {
         if (s.ideMcp.catalogue == LaunchDefaults.DEFAULT_IDE_RULES) return
+        if (s.ideMcp.catalogue.isEmpty()) s.ideMcp.enabled = true
         s.ideMcp.rules = adopted(s.ideMcp.rules, s.ideMcp.catalogue)
         s.ideMcp.catalogue = LaunchDefaults.DEFAULT_IDE_RULES
     }

@@ -18,9 +18,16 @@ class IdeRulesAdoptionTest {
     }
 
     @Test
-    fun `rules that were all on when saved, with no catalogue recorded, land in God Mode with the rules added since`() {
+    fun `a state with no catalogue recorded comes from an older build and lands in God Mode, servers on`() {
         val older = "code.read,code.search,run.build,vcs.read,common.agents"
         assertEquals(current, IdeRulesAdoption.adopted(older, ""))
+        val s = ClaudeSettings.State().apply {
+            ideMcp.enabled = false
+            ideMcp.rules = ""
+        }
+        IdeRulesAdoption.adopt(s)
+        assertEquals(true, s.ideMcp.enabled)
+        assertEquals(current, s.ideMcp.rules)
     }
 
     @Test
