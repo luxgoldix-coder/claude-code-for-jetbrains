@@ -6,6 +6,7 @@ import dev.lain.claudejb.controller.session.AttentionLanding
 import dev.lain.claudejb.controller.session.AttentionReason
 import dev.lain.claudejb.controller.session.ClaudeSession
 import dev.lain.claudejb.model.diff.DiffPresenter
+import dev.lain.claudejb.model.mcp.OwnTools
 import dev.lain.claudejb.model.mcp.RunCard
 import dev.lain.claudejb.model.permission.broker.GuardBypass
 import dev.lain.claudejb.model.permission.broker.GuardDenial
@@ -130,7 +131,7 @@ class SessionGuard(
             recordAlert(
                 GuardAlert.ASKED,
                 it.rule,
-                request.toolName,
+                OwnTools.display(request.toolName, request.input) ?: request.toolName,
                 command = ToolInputScanner.commandText(request.input),
                 toolUseId = request.toolUseId,
                 detail = it.reason,

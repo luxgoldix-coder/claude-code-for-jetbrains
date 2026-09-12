@@ -92,6 +92,24 @@ class JcefPayloadTest {
     }
 
     @Test
+    fun `permissionJson names an own call by server, tool and subject in its headline, not by the meta tool`() {
+        val own = PendingPermission(
+            requestId = "r2",
+            toolName = "mcp__code__run",
+            input = buildJsonObject {
+                put("tool", "read_file")
+                put("args", buildJsonObject { put("path", "src/A.kt") })
+            },
+            title = "Claude wants to use read_file on the code server",
+            summary = "path: src/A.kt",
+            reviewable = false,
+        )
+        val o = JcefCardPayload.permissionJson(own)
+        assertEquals("code ▸ read_file ▸ src/A.kt", o["headline"]!!.jsonPrimitive.content)
+        assertEquals("Edit on App.kt", JcefCardPayload.permissionJson(perm())["headline"]!!.jsonPrimitive.content)
+    }
+
+    @Test
     fun `permissionJson AskUserQuestion card carries questions and options`() {
         val q = AskQuestion(
             question = "Pick one",

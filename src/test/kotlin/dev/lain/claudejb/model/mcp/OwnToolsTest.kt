@@ -35,6 +35,15 @@ class OwnToolsTest {
     }
 
     @Test
+    fun `every surface that names a call gets the same display name, and a foreign tool gets none`() {
+        val commit = input("""{"tool":"git_commit","args":{"message":"m","paths":["A.kt"]}}""")
+        assertEquals("vcs ▸ git_commit", OwnTools.display("mcp__vcs__run", commit))
+        assertEquals("code ▸ read_file ▸ src/A.kt", OwnTools.display("mcp__code__run", input("""{"tool":"read_file","args":{"path":"src/A.kt"}}""")))
+        assertNull(OwnTools.display("Bash", input("""{"command":"ls"}""")))
+        assertNull(OwnTools.display("mcp__jetbrains__get_file_text", input("{}")))
+    }
+
+    @Test
     fun `a result decodes from TOON to JSON for the card, comment primer included, and garbage decodes to nothing`() {
         val decoded = OwnTools.decodeResult("# TOON primer\ndomains[2]{name,description}:\n  read,Files\n  search,Text\n")!!.jsonObject
         assertEquals(2, decoded["domains"]!!.jsonArray.size)

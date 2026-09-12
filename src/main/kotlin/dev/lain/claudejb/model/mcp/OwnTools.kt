@@ -36,6 +36,8 @@ object OwnTools {
 
     fun isOwn(toolName: String?): Boolean = toolName != null && META_TOOL.matches(toolName)
 
+    fun display(toolName: String, input: JsonObject): String? = parse(toolName, input)?.let { label(it, argsOf(input)) }
+
     fun argsOf(input: JsonObject): JsonObject = (input["args"] as? JsonObject) ?: JsonObject(emptyMap())
 
     fun label(call: Call, args: JsonObject = JsonObject(emptyMap())): String = when (call.meta) {

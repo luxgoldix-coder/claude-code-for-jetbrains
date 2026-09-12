@@ -4,6 +4,7 @@ import dev.lain.claudejb.controller.session.AttentionReason
 import dev.lain.claudejb.controller.session.ClaudeSession
 import dev.lain.claudejb.model.diff.DiffPresenter
 import dev.lain.claudejb.model.diff.EditSnapshot
+import dev.lain.claudejb.model.mcp.OwnTools
 import dev.lain.claudejb.model.permission.broker.ElicitationCard
 import dev.lain.claudejb.model.permission.broker.PendingPermission
 import dev.lain.claudejb.model.protocol.PermissionMode
@@ -58,9 +59,9 @@ class SessionCards(
         write(ControlProtocol.permissionAllow(requestId, effectiveInput))
         val guard = request.guard
         if (guard == null) {
-            session.systemNotice("Approved ${request.headline}")
+            session.systemNotice("Approved ${headline(request)}")
         } else {
-            session.guard.notice(request.toolName, "${guard.rule.label} matched, and you accepted it", guard.rule)
+            session.guard.notice(headline(request), "${guard.rule.label} matched, and you accepted it", guard.rule)
         }
         if (request.isPlan && session.launch.permissionMode == PermissionMode.PLAN.wire) {
             session.settings.changePermissionMode(PermissionMode.DEFAULT.wire)
@@ -77,15 +78,17 @@ class SessionCards(
         session.diffs.closeReviewDiff(requestId)
         val message = denyMessage ?: "User rejected the ${request.toolName} request."
         write(ControlProtocol.permissionDeny(requestId, message))
-        session.systemNotice("Rejected ${request.headline}")
+        session.systemNotice("Rejected ${headline(request)}")
     }
 
     fun withdraw(requestId: String) {
         val request = session.cardManager.remove(requestId) ?: return
         session.diffs.closeReviewDiff(requestId)
-        session.systemNotice("${request.headline} was answered from a connected device.")
+        session.systemNotice("${headline(request)} was answered from a connected device.")
         firePermissions()
     }
+
+    private fun headline(request: PendingPermission): String = OwnTools.display(request.toolName, request.input) ?: request.headline
 
     fun resolveQuestion(requestId: String, answers: Map<String, String>) {
         val request = session.cardManager.remove(requestId) ?: return

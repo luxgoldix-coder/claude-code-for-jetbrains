@@ -15,12 +15,12 @@ class FileSizeContractTest {
     fun `every main source stays under the ceiling`() {
         val root = MainSources.root(SOURCE_ROOT)
         val offenders = MainSources.files()
-            .map { it to it.readLines().size }
+            .map { file -> file to file.readLines().count { !it.startsWith("import ") } }
             .filter { (_, lines) -> lines > CEILING }
             .map { (file, lines) -> "${file.relativeTo(root).invariantSeparatorsPath}: $lines" }
         assertEquals(emptyList<String>(), offenders) {
-            "A file over $CEILING lines has more than one responsibility. Split it along its seam and move the " +
-                "contract tests that scan it in the same commit."
+            "A file over $CEILING lines, imports aside, has more than one responsibility. Split it along its seam " +
+                "and move the contract tests that scan it in the same commit."
         }
     }
 

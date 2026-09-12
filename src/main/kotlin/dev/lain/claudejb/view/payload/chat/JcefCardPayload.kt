@@ -1,5 +1,6 @@
 package dev.lain.claudejb.view.payload.chat
 
+import dev.lain.claudejb.model.mcp.OwnTools
 import dev.lain.claudejb.model.permission.broker.ElicitationCard
 import dev.lain.claudejb.model.permission.broker.GuardAlert
 import dev.lain.claudejb.model.permission.broker.PendingPermission
@@ -18,7 +19,7 @@ object JcefCardPayload {
         put("tool", p.toolName)
         put("title", p.title)
         put("summary", p.summary)
-        put("headline", p.headline)
+        put("headline", OwnTools.display(p.toolName, p.input) ?: p.headline)
         put("reviewable", p.reviewable)
         put("isPlan", p.isPlan)
         p.planText?.let { put("planText", it) }
