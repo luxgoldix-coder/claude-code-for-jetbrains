@@ -42,7 +42,7 @@ object ClaudeBinaryLocator {
             File(path).takeIf { it.isFile && it.canExecute() }?.let { return it }
         }
         for (name in executableNames) {
-            PathEnvironmentVariableUtil.findInPath(name)?.let { if (it.canExecute()) return it }
+            onPath(name)?.let { return it }
         }
         for (dir in typicalDirs) {
             for (name in executableNames) {
@@ -51,6 +51,11 @@ object ClaudeBinaryLocator {
             }
         }
         return null
+    }
+
+    private fun onPath(name: String): File? {
+        val dirs = PathEnvironmentVariableUtil.getPathDirs(PathEnvironmentVariableUtil.getPathVariableValue() ?: return null)
+        return dirs.asSequence().map { File(it, name) }.firstOrNull { it.isFile && it.canExecute() }
     }
 
     fun resolveNodeScript(binary: File): File? {
@@ -73,7 +78,7 @@ object ClaudeBinaryLocator {
         }
         if (!SystemInfo.isWindows) return "node"
         near?.let { File(it.parentFile, "node.exe") }?.takeIf { it.isFile }?.let { return it.absolutePath }
-        PathEnvironmentVariableUtil.findInPath("node.exe")?.let { if (it.canExecute()) return it.absolutePath }
+        onPath("node.exe")?.let { return it.absolutePath }
         System.getenv("ProgramFiles")?.let { File("$it\\nodejs\\node.exe") }?.takeIf { it.isFile }
             ?.let { return it.absolutePath }
         return "node"
