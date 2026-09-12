@@ -2,6 +2,7 @@ package dev.lain.claudejb.controller.mcp.tools.run
 
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.BuildViewManager
+import com.intellij.build.FileNavigatable
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.FileMessageEvent
 import com.intellij.build.events.MessageEvent
@@ -10,6 +11,7 @@ import com.intellij.build.events.StartBuildEvent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -31,7 +33,6 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
-import java.io.File
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -159,15 +160,21 @@ internal class BuildTools(private val project: Project, scope: CoroutineScope) {
 
         private fun row(event: MessageEvent): JsonObject = buildJsonObject {
             val position = (event as? FileMessageEvent)?.filePosition
-            put("file", position?.file?.let(::relative) ?: "")
+            put("file", fileOf(event)?.let(::relative) ?: "")
             put("line", position?.startLine?.plus(1) ?: 0)
             put("column", position?.startColumn?.plus(1) ?: 0)
             put("message", event.message)
         }
 
-        private fun relative(file: File): String {
-            val base = project.basePath ?: return file.path
-            return file.path.removePrefix("$base/")
+        private fun fileOf(event: MessageEvent): String? = when (val target = event.getNavigatable(project)) {
+            is OpenFileDescriptor -> target.file.path
+            is FileNavigatable -> target.fileDescriptor?.file?.path
+            else -> null
+        }
+
+        private fun relative(path: String): String {
+            val base = project.basePath ?: return path
+            return path.removePrefix("$base/")
         }
     }
 
