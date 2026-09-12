@@ -72,7 +72,7 @@ object Batch {
     fun param(plural: Plural, description: String): Param =
         Param(plural.key, description, type = "array", required = false, items = plural.items)
 
-    val ONE_CALL_LISTS: Set<String> = setOf("git_stage", "git_commit", "search_replace", "shelve", "patch", "rollback")
+    val ONE_CALL_LISTS: Set<String> = setOf("git_stage", "git_commit", "search_replace", "shelve", "patch", "rollback", "delete_file")
 
     fun split(tool: String?, args: JsonObject): List<JsonObject>? {
         if (tool in ONE_CALL_LISTS) return null

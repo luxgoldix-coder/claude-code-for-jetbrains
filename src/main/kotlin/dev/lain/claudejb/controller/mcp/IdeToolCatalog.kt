@@ -2,10 +2,13 @@ package dev.lain.claudejb.controller.mcp
 
 import com.intellij.openapi.project.Project
 import dev.lain.claudejb.controller.git.GitAvailability
+import dev.lain.claudejb.controller.mcp.tools.code.AnalysisTools
+import dev.lain.claudejb.controller.mcp.tools.code.AnalyzeTools
 import dev.lain.claudejb.controller.mcp.tools.code.DiagnosticsTools
 import dev.lain.claudejb.controller.mcp.tools.code.EditOpsTools
 import dev.lain.claudejb.controller.mcp.tools.code.EditTools
 import dev.lain.claudejb.controller.mcp.tools.code.EditorTools
+import dev.lain.claudejb.controller.mcp.tools.code.FileTools
 import dev.lain.claudejb.controller.mcp.tools.code.FormatTools
 import dev.lain.claudejb.controller.mcp.tools.code.HierarchyTools
 import dev.lain.claudejb.controller.mcp.tools.code.InspectTools
@@ -13,8 +16,10 @@ import dev.lain.claudejb.controller.mcp.tools.code.NavigateTools
 import dev.lain.claudejb.controller.mcp.tools.code.OutlineTools
 import dev.lain.claudejb.controller.mcp.tools.code.ReadTools
 import dev.lain.claudejb.controller.mcp.tools.code.RecentTools
+import dev.lain.claudejb.controller.mcp.tools.code.RefactorOpsTools
 import dev.lain.claudejb.controller.mcp.tools.code.RefactorTools
 import dev.lain.claudejb.controller.mcp.tools.code.SearchTools
+import dev.lain.claudejb.controller.mcp.tools.code.ViewTools
 import dev.lain.claudejb.controller.mcp.tools.ops.ActionTools
 import dev.lain.claudejb.controller.mcp.tools.ops.DbTools
 import dev.lain.claudejb.controller.mcp.tools.ops.HttpTools
@@ -58,6 +63,11 @@ internal object IdeToolCatalog {
             { p, s -> EditorTools(p, Reveal(p), IdeActions(p, s)).domain() },
             { p, _ -> HierarchyTools(p).domain() },
             { p, s -> RecentTools(p, IdeActions(p, s)).domain() },
+            { p, s -> AnalyzeTools(p, IdeActions(p, s)).domain() },
+            { p, s -> AnalysisTools(p, IdeActions(p, s)).domain() },
+            { p, s -> ViewTools(p, IdeActions(p, s)).domain() },
+            { p, s -> FileTools(p, IdeActions(p, s), Reveal(p)).domain() },
+            { p, s -> RefactorOpsTools(IdeActions(p, s)).domain() },
         ),
         IdeServer.RUN to listOf(
             { p, s -> BuildTools(p, s).domain() },

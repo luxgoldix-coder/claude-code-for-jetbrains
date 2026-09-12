@@ -36,6 +36,29 @@ internal object IdeRuleText {
             "index_status with wait and retry once it is ready. For the Code menu at a position (override, implement, " +
             "generate, surround, unwrap, comment, move statement or line, rearrange, fold, live templates, quick " +
             "documentation) call editor_action with path, line and column: the editor performs it with the caret there.",
+        IdeRule.CODE_ANALYZE to "To run the IDE's inspections on a whole scope call inspect_scope (project, module, dir or " +
+            "file): the Inspection Results window shows them. To apply every cleanup fix of the profile call cleanup. " +
+            "To learn what the files of a scope depend on call file_dependencies, transitive levels deep when asked; " +
+            "direction=backward opens the IDE's Backward Dependencies analysis. To follow where a value comes from or " +
+            "goes call dataflow at its position: the IDE's Analyze Data Flow window opens.",
+        IdeRule.CODE_ANALYSIS to "Given a stack trace call stack_trace: the frames come back resolved to the project's files " +
+            "and the IDE's Analyze Stack Trace dialog opens with it. Call duplicates and infer_nullity to run the IDE's " +
+            "duplicate-code and nullity analyses in their own windows. To reach what belongs to a symbol call related " +
+            "with test, subject, super or implementations: the tests and subjects come back as data from the IDE's " +
+            "test finder and the Navigate action opens the target.",
+        IdeRule.CODE_VIEWS to "To show two files side by side call diff_show, or compare for a file against another or " +
+            "against the active editor: the IDE's diff opens without taking the focus. To mark a directory as a source, " +
+            "test, resource or excluded root call mark_as: the project model changes as the project view's menu would. " +
+            "To open a path in the file manager, the IDE's Terminal or its application call open_in.",
+        IdeRule.CODE_FILES to "For the file menu call copy_path (absolute, relative, name or the IDE's Copy Reference, onto " +
+            "the clipboard), file_type to read or associate a file's type through the IDE's file type manager, ignore to " +
+            "add a path to .gitignore or another ignore file (shown in the editor), and delete_file for files with no " +
+            "usages to check, all paths in one call; a symbol or a used file goes through safe_delete.",
+        IdeRule.CODE_REFACTOR_OPS to "For the rest of the Refactor menu call introduce (variable, constant, field, parameter " +
+            "or functional_parameter), extract (method, interface, superclass, delegate or module), inline, or members " +
+            "(pull_up, push_down, change_signature, move, encapsulate_fields and the other member refactorings) at a " +
+            "position or on a selection given with to_line: the IDE's own refactoring runs with its dialog or in-place " +
+            "editor for the user to finish, in a tab that never takes the focus.",
         IdeRule.CODE_RECENT to "To know where the user has been call recent: the files they opened last (kind=files) or " +
             "changed last (kind=changed_files), from the IDE's editor history. To move their editor through that " +
             "history when asked call navigate_history with back, forward, last_change or next_change. To show the " +

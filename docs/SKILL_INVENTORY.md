@@ -100,6 +100,51 @@ Rules that hold for every tool:
 | `index_status` | Whether the IDE is indexing; `wait` blocks until it is done. | On an indexing error, before symbol tools. `code ▸ index_status {wait: true}` |
 | `editor_action` *mutates* | The Code menu at a position: override, implement, delegate, generate, surround, unwrap, comment_line/block, move_statement/element/line, rearrange, auto_indent, insert/save_template, fold/unfold (+recursively, +all), update_copyright, quick_doc/definition/type. Caret placed, file in a tab without focus. | "override toString here". `code ▸ editor_action {action: "override", path: "A.kt", line: 12}` |
 
+### analyze
+
+| Tool | Capability | When · example |
+|---|---|---|
+| `inspect_scope` *mutates* | Code ▸ Inspect Code on project, module, dir or file; the Inspection Results window shows them. | "inspect the whole module". `code ▸ inspect_scope {scope: "module", module: "app"}` |
+| `cleanup` *mutates* | Code ▸ Code Cleanup on a scope, one undoable command. | "clean up this package". `code ▸ cleanup {scope: "dir", path: "src/main/kotlin/x"}` |
+| `file_dependencies` | What the files of a scope depend on (forward, `transitive` levels); backward opens the IDE's analysis. | "what does this file pull in". `code ▸ file_dependencies {scope: "file", path: "A.kt"}` |
+| `dataflow` | Analyze Data Flow to/from the expression at a position, in the IDE's window. | "where does this value come from". `code ▸ dataflow {path: "A.kt", line: 12, column: 9, direction: "to"}` |
+
+### analysis
+
+| Tool | Capability | When · example |
+|---|---|---|
+| `stack_trace` | Frames of a trace resolved to project files; the Analyze Stack Trace dialog opens with the text. | A pasted exception. `code ▸ stack_trace {text: "…"}` |
+| `duplicates` | Locate Duplicates on a file or the project, in the IDE's window. | "is this duplicated anywhere". `code ▸ duplicates {path: "A.kt"}` |
+| `infer_nullity` *mutates* | Infer Nullity (Java) with the IDE's dialog. | "annotate nullability". `code ▸ infer_nullity {path: "A.java"}` |
+| `related` | Tests of a class, the subject of a test (data), super method, implementations; the Navigate action opens it. | "where are the tests for this". `code ▸ related {kind: "test", path: "A.kt", line: 5}` |
+
+### views
+
+| Tool | Capability | When · example |
+|---|---|---|
+| `diff_show` | The IDE's diff of two files. | "diff these two". `code ▸ diff_show {left: "A.kt", right: "B.kt"}` |
+| `compare` | A file against another or against the active editor. | "compare with what I have open". `code ▸ compare {path: "A.kt"}` |
+| `mark_as` *mutates* | Mark Directory as source, test, resources, test_resources, excluded, or unmark. | "this is a test root". `code ▸ mark_as {path: "src/it", kind: "test"}` |
+| `open_in` | Reveal in the file manager, open in the IDE's Terminal, or in the associated app. | "open the folder". `code ▸ open_in {path: "build", where: "file_manager"}` |
+
+### files
+
+| Tool | Capability | When · example |
+|---|---|---|
+| `copy_path` | absolute, relative, name onto the clipboard and returned; reference runs Copy Reference. | "copy the path". `code ▸ copy_path {path: "A.kt", kind: "absolute"}` |
+| `file_type` *mutates* | The file type the IDE assigns; with `type`, associates the name with it. | "treat this as JSON". `code ▸ file_type {path: "x.cfg", type: "JSON"}` |
+| `ignore` *mutates* | Adds a path to .gitignore or another ignore file; the file opens. | "ignore the build dir". `code ▸ ignore {path: "build"}` |
+| `delete_file` *mutates* | Deletes paths through the VFS, one call, inside the project only. | Scratch files with no usages. `code ▸ delete_file {paths: ["tmp.txt"]}` |
+
+### refactor_ops
+
+| Tool | Capability | When · example |
+|---|---|---|
+| `introduce` *mutates* | Introduce variable, constant, field, parameter or functional_parameter at a position or selection. | "extract this into a constant". `code ▸ introduce {kind: "constant", path: "A.kt", line: 8, column: 12, to_line: 8, to_column: 30}` |
+| `extract` *mutates* | Extract method, interface, superclass, delegate or module. | "extract these lines into a method". `code ▸ extract {kind: "method", path: "A.kt", line: 10, to_line: 14}` |
+| `inline` *mutates* | Refactor ▸ Inline at a position. | "inline this variable". `code ▸ inline {path: "A.kt", line: 9, column: 5}` |
+| `members` *mutates* | pull_up, push_down, change_signature, move, encapsulate_fields, make_static, convert_to_instance, inheritance_to_delegation, anonymous_to_inner, method_object. | "change the signature". `code ▸ members {action: "change_signature", path: "A.kt", line: 20, column: 9}` |
+
 ### recent
 
 | Tool | Capability | When · example |
@@ -267,11 +312,11 @@ mirrored in the IDE without taking the user's focus.
 
 | Capability | Tools (domain) | Status |
 |---|---|---|
-| Inspect a scope, code cleanup, dependency analysis, data flow | `inspect_scope`, `cleanup`, `dependencies`, `dataflow` (`analyze`) | ☐ |
-| Stack traces, duplicates, nullity, related symbols | `stack_trace`, `duplicates`, `infer_nullity`, `related` (`analysis`) | ☐ |
-| Diffs, compare, mark directory as, open in | `diff_show`, `compare`, `mark_as`, `open_in` (`views`) | ☐ |
-| Copy path, file type, ignore files, delete | `copy_path`, `file_type`, `ignore`, `delete_file` (`files`) | ☐ |
-| The Refactor menu beyond rename/move/safe-delete | `introduce`, `extract`, `inline`, `members` (`refactor_ops`) | ☐ |
+| Inspect a scope, code cleanup, dependency analysis, data flow | `inspect_scope`, `cleanup`, `file_dependencies`, `dataflow` (`analyze`) | ☑ (backward dependencies is the IDE's window: `BackwardDependenciesBuilder` is Internal) |
+| Stack traces, duplicates, nullity, related symbols | `stack_trace`, `duplicates`, `infer_nullity`, `related` (`analysis`) | ☑ (`AnalyzeStacktraceUtil` is Internal: the frames are parsed here and the dialog opens with the text on the clipboard) |
+| Diffs, compare, mark directory as, open in | `diff_show`, `compare`, `mark_as`, `open_in` (`views`) | ☑ |
+| Copy path, file type, ignore files, delete | `copy_path`, `file_type`, `ignore`, `delete_file` (`files`) | ☑ |
+| The Refactor menu beyond rename/move/safe-delete | `introduce`, `extract`, `inline`, `members` (`refactor_ops`) | ☑ |
 
 ### P5 — roadmap horizon 2
 

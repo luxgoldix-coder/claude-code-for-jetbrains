@@ -7,6 +7,8 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
@@ -37,9 +39,12 @@ internal class TargetContext(private val project: Project) {
         val hash: String?,
         val node: String?,
         val preview: Boolean = true,
+        val selection: Selection? = null,
     ) {
         val named: Boolean get() = path != null || hash != null || node != null
     }
+
+    class Selection(val toLine: Int, val toColumn: Int)
 
     suspend fun of(target: Target): DataContext = when {
         target.path != null -> file(target)
@@ -59,6 +64,7 @@ internal class TargetContext(private val project: Project) {
         return FocusKeeper.keep(project) {
             val descriptor = OpenFileDescriptor(project, file, target.line - 1, target.column - 1).setUsePreviewTab(target.preview)
             val editor = FileEditorManager.getInstance(project).openTextEditor(descriptor, false)
+            target.selection?.let { editor?.let { e -> select(e, target, it) } }
             val element = editor?.let { psiFile.findElementAt(it.caretModel.offset) }
             val base = if (editor != null) DataManager.getInstance().getDataContext(editor.contentComponent) else project()
             SimpleDataContext.builder()
@@ -70,6 +76,12 @@ internal class TargetContext(private val project: Project) {
                 .add(CommonDataKeys.PSI_ELEMENT, element ?: psiFile)
                 .build()
         }
+    }
+
+    private fun select(editor: Editor, target: Target, selection: Selection) {
+        val start = editor.logicalPositionToOffset(LogicalPosition(target.line - 1, target.column - 1))
+        val end = editor.logicalPositionToOffset(LogicalPosition(selection.toLine - 1, selection.toColumn - 1))
+        editor.selectionModel.setSelection(minOf(start, end), maxOf(start, end))
     }
 
     private suspend fun commit(hash: String): DataContext {
@@ -104,6 +116,11 @@ internal class TargetContext(private val project: Project) {
             Param("node", "A Services node path, as services lists it, to act on", required = false),
         )
 
+        val SELECTION_PARAMS: List<Param> = listOf(
+            Param("to_line", "1-based line where the selection ends (default: no selection)", type = "integer", required = false),
+            Param("to_column", "1-based column where the selection ends (default: end of to_line)", type = "integer", required = false),
+        )
+
         fun target(args: ToolArgs, preview: Boolean = true): Target {
             val target = Target(
                 args.optionalString("path"),
@@ -112,6 +129,7 @@ internal class TargetContext(private val project: Project) {
                 args.optionalString("hash"),
                 args.optionalString("node"),
                 preview,
+                args.optionalString("to_line")?.let { Selection(args.int("to_line", 1), args.int("to_column", Int.MAX_VALUE)) },
             )
             if (listOfNotNull(target.path, target.hash, target.node).size > 1) throw ToolException("give one target: path, hash or node")
             if (target.line < 1 || target.column < 1) throw ToolException("line and column start at 1")

@@ -25,6 +25,26 @@ enum class IdeRule(val key: String, val server: IdeServer?, val label: String, v
         "Show the user what you touch",
         setOf("open_file", "active_file", "index_status", "editor_action"),
     ),
+    CODE_ANALYZE(
+        "code.analyze",
+        IdeServer.CODE,
+        "Inspect, clean up, dependencies, data flow",
+        setOf("inspect_scope", "cleanup", "file_dependencies", "dataflow"),
+    ),
+    CODE_ANALYSIS(
+        "code.analysis",
+        IdeServer.CODE,
+        "Stack traces, duplicates, nullity, related",
+        setOf("stack_trace", "duplicates", "infer_nullity", "related"),
+    ),
+    CODE_VIEWS("code.views", IdeServer.CODE, "Diffs, roots, open in", setOf("diff_show", "compare", "mark_as", "open_in")),
+    CODE_FILES("code.files", IdeServer.CODE, "The file menu", setOf("copy_path", "file_type", "ignore", "delete_file")),
+    CODE_REFACTOR_OPS(
+        "code.refactor_ops",
+        IdeServer.CODE,
+        "The rest of the Refactor menu",
+        setOf("introduce", "extract", "inline", "members"),
+    ),
     CODE_RECENT(
         "code.recent",
         IdeServer.CODE,
