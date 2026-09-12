@@ -35,7 +35,7 @@ object LaunchDefaults {
     val SETTING_SOURCES = listOf("user", "project", "local")
 
     const val DEFAULT_IDE_RULES =
-        "code.read,code.search,code.navigate,code.edit,code.refactor,code.format,code.diagnostics,code.editor," +
+        "code.read,code.search,code.navigate,code.edit,code.edit_ops,code.refactor,code.format,code.diagnostics,code.editor," +
             "run.build,run.run,run.terminal,run.debug,vcs.read,vcs.write,vcs.forge," +
             "ops.services,ops.project,ops.ide,ops.actions,ops.data," +
             "common.show,common.query,common.prs,common.batch,common.agents,common.tools,common.fallback,common.report"

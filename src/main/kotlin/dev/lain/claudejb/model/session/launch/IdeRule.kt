@@ -10,6 +10,7 @@ enum class IdeRule(val key: String, val server: IdeServer?, val label: String, v
         setOf("definition", "references", "implementations", "symbol_info", "hierarchy"),
     ),
     CODE_EDIT("code.edit", IdeServer.CODE, "Edit through the IDE", setOf("replace_text", "insert_text", "create_file", "write_file")),
+    CODE_EDIT_OPS("code.edit_ops", IdeServer.CODE, "The Edit menu on a file", setOf("undo", "redo", "search_replace", "line_ops")),
     CODE_REFACTOR("code.refactor", IdeServer.CODE, "Refactor with the IDE's engine", setOf("rename", "move_file", "safe_delete")),
     CODE_FORMAT("code.format", IdeServer.CODE, "Format with the project's code style", setOf("reformat", "optimize_imports")),
     CODE_DIAGNOSTICS(
@@ -18,7 +19,12 @@ enum class IdeRule(val key: String, val server: IdeServer?, val label: String, v
         "No new problems before calling work done",
         setOf("problems", "project_problems", "problems_view", "inspect", "inspections"),
     ),
-    CODE_EDITOR("code.editor", IdeServer.CODE, "Show the user what you touch", setOf("open_file", "active_file", "index_status")),
+    CODE_EDITOR(
+        "code.editor",
+        IdeServer.CODE,
+        "Show the user what you touch",
+        setOf("open_file", "active_file", "index_status", "editor_action"),
+    ),
     RUN_BUILD("run.build", IdeServer.RUN, "Build and test through the IDE", setOf("build", "run_tests", "tests")),
     RUN_RUN(
         "run.run",

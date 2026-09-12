@@ -30,7 +30,14 @@ import java.nio.file.Path
 
 internal class TargetContext(private val project: Project) {
 
-    class Target(val path: String?, val line: Int, val column: Int, val hash: String?, val node: String?) {
+    class Target(
+        val path: String?,
+        val line: Int,
+        val column: Int,
+        val hash: String?,
+        val node: String?,
+        val preview: Boolean = true,
+    ) {
         val named: Boolean get() = path != null || hash != null || node != null
     }
 
@@ -50,7 +57,7 @@ internal class TargetContext(private val project: Project) {
         val path = target.path.orEmpty()
         val (file, psiFile) = readAction { Locations.file(project, path).let { it to Locations.psiFile(project, path) } }
         return FocusKeeper.keep(project) {
-            val descriptor = OpenFileDescriptor(project, file, target.line - 1, target.column - 1).setUsePreviewTab(true)
+            val descriptor = OpenFileDescriptor(project, file, target.line - 1, target.column - 1).setUsePreviewTab(target.preview)
             val editor = FileEditorManager.getInstance(project).openTextEditor(descriptor, false)
             val element = editor?.let { psiFile.findElementAt(it.caretModel.offset) }
             val base = if (editor != null) DataManager.getInstance().getDataContext(editor.contentComponent) else project()
@@ -97,13 +104,14 @@ internal class TargetContext(private val project: Project) {
             Param("node", "A Services node path, as services lists it, to act on", required = false),
         )
 
-        fun target(args: ToolArgs): Target {
+        fun target(args: ToolArgs, preview: Boolean = true): Target {
             val target = Target(
                 args.optionalString("path"),
                 args.int("line", 1),
                 args.int("column", 1),
                 args.optionalString("hash"),
                 args.optionalString("node"),
+                preview,
             )
             if (listOfNotNull(target.path, target.hash, target.node).size > 1) throw ToolException("give one target: path, hash or node")
             if (target.line < 1 || target.column < 1) throw ToolException("line and column start at 1")

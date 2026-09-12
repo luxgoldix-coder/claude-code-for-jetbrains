@@ -18,6 +18,10 @@ internal object IdeRuleText {
             "text exact; to add lines call insert_text; to create a file call create_file; to rewrite whole files call " +
             "write_file with files. Every edit opens as a diff the user sees and reviews, then lands in a real editor tab. Never " +
             "Edit, Write, sed, awk, tee or a heredoc.",
+        IdeRule.CODE_EDIT_OPS to "To take back the last change of a file call undo, to put it back call redo: both go through the " +
+            "IDE's undo stack for that file's editor, as the Edit menu would. To replace text or a regular expression " +
+            "across files call search_replace, with paths to limit it, one undoable command per file and the first " +
+            "changed file shown in the editor. For join, duplicate, delete, indent or unindent at a line call line_ops.",
         IdeRule.CODE_REFACTOR to "To rename a symbol call rename: the IDE's refactoring updates every usage. To move a file " +
             "call move_file, to delete one safely call safe_delete: both fix the imports and refuse while usages remain. " +
             "Never rename or move by editing text.",
@@ -29,7 +33,9 @@ internal object IdeRuleText {
             "the profile's inspections and inspect to run them on a file on request; every reveal is without focus.",
         IdeRule.CODE_EDITOR to "Call open_file to put a file in front of the user at a line, in a tab, without taking the " +
             "focus. Call active_file to learn where the user is: file, caret and selection. On an indexing error call " +
-            "index_status with wait and retry once it is ready.",
+            "index_status with wait and retry once it is ready. For the Code menu at a position (override, implement, " +
+            "generate, surround, unwrap, comment, move statement or line, rearrange, fold, live templates, quick " +
+            "documentation) call editor_action with path, line and column: the editor performs it with the caret there.",
         IdeRule.RUN_BUILD to "To build call build: the IDE's own build with the compiler's errors and their positions, shown " +
             "in the Build window. To run tests call run_tests with a path, a name or a class and read the tree it " +
             "returns; tests lists what the project has. Never a shell, a script or Gradle by hand to build or test.",

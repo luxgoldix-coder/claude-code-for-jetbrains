@@ -3,6 +3,7 @@ package dev.lain.claudejb.controller.mcp
 import com.intellij.openapi.project.Project
 import dev.lain.claudejb.controller.git.GitAvailability
 import dev.lain.claudejb.controller.mcp.tools.code.DiagnosticsTools
+import dev.lain.claudejb.controller.mcp.tools.code.EditOpsTools
 import dev.lain.claudejb.controller.mcp.tools.code.EditTools
 import dev.lain.claudejb.controller.mcp.tools.code.EditorTools
 import dev.lain.claudejb.controller.mcp.tools.code.FormatTools
@@ -46,9 +47,10 @@ internal object IdeToolCatalog {
             { p, _ -> DiagnosticsTools(p, Reveal(p)).domain() },
             { p, _ -> InspectTools(p).domain() },
             { p, _ -> EditTools(p, Reveal(p)).domain() },
+            { p, s -> EditOpsTools(p, Reveal(p), IdeActions(p, s)).domain() },
             { p, _ -> RefactorTools(p).domain() },
             { p, _ -> FormatTools(p).domain() },
-            { p, _ -> EditorTools(p, Reveal(p)).domain() },
+            { p, s -> EditorTools(p, Reveal(p), IdeActions(p, s)).domain() },
             { p, _ -> HierarchyTools(p).domain() },
         ),
         IdeServer.RUN to listOf(

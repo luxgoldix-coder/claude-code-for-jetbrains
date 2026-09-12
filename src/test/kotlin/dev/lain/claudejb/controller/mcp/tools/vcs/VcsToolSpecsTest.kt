@@ -87,10 +87,10 @@ class VcsToolSpecsTest {
     }
 
     @Test
-    fun `stage and commit are the tools whose list is one call, and no other`() {
-        assertEquals(setOf(GitWriteTools.GIT_STAGE.name, GitWriteTools.GIT_COMMIT.name), Batch.ONE_CALL_LISTS)
+    fun `stage and commit are the vcs tools whose list is one call, and no other`() {
         val plain = all.filter { spec -> spec.params.any { it.type == "array" && it.items == null } }.map { it.name }.toSet()
-        assertEquals(Batch.ONE_CALL_LISTS, plain)
+        assertEquals(setOf(GitWriteTools.GIT_STAGE.name, GitWriteTools.GIT_COMMIT.name), plain)
+        assertTrue(plain.all { it in Batch.ONE_CALL_LISTS })
     }
 
     @Test

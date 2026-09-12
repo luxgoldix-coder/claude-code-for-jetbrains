@@ -63,7 +63,7 @@ Rules that hold for every tool:
 | `inspections` | The inspections of the current profile — id, name, group, enabled — filtered by a query. | To find an inspection id. `code ▸ inspections {query: "unused"}` |
 | `inspect` | Runs the profile's enabled inspections on a file, or one by id; findings with line, severity and message; hints below `severity` stay out. | "run the inspections on this file", "is there anything unused here". `code ▸ inspect {path: "A.kt", inspection: "UnusedSymbol"}` |
 
-### edit · refactor · format
+### edit
 
 | Tool | Capability | When · example |
 |---|---|---|
@@ -71,6 +71,20 @@ Rules that hold for every tool:
 | `insert_text` *mutates* | Whole lines before a line (one past the end appends). | Adding a member or an import. `code ▸ insert_text {path: "A.kt", line: 5, content: "fun twice() = 2"}` |
 | `create_file` *mutates* | A new file, directories created, opened; fails if it exists. | "create a test for". `code ▸ create_file {files: [{path: "src/test/X.kt", content: "…"}]}` |
 | `write_file` *mutates* | A whole rewrite as one undo entry and one diff, or creation when absent. | A file that changes more than it keeps. `code ▸ write_file {path: "A.kt", content: "…"}` |
+
+### edit_ops
+
+| Tool | Capability | When · example |
+|---|---|---|
+| `undo` *mutates* | Edit ▸ Undo on a file through the IDE's undo stack; returns whether there was anything to undo. | "take that back". `code ▸ undo {path: "A.kt"}` |
+| `redo` *mutates* | Edit ▸ Redo on a file. | "put it back". `code ▸ redo {path: "A.kt"}` |
+| `search_replace` *mutates* | Replace in Files with Replace All: text or regex across the files that match (or only `paths`, one call), one undoable command per file, first file shown. | A rename of a string across the project. `code ▸ search_replace {query: "foo", replacement: "bar", paths: ["A.kt", "B.kt"]}` |
+| `line_ops` *mutates* | join, duplicate, delete, indent or unindent at a line, as the editor would. | "duplicate line 12". `code ▸ line_ops {action: "duplicate", path: "A.kt", line: 12}` |
+
+### refactor · format
+
+| Tool | Capability | When · example |
+|---|---|---|
 | `rename` *mutates* | The IDE's Rename on the symbol at a position, or the file; every reference follows; fails on conflict. | "rename X to Y". `code ▸ rename {path: "A.kt", line: 6, column: 9, new_name: "salute"}` |
 | `move_file` *mutates* | The IDE's Move: packages, imports and references follow. | "move this into package p". `code ▸ move_file {path: "A.kt", destination: "src/main/kotlin/p"}` |
 | `safe_delete` *mutates* | Deletes a symbol or a file only when nothing uses it; otherwise lists the blocking usages. | "remove this if unused". `code ▸ safe_delete {path: "A.kt", line: 7, column: 9}` |
@@ -84,6 +98,7 @@ Rules that hold for every tool:
 | `open_file` | Opens a file at a line and column, as Go to File does. | "show me", and on every file edited. `code ▸ open_file {path: "A.kt", line: 14}` |
 | `active_file` | The selected editor with caret and selection, plus every open file. | "what am I looking at". `code ▸ active_file {}` |
 | `index_status` | Whether the IDE is indexing; `wait` blocks until it is done. | On an indexing error, before symbol tools. `code ▸ index_status {wait: true}` |
+| `editor_action` *mutates* | The Code menu at a position: override, implement, delegate, generate, surround, unwrap, comment_line/block, move_statement/element/line, rearrange, auto_indent, insert/save_template, fold/unfold (+recursively, +all), update_copyright, quick_doc/definition/type. Caret placed, file in a tab without focus. | "override toString here". `code ▸ editor_action {action: "override", path: "A.kt", line: 12}` |
 
 ## `run` — build, run, test, shell, debug
 
@@ -185,8 +200,8 @@ mirrored in the IDE without taking the user's focus.
 | The action catalogue of the user's IDE, enabled-in-context; the main menu tree | `actions`, `menu` (`actions`) | ☑ |
 | Appearance and UI toggles | `appearance`, `ui` (`actions`) | ☑ |
 | `ide_action` with a target: file/position, commit, Services node | `ide_action` +`path`/`line`/`column`/`hash`/`node` (`ide`), `TargetContext` | ☑ |
-| Code menu editing actions at a position | `editor_action` (`editor`) | ☐ |
-| Undo, redo, replace in path, line operations | `undo`, `redo`, `search_replace`, `line_ops` (`edit_ops`) | ☐ |
+| Code menu editing actions at a position | `editor_action` (`editor`) | ☑ |
+| Undo, redo, replace in path, line operations | `undo`, `redo`, `search_replace`, `line_ops` (`edit_ops`) | ☑ |
 | Recent files/locations/changes, back/forward, clipboard compare, schemes | `recent`, `navigate_history`, `compare_clipboard`, `scheme` (`recent`) | ☐ |
 | Editor tabs, layouts, zoom, editor settings | `tabs`, `layout`, `zoom`, `editor_settings` (`window`) | ☐ |
 | Every Git-menu dialog by name | `vcs_action` table extended (`forge`) | ☐ |

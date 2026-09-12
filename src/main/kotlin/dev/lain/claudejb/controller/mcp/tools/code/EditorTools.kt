@@ -7,7 +7,9 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import dev.lain.claudejb.controller.mcp.IdeActions
 import dev.lain.claudejb.controller.mcp.Reveal
+import dev.lain.claudejb.controller.mcp.TargetContext
 import dev.lain.claudejb.model.mcp.Batch
 import dev.lain.claudejb.model.mcp.Param
 import dev.lain.claudejb.model.mcp.Tool
@@ -24,17 +26,37 @@ import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
-internal class EditorTools(private val project: Project, private val reveal: Reveal) {
+internal class EditorTools(private val project: Project, private val reveal: Reveal, private val actions: IdeActions) {
 
     fun domain(): ToolDomain = ToolDomain(
         "editor",
-        "What the editor shows and whether the index is ready: open a file at a line, the active file and caret, indexing state",
+        "What the editor shows and whether the index is ready: open a file at a line, the active file and caret, indexing " +
+            "state, and the Code menu's editing actions at a position",
         listOf(
             Tool(OPEN_FILE) { ToolResult.toon(Batch.run(it, Batch.PATHS, ::openOne)) },
             Tool(ACTIVE_FILE, ::activeFile),
             Tool(INDEX_STATUS, ::indexStatus),
+            Tool(EDITOR_ACTION, ::editorAction),
         ),
     )
+
+    private suspend fun editorAction(args: ToolArgs): ToolResult {
+        val name = args.string("action")
+        val id = EDITOR_ACTIONS[name] ?: throw ToolException("action must be one of ${EDITOR_ACTIONS.keys.joinToString()}")
+        val target = TargetContext.target(args, preview = false)
+        if (target.path == null) throw ToolException("editor_action needs path")
+        actions.dispatch(id, target)
+        return ToolResult.toon(
+            buildJsonObject {
+                put("action", name)
+                put("id", id)
+                put("path", target.path)
+                put("line", target.line)
+                put("column", target.column)
+                put("dispatched", true)
+            },
+        )
+    }
 
     private suspend fun openOne(args: ToolArgs): JsonObject {
         val path = args.string("path")
@@ -99,6 +121,54 @@ internal class EditorTools(private val project: Project, private val reveal: Rev
             "active_file",
             "The file in the selected editor with its caret position and selection, plus every open file. " +
                 "Empty fields when no text editor is selected.",
+        )
+
+        val EDITOR_ACTIONS: Map<String, String> = linkedMapOf(
+            "override" to "OverrideMethods",
+            "implement" to "ImplementMethods",
+            "delegate" to "DelegateMethods",
+            "generate" to "Generate",
+            "surround" to "SurroundWith",
+            "unwrap" to "Unwrap",
+            "comment_line" to "CommentByLineComment",
+            "comment_block" to "CommentByBlockComment",
+            "move_statement_up" to "MoveStatementUp",
+            "move_statement_down" to "MoveStatementDown",
+            "move_element_left" to "MoveElementLeft",
+            "move_element_right" to "MoveElementRight",
+            "move_line_up" to "MoveLineUp",
+            "move_line_down" to "MoveLineDown",
+            "rearrange" to "RearrangeCode",
+            "auto_indent" to "AutoIndentLines",
+            "insert_template" to "InsertLiveTemplate",
+            "save_template" to "SaveAsTemplate",
+            "fold" to "CollapseRegion",
+            "unfold" to "ExpandRegion",
+            "fold_recursively" to "CollapseRegionRecursively",
+            "unfold_recursively" to "ExpandRegionRecursively",
+            "fold_all" to "CollapseAllRegions",
+            "unfold_all" to "ExpandAllRegions",
+            "update_copyright" to "UpdateCopyright",
+            "quick_doc" to "QuickJavaDoc",
+            "quick_definition" to "QuickImplementations",
+            "quick_type" to "QuickTypeDefinition",
+        )
+
+        val EDITOR_ACTION = ToolSpec(
+            "editor_action",
+            "Performs one of the Code menu's editing actions at a position of a file, exactly as the editor would with the " +
+                "caret there: override, implement, delegate, generate, surround, unwrap, comment_line, comment_block, " +
+                "move_statement_up/down, move_element_left/right, move_line_up/down, rearrange, auto_indent, " +
+                "insert_template, save_template, fold, unfold, fold_recursively, unfold_recursively, fold_all, unfold_all, " +
+                "update_copyright, quick_doc, quick_definition, quick_type. The file opens in a tab without focus; an " +
+                "action that shows a chooser or a popup leaves it for the user.",
+            listOf(
+                Param("action", "One of the names above"),
+                Param("path", "File path, absolute or relative to the project root"),
+                Param("line", "1-based line for the caret (default 1)", type = "integer", required = false),
+                Param("column", "1-based column for the caret (default 1)", type = "integer", required = false),
+            ),
+            mutates = true,
         )
 
         val INDEX_STATUS = ToolSpec(
