@@ -1,5 +1,6 @@
 package dev.lain.claudejb.controller.mcp.tools.ops
 
+import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUiKind
@@ -120,7 +121,22 @@ internal class ActionTools(private val project: Project, private val actions: Id
 
     private suspend fun appearance(args: ToolArgs): ToolResult = flip(args, "mode", APPEARANCE_MODES)
 
-    private suspend fun ui(args: ToolArgs): ToolResult = flip(args, "part", UI_PARTS)
+    private suspend fun ui(args: ToolArgs): ToolResult =
+        if (args.optionalString("part") == NAVIGATION_BAR) navigationBar(args) else flip(args, "part", UI_PARTS)
+
+    private suspend fun navigationBar(args: ToolArgs): ToolResult {
+        val settings = UISettings.getInstance()
+        val on = args.optionalBoolean("on") ?: !settings.showNavigationBar
+        val id = if (on) NAV_BAR_SHOW else NAV_BAR_HIDE
+        withContext(Dispatchers.EDT) { actions.dispatch(id) }
+        return ToolResult.toon(
+            buildJsonObject {
+                put("part", NAVIGATION_BAR)
+                put("id", id)
+                put("on", on)
+            },
+        )
+    }
 
     private suspend fun flip(args: ToolArgs, key: String, table: Map<String, String>): ToolResult {
         val name = args.string(key)
@@ -145,6 +161,9 @@ internal class ActionTools(private val project: Project, private val actions: Id
         private const val DEFAULT_MAX = 100
         private const val MAIN_MENU = "MainMenu"
         private const val MENU_SEPARATOR = "/"
+        private const val NAVIGATION_BAR = "navigation_bar"
+        private const val NAV_BAR_SHOW = "NavBarLocationTop"
+        private const val NAV_BAR_HIDE = "NavBarLocationHide"
 
         val APPEARANCE_MODES: Map<String, String> = linkedMapOf(
             "presentation" to "TogglePresentationMode",
@@ -157,7 +176,7 @@ internal class ActionTools(private val project: Project, private val actions: Id
 
         val UI_PARTS: Map<String, String> = linkedMapOf(
             "toolbar" to "ViewToolBar",
-            "navigation_bar" to "ViewNavigationBar",
+            NAVIGATION_BAR to NAV_BAR_SHOW,
             "tool_window_bars" to "ViewToolButtons",
             "status_bar" to "ViewStatusBar",
             "main_menu" to "ViewMainMenu",
