@@ -1,7 +1,5 @@
 package dev.lain.claudejb.controller.mcp.tools.ops
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ShowSettingsUtil
@@ -112,9 +110,9 @@ internal class IdeTools(private val project: Project, private val actions: IdeAc
     private suspend fun plugins(args: ToolArgs): ToolResult {
         val max = args.int("max", DEFAULT_MAX)
         val filter = args.optionalString("filter").orEmpty()
-        val matching = PluginManagerCore.plugins
+        val matching = PluginDetailsGateway.activePlugins()
             .filter { filter.isEmpty() || matches(it, filter) }
-            .sortedBy { it.pluginId.idString }
+            .sortedBy { it.id }
         return ToolResult.toon(
             buildJsonObject {
                 put("filter", filter)
@@ -125,16 +123,15 @@ internal class IdeTools(private val project: Project, private val actions: IdeAc
         )
     }
 
-    private fun matches(plugin: IdeaPluginDescriptor, filter: String): Boolean =
-        plugin.pluginId.idString.contains(filter, ignoreCase = true) || plugin.name.contains(filter, ignoreCase = true)
+    private fun matches(plugin: PluginDetailsGateway.Row, filter: String): Boolean =
+        plugin.id.contains(filter, ignoreCase = true) || plugin.name.contains(filter, ignoreCase = true)
 
-    private fun pluginRow(plugin: IdeaPluginDescriptor): JsonObject = buildJsonObject {
-        val id = plugin.pluginId
-        put("id", id.idString)
+    private fun pluginRow(plugin: PluginDetailsGateway.Row): JsonObject = buildJsonObject {
+        put("id", plugin.id)
         put("name", plugin.name)
-        put("version", plugin.version ?: "")
-        put("vendor", plugin.vendor ?: "")
-        put("enabled", PluginManagerCore.isLoaded(id) && !PluginManagerCore.isDisabled(id))
+        put("version", plugin.version)
+        put("vendor", plugin.vendor)
+        put("enabled", plugin.enabled)
     }
 
     companion object {
@@ -180,8 +177,9 @@ internal class IdeTools(private val project: Project, private val actions: IdeAc
 
         val PLUGINS = ToolSpec(
             "plugins",
-            "Lists the plugins this IDE has, with id, name, version, vendor and whether each is enabled. Use it before " +
-                "relying on a plugin's tool window, action or file type; filter by a fragment of the id or the name.",
+            "Lists the plugins loaded in this IDE, with id, name, version, vendor and whether each is enabled. Use it before " +
+                "relying on a plugin's tool window, action or file type; filter by a fragment of the id or the name. " +
+                "Refused on IDEs older than 2026.2, which have no public plugin listing.",
             listOf(
                 Param("filter", "Only plugins whose id or name contains this text, case-insensitive", required = false),
                 Param("max", "Maximum plugins to return (default $DEFAULT_MAX)", type = "integer", required = false),
