@@ -9,6 +9,7 @@ import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutputType
 import com.intellij.execution.ui.ConsoleView
+import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
@@ -149,7 +150,7 @@ internal class TerminalTools(private val project: Project, scope: CoroutineScope
     private fun reuse(content: Content, handler: ProcessHandler) {
         val tab = content.getUserData(TAB) ?: return
         tab.handler = handler
-        tab.console.clear()
+        tab.console.print("\n", ConsoleViewContentType.SYSTEM_OUTPUT)
         tab.console.attachToProcess(handler)
     }
 
