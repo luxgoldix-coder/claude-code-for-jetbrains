@@ -4,6 +4,7 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowId
+import dev.lain.claudejb.controller.git.ForgeViewNavigator
 import dev.lain.claudejb.controller.github.GitHubAvailability
 import dev.lain.claudejb.controller.github.GitHubGateway
 import dev.lain.claudejb.controller.mcp.IdeActions
@@ -60,10 +61,7 @@ internal class ForgeTools(
         val number = args.int("number", 0).toLong()
         if (number <= 0) throw ToolException("number must be a positive pull request number")
         val request = github.pullRequest(number)
-        if (args.boolean("open", false)) {
-            reveal.requests()
-            withContext(Dispatchers.EDT) { BrowserUtil.browse(request.head.url) }
-        }
+        val shown = if (args.boolean("open", false)) openInIde(number, request.head.url) else ""
         val branches = request.branches
         val bodyChars = args.int("body_chars", DEFAULT_BODY_CHARS)
         val body = branches?.body.orEmpty()
@@ -73,11 +71,23 @@ internal class ForgeTools(
                 put("base", branches?.base ?: "")
                 put("head", branches?.head ?: "")
                 put("review_decision", branches?.reviewDecision ?: "")
+                put("shown", shown)
                 put("body_chars", body.length)
                 put("body_truncated", body.length > bodyChars)
                 put("body", body.take(bodyChars))
             },
         )
+    }
+
+    private suspend fun openInIde(number: Long, url: String): String {
+        reveal.requests()
+        val context = withContext(Dispatchers.EDT) { ForgeViewNavigator.selectRequest(project, number) }
+        if (context != null) {
+            val fired = runCatching { actions.dispatch(SHOW_PULL_REQUEST, context) }.isSuccess
+            if (fired) return "ide"
+        }
+        withContext(Dispatchers.EDT) { BrowserUtil.browse(url) }
+        return "browser"
     }
 
     private fun row(request: GitHubGateway.Request): JsonObject = buildJsonObject {
@@ -144,6 +154,7 @@ internal class ForgeTools(
 
         private const val DEFAULT_MAX = 30
         private const val DEFAULT_BODY_CHARS = 2_000
+        private const val SHOW_PULL_REQUEST = "Github.PullRequest.Show"
         private val STATES = linkedMapOf("open" to "is:open", "closed" to "is:closed is:unmerged", "merged" to "is:merged", "all" to "")
 
         val PULL_REQUESTS = ToolSpec(
@@ -160,8 +171,8 @@ internal class ForgeTools(
         val PULL_REQUEST = ToolSpec(
             "pull_request",
             "One pull request by number, with its base and head branches, review decision and the first body_chars of its " +
-                "description (body_truncated says when there is more); with open, the IDE's Pull Requests view is shown and " +
-                "the request opens in the browser.",
+                "description (body_truncated says when there is more); with open, the request is selected and opened in the " +
+                "IDE's Pull Requests view (shown=ide), or in the browser when the view does not list it (shown=browser).",
             listOf(
                 Param("number", "The pull request number", type = "integer"),
                 Param("open", "true to also open it for the user (default false)", type = "boolean", required = false),
