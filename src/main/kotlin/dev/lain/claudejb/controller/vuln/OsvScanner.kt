@@ -12,7 +12,7 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import java.net.URI
 
-internal class OsvScanner {
+internal class OsvScanner(private val post: (URI, String) -> OsvAnswer = OsvHttp::post) {
 
     val endpoint: String = VulnDisclosure.ENDPOINT
 
@@ -23,7 +23,7 @@ internal class OsvScanner {
         var asked = 0
         for (batch in inventory.chunked(BATCH_SIZE)) {
             if (cancelled()) return ScanAnswer.Silent(ScanSilence.CANCELLED)
-            val body = when (val answer = OsvHttp.post(URI.create(VulnDisclosure.ENDPOINT), batchBody(batch))) {
+            val body = when (val answer = post(URI.create(VulnDisclosure.ENDPOINT), batchBody(batch))) {
                 is OsvAnswer.Silent -> return ScanAnswer.Silent(answer.reason)
                 is OsvAnswer.Body -> answer.json
             }
@@ -47,7 +47,7 @@ internal class OsvScanner {
         val findings = ArrayList<VulnFinding>()
         for (component in components) {
             if (cancelled()) return ScanAnswer.Silent(ScanSilence.CANCELLED)
-            val body = when (val answer = OsvHttp.post(URI.create(QUERY_ENDPOINT), queryBody(component))) {
+            val body = when (val answer = post(URI.create(QUERY_ENDPOINT), queryBody(component))) {
                 is OsvAnswer.Silent -> return ScanAnswer.Silent(answer.reason)
                 is OsvAnswer.Body -> answer.json
             }
