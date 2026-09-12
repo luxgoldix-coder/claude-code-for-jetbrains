@@ -274,13 +274,7 @@ describe('the sections', () => {
       walk.push(q.focused());
       q.key('ArrowDown');
     }
-    expect(walk).toEqual([
-      'Model',
-      'Effort',
-      'Security',
-      'Setting sources',
-      'Open Plugin Settings',
-    ]);
+    expect(walk).toEqual(['Model', 'Effort', 'Security', 'Setting sources', 'Open Plugin Settings']);
     expect(q.focused()).toBe('Model');
 
     q.enter('Security');

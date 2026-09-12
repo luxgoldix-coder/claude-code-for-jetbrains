@@ -93,13 +93,7 @@
     let sig = (ST.view == null ? '' : ST.view) + '|' + list.length + '|';
     for (let i = 0; i < list.length; i++) {
       const it = list[i];
-      const f = [
-        ST.groupOf(it),
-        subOf(it),
-        it.key,
-        ST.labelOf(it),
-        ST.isRadio(it) ? 'r' : 'c',
-      ];
+      const f = [ST.groupOf(it), subOf(it), it.key, ST.labelOf(it), ST.isRadio(it) ? 'r' : 'c'];
       sig += f.join(ST.SEP) + '|';
     }
     return sig;
