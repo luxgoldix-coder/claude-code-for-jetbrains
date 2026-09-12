@@ -20,8 +20,8 @@ internal class IdePlaces(private val project: Project) {
     private class Verb(val key: String, val required: Boolean = true, val open: (String) -> Boolean)
 
     private val verbs: Map<String, Verb> = mapOf(
-        "commit" to Verb("hash") { GitLogNavigator.showCommit(project, it) },
-        "log" to Verb("", required = false) { GitLogNavigator.showLog(project) },
+        "commit" to Verb("hash") { GitLogNavigator.showCommit(project, it, focus = true) },
+        "log" to Verb("", required = false) { GitLogNavigator.showLog(project, focus = true) },
         "toolwindow" to Verb("id", open = ::activate),
         "terminal" to Verb("tab", required = false, open = ::terminal),
         "run" to Verb("name", open = ::run),

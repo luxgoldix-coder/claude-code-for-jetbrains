@@ -7,7 +7,6 @@ import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutputType
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -18,6 +17,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.terminal.TerminalExecutionConsole
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
+import dev.lain.claudejb.controller.mcp.FocusKeeper
 import dev.lain.claudejb.controller.mcp.tools.code.ReadTools
 import dev.lain.claudejb.model.mcp.Param
 import dev.lain.claudejb.model.mcp.Tool
@@ -28,8 +28,6 @@ import dev.lain.claudejb.model.mcp.ToolResult
 import dev.lain.claudejb.model.mcp.ToolSpec
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.buildJsonObject
 import java.nio.file.Path
 
@@ -89,7 +87,7 @@ internal class TerminalTools(private val project: Project, scope: CoroutineScope
                 }
             },
         )
-        withContext(Dispatchers.EDT) { show(handler) }
+        FocusKeeper.keep(project) { show(handler) }
         handler.notifyTextAvailable("$ $command\n", ProcessOutputType.SYSTEM)
         handler.startNotify()
         return exited.await()
@@ -103,8 +101,8 @@ internal class TerminalTools(private val project: Project, scope: CoroutineScope
         val content = manager.contents.firstOrNull { it.getUserData(TAB)?.handler?.isProcessTerminated == true }
             ?.also { reuse(it, handler) }
             ?: open(window, handler)
-        manager.setSelectedContent(content)
-        window.activate(null)
+        val userIsThere = window.isActive
+        window.show { if (!userIsThere) manager.setSelectedContent(content, false) }
     }
 
     private fun reuse(content: Content, handler: ProcessHandler) {
@@ -134,6 +132,7 @@ internal class TerminalTools(private val project: Project, scope: CoroutineScope
             "shell",
             "Runs a command line in the user's shell (bash or the login shell; PowerShell on Windows) inside a tab of the " +
                 "IDE's Terminal tool window, and returns its exit code and the end of its output. This replaces Bash. " +
+                "The tab is shown without taking the focus, and never switched while the user is in the Terminal. " +
                 "Output streams to the chat while it runs; status running means call again with job.",
             listOf(
                 Param("command", "The command line, as typed at the prompt (not needed with job)", required = false),

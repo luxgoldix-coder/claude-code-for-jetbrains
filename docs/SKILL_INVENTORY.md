@@ -169,9 +169,9 @@ mirrored in the IDE without taking the user's focus.
 | An agent still reasoning is never shown as completed | `AgentEnding` | ☑ |
 | The rules block has no length limit; the test asserts coverage and prints the size | `IdeMcpPrompt`, `IdeRule`, `IdeMcpPromptTest` | ☐ |
 | 250 lines per file, imports not counted | `FileSizeContractTest` | ☑ |
-| Reveal without focus on every existing tool; `FocusKeeper` returns the focus the platform steals; the terminal is never focused nor its tab switched | `FocusKeeper`, every domain, a contract test | ☐ |
-| Live mirror with one switch (Settings ▸ Claude Code, ON): reads in the preview tab, edits in a real tab, commits in the log, nodes in Services, problems in their tab, runs in their window | `Reveal`, `IdeMcpState.mirror`, Settings section | ☐ |
-| `vcs_open(log, range)` off the deprecated `openLogTab` | `GitLogNavigator` | ☐ |
+| Reveal without focus on every existing tool; `FocusKeeper` returns the focus the platform steals; the terminal is never focused nor its tab switched | `FocusKeeper`, every domain, `FocusContractTest` | ☑ |
+| Live mirror with one switch (Settings ▸ Claude Code, ON): reads in the preview tab, edits in a real tab, commits in the log, nodes in Services, problems in their tab, runs in their window | `Reveal`, `IdeMcpState.mirror`, Settings section | ◐ switch and `Reveal` landed; reads, problems, git_log, services, build/run/tests and debug still to call it |
+| `vcs_open(log, range)` off the deprecated `openLogTab` | `GitLogNavigator` | ☑ |
 | `run_tests(path)` prefers the framework producer over Gradle | `TestTools` | ☐ |
 
 ### P1 — every action, with its target

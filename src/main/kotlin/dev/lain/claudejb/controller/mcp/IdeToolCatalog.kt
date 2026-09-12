@@ -44,10 +44,10 @@ internal object IdeToolCatalog {
             { p, _ -> OutlineTools(p).domain() },
             { p, _ -> DiagnosticsTools(p).domain() },
             { p, _ -> InspectTools(p).domain() },
-            { p, _ -> EditTools(p).domain() },
+            { p, _ -> EditTools(p, Reveal(p)).domain() },
             { p, _ -> RefactorTools(p).domain() },
             { p, _ -> FormatTools(p).domain() },
-            { p, _ -> EditorTools(p).domain() },
+            { p, _ -> EditorTools(p, Reveal(p)).domain() },
             { p, _ -> HierarchyTools(p).domain() },
         ),
         IdeServer.RUN to listOf(
@@ -61,7 +61,7 @@ internal object IdeToolCatalog {
         IdeServer.VCS to listOf(
             { p, _ -> GitReadTools(p).domain() },
             { p, _ -> GitWriteTools(p).domain() },
-            { p, s -> ForgeTools(p, IdeActions(p, s)).domain() },
+            { p, s -> ForgeTools(p, IdeActions(p, s), Reveal(p)).domain() },
         ),
         IdeServer.OPS to listOf(
             { p, s -> ServiceTools(p, s).domain() },
@@ -69,7 +69,7 @@ internal object IdeToolCatalog {
             { p, s -> IdeTools(p, IdeActions(p, s), s).domain() },
             { p, _ -> NotifyTools(p).domain() },
             { p, _ -> DbTools(p).domain() },
-            { p, s -> HttpTools(p, s).takeIf { it.available() }?.domain() },
+            { p, s -> HttpTools(p, s, Reveal(p)).takeIf { it.available() }?.domain() },
             { p, _ -> SshTools(p).takeIf { it.available() }?.domain() },
         ),
     )

@@ -154,8 +154,8 @@ internal class ServiceTools(private val project: Project, private val scope: Cor
 
         val SERVICE_OPEN = ToolSpec(
             "service_open",
-            "Reveals a node in the Services tool window, selecting it and activating the window, so the user sees what you " +
-                "are talking about. Use it after finding a node with services.",
+            "Reveals a node in the Services tool window, selecting it and showing the window without taking the focus, " +
+                "so the user sees what you are talking about. Use it after finding a node with services.",
             listOf(Param("path", "The node's path as services lists it")),
         )
     }

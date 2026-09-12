@@ -5,9 +5,9 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import dev.lain.claudejb.controller.mcp.Reveal
 import dev.lain.claudejb.model.mcp.Batch
 import dev.lain.claudejb.model.mcp.Param
 import dev.lain.claudejb.model.mcp.Tool
@@ -24,7 +24,7 @@ import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
-internal class EditorTools(private val project: Project) {
+internal class EditorTools(private val project: Project, private val reveal: Reveal) {
 
     fun domain(): ToolDomain = ToolDomain(
         "editor",
@@ -42,11 +42,7 @@ internal class EditorTools(private val project: Project) {
         val column = args.int("column", 1)
         if (line < 1 || column < 1) throw ToolException("line and column start at 1")
         val file = readAction { Locations.file(project, path) }
-        val opened = withContext(Dispatchers.EDT) {
-            val manager = FileEditorManager.getInstance(project)
-            manager.openTextEditor(OpenFileDescriptor(project, file, line - 1, column - 1), true) != null ||
-                manager.openFile(file, true).isNotEmpty()
-        }
+        val opened = reveal.file(file, line, column)
         return buildJsonObject {
             put("path", path)
             put("line", line)
@@ -89,7 +85,8 @@ internal class EditorTools(private val project: Project) {
 
         val OPEN_FILE = ToolSpec(
             "open_file",
-            "Opens a file in the editor and places the caret at a line and column, as the IDE's Go to File does.",
+            "Opens a file in an editor tab and places its caret at a line and column, as the IDE's Go to File does, " +
+                "without taking the focus from where the user is working.",
             listOf(
                 Param("path", "File path, absolute or relative to the project root", required = false),
                 Batch.paths("each opens in its own tab"),

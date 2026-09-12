@@ -8,6 +8,7 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
+import dev.lain.claudejb.controller.mcp.FocusKeeper
 import dev.lain.claudejb.controller.mcp.IdeActions
 import dev.lain.claudejb.model.mcp.Param
 import dev.lain.claudejb.model.mcp.Tool
@@ -61,7 +62,7 @@ internal class IdeTools(private val project: Project, private val actions: IdeAc
                 manager.toolWindowIds.sorted().mapNotNull(manager::getToolWindow)
             } else {
                 val window = window(manager, id)
-                if (action == "open") window.activate(null, true) else window.hide()
+                if (action == "open") FocusKeeper.keeping(project) { window.show() } else window.hide()
                 listOf(window)
             }
             windows.map(::row)
@@ -153,7 +154,7 @@ internal class IdeTools(private val project: Project, private val actions: IdeAc
             "tool_window",
             "Opens or closes one of the IDE's tool windows, or lists them all with whether each is visible and active. " +
                 "Use action=open to put a view in front of the user (Services, Problems View, Version Control, Run, Debug, " +
-                "Project, Structure, Database) and action=list when unsure of an id.",
+                "Project, Structure, Database) without taking the focus, and action=list when unsure of an id.",
             listOf(
                 Param("action", "open, close or list"),
                 Param("id", "The tool window id, matched case-insensitively (action=open and close)", required = false),

@@ -14,6 +14,7 @@ internal class SettingsIdeMcpSection : SettingsSection {
 
     private val ownServers = JBCheckBox(OWN_SERVERS_LABEL).apply { addActionListener { syncEnabled() } }
     private val approveClients = JBCheckBox("Ask me before an unexpected client may talk to our servers")
+    private val mirror = JBCheckBox(MIRROR_LABEL)
     private val serverRules: Map<IdeServer, IdeRuleBoxes> = IdeServer.entries.associateWith { IdeRuleBoxes(IdeRule.forServer(it)) }
     private val commonRules = IdeRuleBoxes(IdeRule.common)
 
@@ -31,6 +32,7 @@ internal class SettingsIdeMcpSection : SettingsSection {
             row { cell(enableAll) }.rowComment(ENABLE_ALL_NOTE, MAX_LINE_LENGTH_WORD_WRAP)
             row { cell(ownServers) }.rowComment(OWN_SERVERS_NOTE, MAX_LINE_LENGTH_WORD_WRAP)
             row { cell(approveClients) }.rowComment(APPROVE_NOTE, MAX_LINE_LENGTH_WORD_WRAP)
+            row { cell(mirror) }.rowComment(MIRROR_NOTE, MAX_LINE_LENGTH_WORD_WRAP)
             IdeServer.entries.forEach { server ->
                 row(server.label + ":") { cell(serverRules.getValue(server).component) }
                     .rowComment(SERVER_NOTES.getValue(server), MAX_LINE_LENGTH_WORD_WRAP)
@@ -42,6 +44,7 @@ internal class SettingsIdeMcpSection : SettingsSection {
     override fun reset(s: ClaudeSettings.State) {
         ownServers.isSelected = s.ideMcp.enabled
         approveClients.isSelected = s.ideMcp.approveClients
+        mirror.isSelected = s.ideMcp.mirror
         val selected = IdeRule.parse(s.ideMcp.rules)
         serverRules.values.forEach { it.setFrom(selected) }
         commonRules.setFrom(selected)
@@ -51,12 +54,14 @@ internal class SettingsIdeMcpSection : SettingsSection {
     override fun apply(s: ClaudeSettings.State) {
         s.ideMcp.enabled = ownServers.isSelected
         s.ideMcp.approveClients = approveClients.isSelected
+        s.ideMcp.mirror = mirror.isSelected
         s.ideMcp.rules = IdeRule.csv(selectedRules())
     }
 
     override fun changedFields(s: ClaudeSettings.State): List<Boolean> = listOf(
         ownServers.isSelected != s.ideMcp.enabled,
         approveClients.isSelected != s.ideMcp.approveClients,
+        mirror.isSelected != s.ideMcp.mirror,
         selectedRules() != IdeRule.parse(s.ideMcp.rules),
     )
 
@@ -66,6 +71,7 @@ internal class SettingsIdeMcpSection : SettingsSection {
         val on = ownServers.isSelected
         serverRules.values.forEach { it.setEnabled(on) }
         commonRules.setEnabled(on)
+        mirror.isEnabled = on
     }
 
     private companion object {
@@ -80,6 +86,13 @@ internal class SettingsIdeMcpSection : SettingsSection {
         const val APPROVE_NOTE =
             "Our servers already refuse anyone without the session's token. This adds a notification with Allow " +
                 "and Reject for a connection the plugin did not launch itself; unanswered, it is rejected."
+
+        const val MIRROR_LABEL = "Mirror Claude's work in the IDE"
+
+        const val MIRROR_NOTE =
+            "What Claude reads opens in the preview tab, what it edits in a real one, a commit it names is selected in the " +
+                "Log, a service in Services, a problem in its tab, a run in its window. Always without taking your focus: " +
+                "the caret stays where you are typing and the Terminal keeps its tab."
 
         const val ENABLE_ALL_NOTE =
             "One switch, every server and every rule; it is on by default. Claude then reads, searches, edits, " +

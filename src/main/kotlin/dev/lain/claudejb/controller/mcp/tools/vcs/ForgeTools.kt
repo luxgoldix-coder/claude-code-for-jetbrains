@@ -1,12 +1,9 @@
 package dev.lain.claudejb.controller.mcp.tools.vcs
 
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.openapi.wm.ToolWindowManager
-import dev.lain.claudejb.controller.git.ForgeViewNavigator
-import dev.lain.claudejb.controller.git.GitLogNavigator
 import dev.lain.claudejb.controller.mcp.IdeActions
+import dev.lain.claudejb.controller.mcp.Reveal
 import dev.lain.claudejb.model.mcp.Param
 import dev.lain.claudejb.model.mcp.Tool
 import dev.lain.claudejb.model.mcp.ToolArgs
@@ -14,12 +11,10 @@ import dev.lain.claudejb.model.mcp.ToolDomain
 import dev.lain.claudejb.model.mcp.ToolException
 import dev.lain.claudejb.model.mcp.ToolResult
 import dev.lain.claudejb.model.mcp.ToolSpec
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
-internal class ForgeTools(private val project: Project, private val actions: IdeActions) {
+internal class ForgeTools(private val project: Project, private val actions: IdeActions, private val reveal: Reveal) {
 
     fun domain(): ToolDomain = ToolDomain(
         "forge",
@@ -32,14 +27,12 @@ internal class ForgeTools(private val project: Project, private val actions: Ide
         val hash = args.optionalString("hash").orEmpty()
         val range = args.optionalString("range").orEmpty()
         val path = args.optionalString("path").orEmpty()
-        val opened = withContext(Dispatchers.EDT) {
-            when (view) {
-                "log" -> showLog(hash, range)
-                "history" -> GitLogNavigator.showFileHistory(project, historyPath(path))
-                "commit" -> showCommitWindow()
-                "pull_requests" -> ForgeViewNavigator.open(project)
-                else -> throw ToolException("view must be log, history, commit or pull_requests")
-            }
+        val opened = when (view) {
+            "log" -> showLog(hash, range)
+            "history" -> reveal.fileHistory(historyPath(path))
+            "commit" -> reveal.toolWindow(ToolWindowId.COMMIT)
+            "pull_requests" -> reveal.requests()
+            else -> throw ToolException("view must be log, history, commit or pull_requests")
         }
         if (!opened) throw ToolException(MISSING.getValue(view))
         return ToolResult.toon(
@@ -53,16 +46,10 @@ internal class ForgeTools(private val project: Project, private val actions: Ide
         )
     }
 
-    private fun showLog(hash: String, range: String): Boolean = when {
-        range.isNotEmpty() -> refRange(range).let { (exclusive, inclusive) -> GitLogNavigator.showRange(project, exclusive, inclusive) }
-        hash.isNotEmpty() -> GitLogNavigator.showCommit(project, commitHash(hash))
-        else -> GitLogNavigator.showLog(project)
-    }
-
-    private fun showCommitWindow(): Boolean {
-        val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.COMMIT) ?: return false
-        toolWindow.activate(null, true)
-        return true
+    private suspend fun showLog(hash: String, range: String): Boolean = when {
+        range.isNotEmpty() -> refRange(range).let { (exclusive, inclusive) -> reveal.range(exclusive, inclusive) }
+        hash.isNotEmpty() -> reveal.commit(commitHash(hash))
+        else -> reveal.log()
     }
 
     private fun commitHash(hash: String): String {

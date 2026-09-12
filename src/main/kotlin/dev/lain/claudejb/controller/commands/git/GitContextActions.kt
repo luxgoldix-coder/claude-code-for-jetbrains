@@ -131,7 +131,7 @@ internal object GitContextActions {
     }
 
     private fun openLog(project: Project) {
-        if (!GitLogNavigator.showLog(project)) {
+        if (!GitLogNavigator.showLog(project, focus = true)) {
             Messages.showInfoMessage(project, NO_LOG, DIALOG_TITLE)
         }
     }

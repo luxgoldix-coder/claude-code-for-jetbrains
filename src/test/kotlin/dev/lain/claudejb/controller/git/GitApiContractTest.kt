@@ -175,19 +175,32 @@ class GitApiContractTest {
     }
 
     @Test
-    fun `a log tab filtered by a ref range is still two public calls, neither deprecated`() {
+    fun `the main log still takes a ref-range filter and a jump to a hash, through public non-deprecated calls`() {
         load("com.intellij.vcs.log.visible.filters.VcsLogFilterObject")
             .getMethod("fromRange", String::class.java, String::class.java)
             .assertNotDeprecated()
         load("com.intellij.vcs.log.impl.VcsProjectLog")
-            .getMethod("openLogTab", load("com.intellij.vcs.log.VcsLogFilterCollection"))
+            .getMethod("runInMainLog", Project::class.java, Function1::class.java)
+            .assertNotDeprecated()
+        load("com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx")
+            .getMethod("setFilters", load("com.intellij.vcs.log.VcsLogFilterCollection"))
+            .assertNotDeprecated()
+        load("com.intellij.vcs.log.impl.VcsLogNavigationUtil")
+            .getMethod(
+                "jumpToHash",
+                load("com.intellij.vcs.log.ui.VcsLogUiEx"),
+                String::class.java,
+                java.lang.Boolean.TYPE,
+                java.lang.Boolean.TYPE,
+            )
             .assertNotDeprecated()
     }
 
     @Test
-    fun `the Version Control tool window is still where the Git Log lives, and can still be activated`() {
+    fun `the Version Control tool window is still where the Git Log lives, shown with or without focus`() {
         val toolWindow = load("com.intellij.openapi.wm.ToolWindow")
         toolWindow.getMethod("activate", Runnable::class.java, java.lang.Boolean.TYPE).assertNotDeprecated()
+        toolWindow.getMethod("show").assertNotDeprecated()
         val id = load("com.intellij.openapi.wm.ToolWindowId").getField("VCS").get(null)
         assertTrue(id == "Version Control", "ToolWindowId.VCS changed to '$id'; GitLogNavigator.showLog targets it by id")
     }

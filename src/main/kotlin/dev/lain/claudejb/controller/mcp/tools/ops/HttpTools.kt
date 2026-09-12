@@ -1,12 +1,11 @@
 package dev.lain.claudejb.controller.mcp.tools.ops
 
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.smartReadAction
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
+import dev.lain.claudejb.controller.mcp.Reveal
 import dev.lain.claudejb.controller.mcp.tools.code.Locations
 import dev.lain.claudejb.controller.mcp.tools.run.Deadline
 import dev.lain.claudejb.controller.mcp.tools.run.Job
@@ -23,15 +22,13 @@ import dev.lain.claudejb.model.mcp.ToolException
 import dev.lain.claudejb.model.mcp.ToolResult
 import dev.lain.claudejb.model.mcp.ToolSpec
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
-internal class HttpTools(private val project: Project, scope: CoroutineScope) {
+internal class HttpTools(private val project: Project, scope: CoroutineScope, private val reveal: Reveal) {
 
     private val jobs = Jobs<Int>(scope, "http")
     private val processRun = ProcessRun(project)
@@ -91,7 +88,7 @@ internal class HttpTools(private val project: Project, scope: CoroutineScope) {
     private suspend fun open(args: ToolArgs): ToolResult {
         val path = requestFile(args)
         val file = readAction { Locations.file(project, path) }
-        val opened = withContext(Dispatchers.EDT) { FileEditorManager.getInstance(project).openFile(file, true).isNotEmpty() }
+        val opened = reveal.file(file)
         return ToolResult.toon(
             buildJsonObject {
                 put("path", path)

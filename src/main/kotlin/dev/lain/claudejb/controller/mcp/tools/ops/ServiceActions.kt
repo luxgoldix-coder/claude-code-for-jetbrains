@@ -21,7 +21,7 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.openapi.wm.ToolWindowManager
+import dev.lain.claudejb.controller.mcp.FocusKeeper
 import dev.lain.claudejb.model.mcp.ToolException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -59,14 +59,14 @@ internal class ServiceActions(private val project: Project, private val node: Se
     suspend fun reveal(): String {
         val manager = ServiceViewManager.getInstance(project)
         val selected = CompletableDeferred<Unit>()
-        manager.select(node.value, node.root.javaClass, true, true)
-            .onSuccess { selected.complete(Unit) }
-            .onError { selected.completeExceptionally(ToolException("the Services view could not reveal ${node.path}: ${it.message}")) }
+        FocusKeeper.keeping(project) {
+            manager.select(node.value, node.root.javaClass, true, false)
+                .onSuccess { selected.complete(Unit) }
+                .onError { selected.completeExceptionally(ToolException("the Services view could not reveal ${node.path}: ${it.message}")) }
+        }
         withTimeoutOrNull(SELECT_TIMEOUT_MILLIS) { selected.await() }
             ?: throw ToolException("the Services view did not reveal ${node.path} in time; it may still be loading")
-        val windowId = manager.getToolWindowId(node.root.javaClass) ?: ToolWindowId.SERVICES
-        ToolWindowManager.getInstance(project).getToolWindow(windowId)?.activate(null, true)
-        return windowId
+        return manager.getToolWindowId(node.root.javaClass) ?: ToolWindowId.SERVICES
     }
 
     private fun expand(group: ActionGroup?, into: MutableSet<AnAction>, depth: Int) {

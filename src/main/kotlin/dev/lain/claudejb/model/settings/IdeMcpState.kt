@@ -4,5 +4,6 @@ package dev.lain.claudejb.model.settings
 data class IdeMcpState(
     @JvmField var enabled: Boolean = true,
     @JvmField var approveClients: Boolean = false,
+    @JvmField var mirror: Boolean = true,
     @JvmField var rules: String = LaunchDefaults.DEFAULT_IDE_RULES,
 )

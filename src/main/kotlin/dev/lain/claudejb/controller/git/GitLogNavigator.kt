@@ -8,8 +8,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.vcs.log.impl.HashImpl
-import com.intellij.vcs.log.impl.VcsLogNavigationUtil
+import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToHash
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.vcsUtil.VcsUtil
@@ -18,32 +17,23 @@ import dev.lain.claudejb.util.logger
 
 object GitLogNavigator {
 
-    fun showLog(project: Project): Boolean {
+    fun showLog(project: Project, focus: Boolean): Boolean {
         val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS) ?: return false
-        toolWindow.activate(null, true)
+        if (focus) toolWindow.activate(null, true) else toolWindow.show()
         return true
     }
 
-    fun showRange(project: Project, exclusiveRef: String, inclusiveRef: String): Boolean {
-        if (!project.service<GitHistoryService>().isAvailable() || !showLog(project)) return false
+    fun showRange(project: Project, exclusiveRef: String, inclusiveRef: String, focus: Boolean): Boolean {
+        if (!project.service<GitHistoryService>().isAvailable() || !showLog(project, focus)) return false
         val filters = VcsLogFilterObject.collection(VcsLogFilterObject.fromRange(exclusiveRef, inclusiveRef))
-        return VcsProjectLog.getInstance(project).openLogTab(filters) != null
+        VcsProjectLog.runInMainLog(project) { it.filterUi.setFilters(filters) }
+        return true
     }
 
-    fun showCommit(project: Project, hash: String): Boolean {
-        if (hash.isBlank()) return false
-        val history = project.service<GitHistoryService>()
-        if (!history.isAvailable()) return false
-        val root = history.primaryRepositoryRoot() ?: return false
-        val rootFile = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(root))
-            ?: return false
-        return runCatching {
-            VcsLogNavigationUtil.jumpToRevisionAsync(project, rootFile, HashImpl.build(hash))
-            true
-        }.getOrElse {
-            LOG.warn("Could not show commit $hash in the Git Log", it)
-            false
-        }
+    fun showCommit(project: Project, hash: String, focus: Boolean): Boolean {
+        if (hash.isBlank() || !project.service<GitHistoryService>().isAvailable() || !showLog(project, focus)) return false
+        VcsProjectLog.runInMainLog(project) { it.jumpToHash(hash, false, focus) }
+        return true
     }
 
     fun showFileHistory(project: Project, path: String): Boolean {

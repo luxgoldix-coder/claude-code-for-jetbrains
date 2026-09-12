@@ -5,7 +5,6 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
@@ -13,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findOrCreateFile
 import com.intellij.openapi.vfs.writeText
 import com.intellij.psi.PsiDocumentManager
+import dev.lain.claudejb.controller.mcp.Reveal
 import dev.lain.claudejb.model.mcp.Batch
 import dev.lain.claudejb.model.mcp.Param
 import dev.lain.claudejb.model.mcp.TextEdit
@@ -33,7 +33,7 @@ import kotlinx.serialization.json.put
 import java.io.IOException
 import java.nio.file.Path
 
-internal class EditTools(private val project: Project) {
+internal class EditTools(private val project: Project, private val reveal: Reveal) {
 
     fun domain(): ToolDomain = ToolDomain(
         "edit",
@@ -106,7 +106,7 @@ internal class EditTools(private val project: Project) {
         } catch (e: IOException) {
             throw ToolException("cannot create $path: ${e.message}", e)
         }
-        withContext(Dispatchers.EDT) { FileEditorManager.getInstance(project).openFile(file, false) }
+        reveal.file(file)
     }
 
     private fun createOnDisk(absolute: Path, content: String): VirtualFile =
