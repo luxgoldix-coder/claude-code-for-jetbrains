@@ -80,6 +80,7 @@ class GitReadOnlyContractTest {
             "git4idea.GitCommit",
             "git4idea.GitRevisionNumber",
             "git4idea.branch.GitBranchesCollection",
+            "git4idea.history.GitFileHistory",
             "git4idea.history.GitHistoryUtils",
             "git4idea.repo.GitBranchTrackInfo",
             "git4idea.repo.GitRemote",

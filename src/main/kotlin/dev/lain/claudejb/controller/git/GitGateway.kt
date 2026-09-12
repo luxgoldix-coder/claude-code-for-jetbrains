@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.vcsUtil.VcsUtil
 import dev.lain.claudejb.model.git.GitBranchTopology
 import dev.lain.claudejb.model.git.GitCommitInfo
 import dev.lain.claudejb.model.git.GitLogScope
@@ -14,6 +15,7 @@ import dev.lain.claudejb.model.git.GitRemoteInfo
 import git4idea.GitCommit
 import git4idea.GitRevisionNumber
 import git4idea.branch.GitBranchesCollection
+import git4idea.history.GitFileHistory
 import git4idea.history.GitHistoryUtils
 import git4idea.repo.GitBranchTrackInfo
 import git4idea.repo.GitRemote
@@ -71,8 +73,14 @@ internal object GitGateway {
         GitHistoryUtils.history(project, root, hash, "-n", "1").firstOrNull()?.let { toInfo(it, root.path) }
 
     @Throws(VcsException::class)
-    fun fileHistory(project: Project, root: VirtualFile, relativePath: String, limit: Int): List<GitCommitInfo> =
-        GitHistoryUtils.history(project, root, "-n", limit.toString(), "--follow", "--", relativePath).map { toInfo(it, root.path) }
+    fun fileHistory(project: Project, root: VirtualFile, relativePath: String, limit: Int): List<GitCommitInfo> {
+        val path = VcsUtil.getFilePath(root.path + "/" + relativePath, false)
+        val hashes = GitFileHistory.collectHistory(project, path, "-n", limit.toString()).map { it.revisionNumber.asString() }
+        if (hashes.isEmpty()) return emptyList()
+        @Suppress("SpreadOperator")
+        val commits = GitHistoryUtils.history(project, root, *GitHistoryUtils.formHashParameters(project, hashes))
+        return hashes.mapNotNull { hash -> commits.firstOrNull { it.id.asString() == hash } }.map { toInfo(it, root.path) }
+    }
 
     private fun revisionsOf(scope: GitLogScope): Array<String> = when (scope) {
         GitLogScope.CURRENT_BRANCH -> arrayOf("HEAD")

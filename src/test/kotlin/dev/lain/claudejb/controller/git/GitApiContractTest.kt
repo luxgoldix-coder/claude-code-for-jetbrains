@@ -69,6 +69,19 @@ class GitApiContractTest {
     }
 
     @Test
+    fun `a file's history comes from GitFileHistory, whose parameters land before the path, then formHashParameters`() {
+        val filePath = load("com.intellij.openapi.vcs.FilePath")
+        val collect = load("git4idea.history.GitFileHistory")
+            .getMethod("collectHistory", Project::class.java, filePath, Array<String>::class.java)
+            .assertNotDeprecated()
+        assertTrue(List::class.java.isAssignableFrom(collect.returnType), "collectHistory() must return a List of revisions")
+        val form = load("git4idea.history.GitHistoryUtils")
+            .getMethod("formHashParameters", Project::class.java, Collection::class.java)
+            .assertNotDeprecated()
+        assertTrue(Array<String>::class.java == form.returnType, "formHashParameters must give git-log parameters")
+    }
+
+    @Test
     fun `GitHistoryUtils still counts commits between two refs, and still returns that count as text`() {
         val method = load("git4idea.history.GitHistoryUtils")
             .getMethod("getNumberOfCommitsBetween", load("git4idea.repo.GitRepository"), String::class.java, String::class.java)
