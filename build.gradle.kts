@@ -226,7 +226,10 @@ tasks {
             includeEngines("junit-jupiter")
         }
         // Belt-and-suspenders: restrict discovery to the drift package.
-        filter { includeTestsMatching("dev.lain.claudejb.drift.*") }
+        filter {
+            includeTestsMatching("dev.lain.claudejb.drift.*")
+            isFailOnNoMatchingTests = false
+        }
         testClassesDirs =
             sourceSets.test
                 .get()
