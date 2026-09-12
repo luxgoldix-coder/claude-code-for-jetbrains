@@ -14,6 +14,7 @@ internal class PageDelivery(
     private val webReady: () -> Boolean,
     private val onRedeliver: () -> Unit,
     private val isDisposed: () -> Boolean,
+    private val onExhausted: () -> Unit = {},
 ) {
 
     private val log = logger<PageDelivery>()
@@ -62,6 +63,7 @@ internal class PageDelivery(
         val next = nextPageRoute(current)
         if (next == null) {
             log.warn("Claude Code chat did not come up over $current and there is no route left to try")
+            onExhausted()
             return
         }
         onRedeliver()

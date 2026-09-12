@@ -22,6 +22,7 @@ import javax.swing.border.EmptyBorder
 class JcefHost(
     parentDisposable: Disposable,
     private val onMessage: (String) -> Unit,
+    onPageLost: () -> Unit = {},
 ) {
 
     val supported: Boolean = JBCefApp.isSupported()
@@ -96,6 +97,7 @@ class JcefHost(
                 webReady = { webReady },
                 onRedeliver = { ready = false },
                 isDisposed = { disposed },
+                onExhausted = onPageLost,
             )
             delivery = d
             d.start()

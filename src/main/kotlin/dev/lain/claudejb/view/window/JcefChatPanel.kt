@@ -14,6 +14,7 @@ import dev.lain.claudejb.controller.commands.git.GitIntegration
 import dev.lain.claudejb.controller.context.LinkNavigator
 import dev.lain.claudejb.controller.git.GitHistoryService
 import dev.lain.claudejb.controller.session.ClaudeSession
+import dev.lain.claudejb.controller.session.IdeWithoutChat
 import dev.lain.claudejb.controller.session.SessionListener
 import dev.lain.claudejb.controller.vuln.VulnService
 import dev.lain.claudejb.model.bridge.JcefBridge
@@ -44,7 +45,7 @@ class JcefChatPanel(internal val project: Project, val session: ClaudeSession) :
 
     internal val router = ChatBridgeRouter(this)
 
-    internal val host = JcefHost(this, router::dispatch)
+    internal val host = JcefHost(this, router::dispatch) { IdeWithoutChat.serve(project) }
 
     internal val links = LinkNavigator(project)
 
