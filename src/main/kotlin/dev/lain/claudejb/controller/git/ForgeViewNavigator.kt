@@ -2,10 +2,10 @@ package dev.lain.claudejb.controller.git
 
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.ui.UIUtil
-import javax.swing.JComponent
 import javax.swing.JList
 
 object ForgeViewNavigator {
@@ -33,13 +33,11 @@ object ForgeViewNavigator {
         return null
     }
 
-    fun componentContexts(project: Project): List<DataContext> {
-        val toolWindow = found(project) ?: return emptyList()
-        return toolWindow.contentManager.contents.flatMap { content ->
-            UIUtil.uiTraverser(content.component).filter(JComponent::class.java)
-                .map { DataManager.getInstance().getDataContext(it) }
-                .toList()
-        }
+    fun selectTimeline(project: Project, number: Long): Boolean {
+        val manager = FileEditorManager.getInstance(project)
+        val timeline = manager.openFiles.firstOrNull { !it.isInLocalFileSystem && it.name == "#$number" } ?: return false
+        manager.openFile(timeline, false)
+        return true
     }
 
     private fun numberOf(item: Any?): Long? {

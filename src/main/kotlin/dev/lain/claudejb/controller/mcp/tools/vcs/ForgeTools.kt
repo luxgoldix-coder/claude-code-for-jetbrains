@@ -84,11 +84,10 @@ internal class ForgeTools(
             withContext(Dispatchers.EDT) { BrowserUtil.browse(url) }
             return "browser"
         }
+        if (withContext(Dispatchers.EDT) { ForgeViewNavigator.selectTimeline(project, number) }) return "ide"
         val context = withContext(Dispatchers.EDT) { ForgeViewNavigator.selectRequest(project, number) }
         if (context != null && runCatching { actions.dispatch(SHOW_PULL_REQUEST, context) }.isSuccess) return "ide"
-        val contexts = withContext(Dispatchers.EDT) { ForgeViewNavigator.componentContexts(project) }
-        val refreshed = contexts.any { runCatching { actions.dispatch(RELOAD_PULL_REQUEST, it) }.isSuccess }
-        return if (refreshed) "refreshed" else "none"
+        return "none"
     }
 
     private fun row(request: GitHubGateway.Request): JsonObject = buildJsonObject {
@@ -156,7 +155,6 @@ internal class ForgeTools(
         private const val DEFAULT_MAX = 30
         private const val DEFAULT_BODY_CHARS = 2_000
         private const val SHOW_PULL_REQUEST = "Github.PullRequest.Show"
-        private const val RELOAD_PULL_REQUEST = "Github.PullRequest.Details.Reload"
         private val STATES = linkedMapOf("open" to "is:open", "closed" to "is:closed is:unmerged", "merged" to "is:merged", "all" to "")
 
         val PULL_REQUESTS = ToolSpec(
@@ -174,8 +172,9 @@ internal class ForgeTools(
             "pull_request",
             "One pull request by number, with its base and head branches, review decision and the first body_chars of its " +
                 "description (body_truncated says when there is more); with open, the request is selected and opened in the " +
-                "IDE's Pull Requests view (shown=ide); when the view already shows a request's details, they are refreshed " +
-                "(shown=refreshed); the browser only when the IDE has no Pull Requests view (shown=browser).",
+                "IDE's Pull Requests view and its timeline tab is opened in the editor, or selected when it is already open " +
+                "(shown=ide); shown=none when the view lists no such request yet; the browser only when the IDE has no " +
+                "Pull Requests view (shown=browser).",
             listOf(
                 Param("number", "The pull request number", type = "integer"),
                 Param("open", "true to also open it for the user (default false)", type = "boolean", required = false),
