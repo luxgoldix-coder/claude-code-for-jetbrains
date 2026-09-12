@@ -47,7 +47,7 @@ internal class FileTools(private val project: Project, private val actions: IdeA
     private suspend fun copyPath(args: ToolArgs): ToolResult {
         val path = args.string("path")
         val kind = args.optionalString("kind") ?: "relative"
-        val file = readAction { Locations.file(project, path) }
+        val file = readAction { Locations.any(project, path) }
         val text = when (kind) {
             "absolute" -> file.path
 

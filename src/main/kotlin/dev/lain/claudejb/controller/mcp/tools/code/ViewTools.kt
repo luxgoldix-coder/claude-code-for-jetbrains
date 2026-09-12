@@ -4,6 +4,8 @@ import com.intellij.diff.DiffContentFactory
 import com.intellij.diff.DiffManager
 import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.ide.actions.RevealFileAction
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
@@ -119,11 +121,11 @@ internal class ViewTools(private val project: Project, private val actions: IdeA
     private suspend fun openIn(args: ToolArgs): ToolResult {
         val path = args.string("path")
         val where = args.optionalString("where") ?: "file_manager"
-        val file = readAction { Locations.file(project, path) }
+        val file = readAction { Locations.any(project, path) }
         when (where) {
             "file_manager" -> reveal(file)
-            "terminal" -> actions.dispatch(OPEN_IN_TERMINAL, TargetContext.target(args))
-            "app" -> actions.dispatch(OPEN_IN_APP, TargetContext.target(args))
+            "terminal" -> dispatchOn(OPEN_IN_TERMINAL, file, args)
+            "app" -> dispatchOn(OPEN_IN_APP, file, args)
             else -> throw ToolException("where must be file_manager, terminal or app")
         }
         return ToolResult.toon(
@@ -133,6 +135,16 @@ internal class ViewTools(private val project: Project, private val actions: IdeA
                 put("opened", true)
             },
         )
+    }
+
+    private suspend fun dispatchOn(id: String, file: VirtualFile, args: ToolArgs) {
+        if (!file.isDirectory) return actions.dispatch(id, TargetContext.target(args))
+        val context = SimpleDataContext.builder()
+            .add(CommonDataKeys.PROJECT, project)
+            .add(CommonDataKeys.VIRTUAL_FILE, file)
+            .add(CommonDataKeys.VIRTUAL_FILE_ARRAY, arrayOf(file))
+            .build()
+        actions.dispatch(id, context)
     }
 
     private fun reveal(file: VirtualFile) {
