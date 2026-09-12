@@ -77,16 +77,33 @@ class BatchTest {
 
     @Test
     fun `the host splits any list the same way the server does, so every item gets a card of its own`() {
-        val hashes = Batch.split(args("""{"hashes":["a","b"],"max":"3"}""").json)!!
+        val hashes = Batch.split("git_log", args("""{"hashes":["a","b"],"max":"3"}""").json)!!
         assertEquals(listOf("a", "b"), hashes.map { it["hash"]!!.jsonPrimitive.content })
         assertEquals("3", hashes[1]["max"]!!.jsonPrimitive.content)
         assertNull(hashes[0]["hashes"])
-        val statements = Batch.split(args("""{"connection":"db","statements":["select 1"]}""").json)!!
+        val statements = Batch.split("db_query", args("""{"connection":"db","statements":["select 1"]}""").json)!!
         assertEquals("select 1", statements.single()["code"]!!.jsonPrimitive.content)
-        val edits = Batch.split(args("""{"edits":[{"path":"a.kt","line":1,"content":"x"}]}""").json)!!
+        val edits = Batch.split("insert_text", args("""{"edits":[{"path":"a.kt","line":1,"content":"x"}]}""").json)!!
         assertEquals("a.kt", edits.single()["path"]!!.jsonPrimitive.content)
-        assertNull(Batch.split(args("""{"path":"a.kt"}""").json))
+        assertNull(Batch.split("read_file", args("""{"path":"a.kt"}""").json))
         assertEquals("tu#4", Batch.itemId("tu", 4))
+    }
+
+    @Test
+    fun `a tool whose list is one call keeps one card, so a commit of five files is not five failures`() {
+        val commit = args("""{"message":"m","paths":["a.kt","b.kt"]}""").json
+        assertNull(Batch.split("git_commit", commit))
+        assertNull(Batch.split("git_stage", commit))
+        assertEquals(2, Batch.split("git_diff", commit)!!.size)
+    }
+
+    @Test
+    fun `a domain refuses a tool whose list is neither a batch nor declared as one call`() {
+        val list = Param("paths", "", type = "array")
+        fun domain(spec: ToolSpec) = ToolDomain("d", "", listOf(Tool(spec) { ToolResult("") }))
+        assertThrows<IllegalArgumentException> { domain(ToolSpec("stray", "", listOf(list))) }
+        domain(ToolSpec("git_commit", "", listOf(list)))
+        domain(ToolSpec("read_file", "", listOf(Batch.paths("each"))))
     }
 
     @Test

@@ -1,6 +1,7 @@
 package dev.lain.claudejb.controller.mcp.tools.vcs
 
 import dev.lain.claudejb.controller.mcp.tools.code.DiagnosticsTools
+import dev.lain.claudejb.model.mcp.Batch
 import dev.lain.claudejb.model.mcp.ToolException
 import dev.lain.claudejb.model.mcp.ToolSpec
 import dev.lain.claudejb.model.permission.scan.ToolInputScanner
@@ -83,6 +84,13 @@ class VcsToolSpecsTest {
             ForgeTools.ACTIONS,
         )
         ForgeTools.ACTIONS.keys.forEach { assertTrue(it in ForgeTools.VCS_ACTION.description, "vcs_action does not list $it") }
+    }
+
+    @Test
+    fun `stage and commit are the tools whose list is one call, and no other`() {
+        assertEquals(setOf(GitWriteTools.GIT_STAGE.name, GitWriteTools.GIT_COMMIT.name), Batch.ONE_CALL_LISTS)
+        val plain = all.filter { spec -> spec.params.any { it.type == "array" && it.items == null } }.map { it.name }.toSet()
+        assertEquals(Batch.ONE_CALL_LISTS, plain)
     }
 
     @Test

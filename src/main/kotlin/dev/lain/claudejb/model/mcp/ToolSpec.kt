@@ -61,6 +61,11 @@ class Tool(val spec: ToolSpec, val run: suspend (ToolArgs) -> ToolResult)
 class ToolDomain(val name: String, val description: String, val tools: List<Tool>) {
     init {
         require(tools.size <= MAX_TOOLS) { "domain $name exposes ${tools.size} tools; the ceiling is $MAX_TOOLS" }
+        tools.map { it.spec }.forEach { spec ->
+            require(spec.name in Batch.ONE_CALL_LISTS || spec.params.none { it.type == "array" && it.items == null }) {
+                "${spec.name} takes a list that is not a batch; name it in Batch.ONE_CALL_LISTS so the host draws one card"
+            }
+        }
     }
 
     companion object {

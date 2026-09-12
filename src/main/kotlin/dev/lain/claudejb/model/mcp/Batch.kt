@@ -72,7 +72,10 @@ object Batch {
     fun param(plural: Plural, description: String): Param =
         Param(plural.key, description, type = "array", required = false, items = plural.items)
 
-    fun split(args: JsonObject): List<JsonObject>? {
+    val ONE_CALL_LISTS: Set<String> = setOf("git_stage", "git_commit")
+
+    fun split(tool: String?, args: JsonObject): List<JsonObject>? {
+        if (tool in ONE_CALL_LISTS) return null
         val (key, identity) = IDENTITIES.entries.firstOrNull { args[it.key] is JsonArray } ?: return null
         val shared = args.filterKeys { it != key }
         return (args.getValue(key) as JsonArray).map { item ->

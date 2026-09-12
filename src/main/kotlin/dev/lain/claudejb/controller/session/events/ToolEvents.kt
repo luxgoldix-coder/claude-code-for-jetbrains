@@ -92,7 +92,7 @@ class ToolEvents(
 
     private fun ownUse(own: OwnTools.Call, event: ClaudeEvent.ToolUse): Own {
         val args = OwnTools.argsOf(event.input)
-        val split = Batch.split(args)
+        val split = Batch.split(own.argument, args)
         val items = (split ?: listOf(args)).mapIndexed { index, itemArgs ->
             val id = if (split == null) event.id else Batch.itemId(event.id, index)
             val review = OwnTools.reviewAs(own, itemArgs, s.project.basePath)?.let(::asWrite)
