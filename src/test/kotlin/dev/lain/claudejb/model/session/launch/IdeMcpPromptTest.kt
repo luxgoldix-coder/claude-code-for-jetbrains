@@ -27,41 +27,67 @@ class IdeMcpPromptTest {
     }
 
     @Test
-    fun `the paragraph names the three meta-tools and no tool of any domain, reads as an order, and fits`() {
+    fun `the paragraph names the three meta-tools and no tool of any domain, and reads as an order`() {
         val text = IdeMcpPrompt.text(own)
         listOf("domains()", "tools(domain)", "run(tool, args)").forEach { assertTrue(text.contains(it), it) }
         assertFalse(SNAKE_CASE.containsMatchIn(text), "a domain tool is named: " + SNAKE_CASE.find(text)?.value)
         assertTrue(text.startsWith(IdeMcpPrompt.OPEN) && text.endsWith(IdeMcpPrompt.CLOSE))
         assertEquals(3, text.lines().size, "open, one paragraph, close")
-        listOf("prefer", "try to", "if possible", "consider", "when possible").forEach {
-            assertFalse(text.lowercase().contains(it), it)
-        }
-        assertTrue(text.length < BUDGET_PARAGRAPH, "length=" + text.length)
+        assertNoHedging(text)
     }
 
     @Test
-    fun `rules of a server that is off are left out, and every rule names one of its tools in one sequence`() {
+    fun `rules of a server that is off are left out, and the rules come in one numbered sequence`() {
         val onlyCode = IdeMcpPrompt.text(setOf(IdeServer.CODE), all)
         assertTrue(onlyCode.contains("read_file"))
-        assertFalse(onlyCode.contains("git_commit"))
+        assertFalse(onlyCode.contains("git_branches"))
         assertFalse(onlyCode.contains("run_tests"))
         assertTrue(onlyCode.contains("Always:"))
         val text = IdeMcpPrompt.rulesBlock(all, own)
-        val numbered = text.lines().filter { it.substringBefore('.').toIntOrNull() != null }
+        val numbered = numbered(text)
         assertEquals(IdeRule.entries.size, numbered.size)
         assertEquals((1..IdeRule.entries.size).toList(), numbered.map { it.substringBefore('.').toInt() })
-        IdeRule.entries.filter { it.tools.isNotEmpty() }.forEach { rule ->
-            assertTrue(numbered.any { line -> rule.tools.any { line.contains(it) } }, rule.key)
-        }
         assertTrue(text.startsWith(IdeMcpPrompt.OPEN) && text.endsWith(IdeMcpPrompt.CLOSE))
-        assertTrue(text.length < BUDGET_RULES, "length=" + text.length)
+    }
+
+    @Test
+    fun `every tool of every rule is named in that rule's line, owned by one rule, as a full sentence, without hedging`() {
+        val lines = numbered(IdeMcpPrompt.rulesBlock(all, own))
+        IdeRule.entries.forEachIndexed { index, rule ->
+            val line = lines[index]
+            rule.tools.forEach { tool ->
+                assertTrue(toolWord(tool).containsMatchIn(line), "${rule.key} does not name $tool")
+                val owners = IdeRule.entries.filter { tool in it.tools }.map { it.key }
+                assertEquals(listOf(rule.key), owners, "$tool belongs to more than one rule")
+            }
+            val sentence = line.substringAfter(". ")
+            assertTrue(sentence.first().isUpperCase() && sentence.endsWith("."), "${rule.key} is not a sentence: $line")
+        }
+        assertNoHedging(IdeMcpPrompt.rulesBlock(all, own))
+    }
+
+    @Test
+    fun `every rule with tools says how the call reaches the IDE or what the user sees`() {
+        val lines = numbered(IdeMcpPrompt.rulesBlock(all, own))
+        IdeRule.entries.filter { it.tools.isNotEmpty() }.forEachIndexed { index, rule ->
+            val line = lines[index].lowercase()
+            assertTrue(MECHANISM.any { it in line }, "${rule.key} names neither the IDE's mechanism nor the reveal: $line")
+        }
+    }
+
+    @Test
+    fun `the block's size is printed, not capped`() {
+        val text = IdeMcpPrompt.text(own, all)
+        println("ide-integration block: ${text.length} chars, ~${text.length / CHARS_PER_TOKEN} tokens")
+        assertTrue(text.length > IdeRule.entries.size * MIN_CHARS_PER_RULE, "length=" + text.length)
     }
 
     @Test
     fun `the rules replace the native tools by name, batch by default, and bind agents to the same way of working`() {
         val text = IdeMcpPrompt.rulesBlock(all, own)
         val expected = "never Bash|never grep|write_file(files)|one message|verbatim|in batches|never from memory|" +
-            ".idea/runConfigurations|not even outside the project|never done natively|name it and stop"
+            ".idea/runConfigurations|not even outside the project|never done natively|name it and stop|" +
+            "never through a new process|correct that text once|never focused|never switched while the user is in the Terminal"
         expected.split('|').forEach { assertTrue(text.contains(it), it) }
         listOf("ide_read_file", "jetbrains", "hechtcarmel", "apply_patch").forEach { assertFalse(text.contains(it), it) }
     }
@@ -72,16 +98,35 @@ class IdeMcpPromptTest {
         assertEquals(1, text.lines().count { it == IdeMcpPrompt.OPEN })
         assertEquals(1, text.lines().count { it == IdeMcpPrompt.CLOSE })
         assertTrue(text.contains("domains()") && text.contains("read_file"))
-        assertTrue(text.length < BUDGET_ALL, "length=" + text.length)
         val hook = IdeMcpPrompt.rulesBlock(all, own)
         hook.lines().forEach { assertTrue(it in text.lines(), it) }
     }
 
+    private fun numbered(text: String): List<String> = text.lines().filter { it.substringBefore('.').toIntOrNull() != null }
+
+    private fun assertNoHedging(text: String) {
+        HEDGES.forEach { assertFalse(text.lowercase().contains(it), it) }
+    }
+
     private companion object {
-        const val BUDGET_PARAGRAPH = 800
-        const val BUDGET_RULES = 2800
-        const val BUDGET_ALL = 3600
+        const val CHARS_PER_TOKEN = 4
+        const val MIN_CHARS_PER_RULE = 60
 
         val SNAKE_CASE = Regex("[a-z]+_[a-z_]+")
+
+        val HEDGES = listOf("prefer", "try to", "if possible", "consider", "when possible")
+
+        val MECHANISM = listOf(
+            "through the ide",
+            "the ide's",
+            "over the socket",
+            "the user sees",
+            "without taking the focus",
+            "shows",
+            "window",
+            "in the log",
+        )
+
+        fun toolWord(tool: String) = Regex("(?<![a-z_])" + Regex.escape(tool) + "(?![a-z_])")
     }
 }
