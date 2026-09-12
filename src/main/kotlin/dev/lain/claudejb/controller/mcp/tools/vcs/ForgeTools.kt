@@ -80,14 +80,15 @@ internal class ForgeTools(
     }
 
     private suspend fun openInIde(number: Long, url: String): String {
-        reveal.requests()
-        val context = withContext(Dispatchers.EDT) { ForgeViewNavigator.selectRequest(project, number) }
-        if (context != null) {
-            val fired = runCatching { actions.dispatch(SHOW_PULL_REQUEST, context) }.isSuccess
-            if (fired) return "ide"
+        if (!reveal.requests()) {
+            withContext(Dispatchers.EDT) { BrowserUtil.browse(url) }
+            return "browser"
         }
-        withContext(Dispatchers.EDT) { BrowserUtil.browse(url) }
-        return "browser"
+        val context = withContext(Dispatchers.EDT) { ForgeViewNavigator.selectRequest(project, number) }
+        if (context != null && runCatching { actions.dispatch(SHOW_PULL_REQUEST, context) }.isSuccess) return "ide"
+        val contexts = withContext(Dispatchers.EDT) { ForgeViewNavigator.componentContexts(project) }
+        val refreshed = contexts.any { runCatching { actions.dispatch(RELOAD_PULL_REQUEST, it) }.isSuccess }
+        return if (refreshed) "refreshed" else "none"
     }
 
     private fun row(request: GitHubGateway.Request): JsonObject = buildJsonObject {
@@ -155,6 +156,7 @@ internal class ForgeTools(
         private const val DEFAULT_MAX = 30
         private const val DEFAULT_BODY_CHARS = 2_000
         private const val SHOW_PULL_REQUEST = "Github.PullRequest.Show"
+        private const val RELOAD_PULL_REQUEST = "Github.PullRequest.Details.Reload"
         private val STATES = linkedMapOf("open" to "is:open", "closed" to "is:closed is:unmerged", "merged" to "is:merged", "all" to "")
 
         val PULL_REQUESTS = ToolSpec(
@@ -172,7 +174,8 @@ internal class ForgeTools(
             "pull_request",
             "One pull request by number, with its base and head branches, review decision and the first body_chars of its " +
                 "description (body_truncated says when there is more); with open, the request is selected and opened in the " +
-                "IDE's Pull Requests view (shown=ide), or in the browser when the view does not list it (shown=browser).",
+                "IDE's Pull Requests view (shown=ide); when the view already shows a request's details, they are refreshed " +
+                "(shown=refreshed); the browser only when the IDE has no Pull Requests view (shown=browser).",
             listOf(
                 Param("number", "The pull request number", type = "integer"),
                 Param("open", "true to also open it for the user (default false)", type = "boolean", required = false),

@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.ui.UIUtil
+import javax.swing.JComponent
 import javax.swing.JList
 
 object ForgeViewNavigator {
@@ -30,6 +31,15 @@ object ForgeViewNavigator {
             }
         }
         return null
+    }
+
+    fun componentContexts(project: Project): List<DataContext> {
+        val toolWindow = found(project) ?: return emptyList()
+        return toolWindow.contentManager.contents.flatMap { content ->
+            UIUtil.uiTraverser(content.component).filter(JComponent::class.java)
+                .map { DataManager.getInstance().getDataContext(it) }
+                .toList()
+        }
     }
 
     private fun numberOf(item: Any?): Long? {
