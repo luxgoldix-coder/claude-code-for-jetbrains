@@ -6,4 +6,5 @@ data class IdeMcpState(
     @JvmField var approveClients: Boolean = false,
     @JvmField var mirror: Boolean = true,
     @JvmField var rules: String = LaunchDefaults.DEFAULT_IDE_RULES,
+    @JvmField var catalogue: String = "",
 )
