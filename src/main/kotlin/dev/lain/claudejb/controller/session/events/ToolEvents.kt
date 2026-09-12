@@ -60,13 +60,7 @@ class ToolEvents(
     }
 
     fun onToolUse(event: ClaudeEvent.ToolUse) = edt {
-        if (event.parentToolUseId != null) {
-            if (event.name in DiffPresenter.REVIEWABLE_TOOLS) {
-                s.diffs.captureForReview(event.name, event.input, event.id)
-            }
-            return@edt
-        }
-        s.reconciler.onMessageBoundary()
+        if (event.parentToolUseId == null) s.reconciler.onMessageBoundary()
         val own = OwnTools.parse(event.name, event.input)
         if (own != null) {
             ownCalls[event.id] = ownUse(own, event)
@@ -77,6 +71,7 @@ class ToolEvents(
             ToolNaming.formatToolUse(event.name, event.input, s.project.basePath),
             meta = event.name,
             toolUseId = event.id,
+            parentToolUseId = event.parentToolUseId,
             toolState = ToolState.LOADING,
             filePath = ToolNaming.toolFilePath(event.name, event.input, s.project.basePath),
             commandText = ToolInputScanner.commandText(event.input),
@@ -101,6 +96,7 @@ class ToolEvents(
                 OwnTools.label(own, itemArgs),
                 meta = event.name,
                 toolUseId = id,
+                parentToolUseId = event.parentToolUseId,
                 toolState = ToolState.LOADING,
                 filePath = OwnTools.path(itemArgs),
                 messageText = if (review == null) OwnTools.argsToon(itemArgs) else null,
@@ -138,7 +134,6 @@ class ToolEvents(
         }
         settle(event.toolUseId, event.isError)
         val diff = s.diffs.onToolResult(event.toolUseId)?.let(::diffOf)
-        if (event.parentToolUseId != null) return@edt
         if (diff != null) {
             s.transcript.addToolOutput(event.toolUseId, diff, meta = DIFF)
             return@edt
