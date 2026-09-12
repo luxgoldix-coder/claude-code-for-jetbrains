@@ -63,7 +63,8 @@ internal object AgentEnding {
         val message = this["message"] as? JsonObject ?: return false
         if ((message["stop_reason"] as? JsonPrimitive)?.contentOrNull != null) return false
         val content = message["content"] as? JsonArray ?: return false
-        return content.none { (it as? JsonObject)?.get("type").let { t -> t as? JsonPrimitive }?.contentOrNull == "tool_use" }
+        val holdsToolUse = content.any { (it as? JsonObject)?.get("type").let { t -> t as? JsonPrimitive }?.contentOrNull == "tool_use" }
+        return !holdsToolUse && text().isNotBlank()
     }
 
     private const val SYNTHETIC_MODEL = "<synthetic>"

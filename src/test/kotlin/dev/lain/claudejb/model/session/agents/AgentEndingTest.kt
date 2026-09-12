@@ -116,6 +116,16 @@ class AgentEndingTest {
     }
 
     @Test
+    fun `an answer that is only thinking is still reasoning, not finished`() {
+        val thinking =
+            """{"type":"assistant","message":{"role":"assistant","model":"claude-opus-5","content":[{"type":"thinking","thinking":"let me see"}]}}"""
+        val empty = """{"type":"assistant","message":{"role":"assistant","model":"claude-opus-5","content":[]}}"""
+
+        assertEquals(AgentEnding.Ending.UNFINISHED, AgentEnding.of(records(listOf(toolUse, toolResult, thinking))))
+        assertEquals(AgentEnding.Ending.UNFINISHED, AgentEnding.of(records(listOf(toolUse, toolResult, empty))))
+    }
+
+    @Test
     fun `an answer still holding a tool call is waiting, not finished`() {
         val pending =
             """{"type":"assistant","message":{"role":"assistant","model":"claude-opus-5","content":[{"type":"text","text":"one moment"},{"type":"tool_use","id":"t1","name":"Read"}]}}"""
