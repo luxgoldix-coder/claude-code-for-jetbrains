@@ -119,6 +119,18 @@ enum class IdeRule(val key: String, val server: IdeServer?, val label: String, v
     ),
     OPS_IDE("ops.ide", IdeServer.OPS, "Move the IDE for the user", setOf("tool_window", "settings_open", "ide_action", "notify")),
     OPS_ACTIONS("ops.actions", IdeServer.OPS, "Every menu entry is one action away", setOf("actions", "menu", "appearance", "ui")),
+    OPS_SERVICE_VIEW(
+        "ops.service_view",
+        IdeServer.OPS,
+        "Services in depth",
+        setOf("service_data", "service_extract", "service_expand", "service_events"),
+    ),
+    OPS_REMOTE(
+        "ops.remote",
+        IdeServer.OPS,
+        "The closed Tools entries",
+        setOf("deployment", "ssh_session", "qodana", "vulnerable_dependencies"),
+    ),
     OPS_WINDOW("ops.window", IdeServer.OPS, "Tabs, layout, zoom and editor settings", setOf("tabs", "layout", "zoom", "editor_settings")),
     OPS_DATA(
         "ops.data",

@@ -306,6 +306,14 @@ Rules that hold for every tool:
 | `menu` | The main menu as the user sees it: top level, or the items of one menu by path. | "what is under Code ▸ Analyze". `ops ▸ menu {path: "Code/Analyze"}` |
 | `appearance` *mutates* | View ▸ Appearance modes: presentation, distraction_free, full_screen, zen, compact, assistant; toggle or set with `on`; returns the state. | "put the IDE in presentation mode". `ops ▸ appearance {mode: "presentation", on: true}` |
 | `ui` *mutates* | Show or hide the toolbar, navigation_bar, tool_window_bars, status_bar or main_menu; toggle or set with `on`. | "hide the status bar". `ops ▸ ui {part: "status_bar", on: false}` |
+| `service_data` | The console/editor text inside a Services node's panel (last `tail` lines). | "show me the container log". `ops ▸ service_data {path: "Docker/Docker/Containers/web", tail: 100}` |
+| `service_extract` *mutates* | Extract a node into its own tab. | `ops ▸ service_extract {path: "Docker/Docker/Containers/web"}` |
+| `service_expand` *mutates* | Expand a node in the tree. | `ops ▸ service_expand {path: "Docker/Docker"}` |
+| `service_events` | Service events since a sequence number: added, removed, changed, reset. | "did anything change". `ops ▸ service_events {since: 12}` |
+| `deployment` *mutates* | Tools ▸ Deployment: upload, download, sync, compare, browse, configure through the plugin's actions. | `ops ▸ deployment {action: "upload", path: "src"}` |
+| `ssh_session` *mutates* | Tools ▸ Start SSH Session. | `ops ▸ ssh_session {}` |
+| `qodana` *mutates* | Qodana results as data with the tab shown; run/open through the plugin. | `ops ▸ qodana {action: "results"}` |
+| `vulnerable_dependencies` | The Package Checker's findings, tab shown. | `ops ▸ vulnerable_dependencies {}` |
 | `tabs` *mutates* | The editor's tab groups with tabs, selection and pins; or close, close_others, close_all, pin, split_right, split_down, unsplit, move_to_opposite on a tab. | "split the editor with A.kt on the right". `ops ▸ tabs {action: "split_right", path: "A.kt"}` |
 | `layout` *mutates* | save_default, restore_default or hide_all for the tool window layout. | "hide everything". `ops ▸ layout {action: "hide_all"}` |
 | `zoom` *mutates* | in, out or reset on the selected editor's font (`scope=editor`) or the whole IDE (`ide`). | "make it bigger". `ops ▸ zoom {action: "in", scope: "ide"}` |
@@ -416,8 +424,8 @@ mirrored in the IDE without taking the user's focus.
 
 | Capability | Tools (domain) | Status |
 |---|---|---|
-| A node's data, extract, expand, events | `service_data`, `service_extract`, `service_expand`, `service_events` (`service_view`), `ServiceContentGateway` | ☐ |
-| Deployment, SSH sessions, Qodana, vulnerable dependencies (S5) | `deployment`, `ssh_session`, `qodana`, `vulnerable_dependencies` (`remote`) | ☐ |
+| A node's data, extract, expand, events | `service_data`, `service_extract`, `service_expand`, `service_events` (`service_view`) | ☑ (`service_data` reads the editors inside the node's content component; Docker/Kubernetes stay closed, so no deeper data path) |
+| Deployment, SSH sessions, Qodana, vulnerable dependencies (S5) | `deployment`, `ssh_session`, `qodana`, `vulnerable_dependencies` (`remote`) | ☑ actions discovered by id fragment on the user's IDE (closed plugins have no source to pin); Qodana results and vulnerable dependencies come from the Problems collector |
 
 ### P8 — run, tools, consoles, the client
 

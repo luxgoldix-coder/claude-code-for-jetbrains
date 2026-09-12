@@ -36,7 +36,9 @@ import dev.lain.claudejb.controller.mcp.tools.ops.HttpTools
 import dev.lain.claudejb.controller.mcp.tools.ops.IdeTools
 import dev.lain.claudejb.controller.mcp.tools.ops.NotifyTools
 import dev.lain.claudejb.controller.mcp.tools.ops.ProjectTools
+import dev.lain.claudejb.controller.mcp.tools.ops.RemoteTools
 import dev.lain.claudejb.controller.mcp.tools.ops.ServiceTools
+import dev.lain.claudejb.controller.mcp.tools.ops.ServiceViewTools
 import dev.lain.claudejb.controller.mcp.tools.ops.SshTools
 import dev.lain.claudejb.controller.mcp.tools.ops.WindowTools
 import dev.lain.claudejb.controller.mcp.tools.run.BreakpointTools
@@ -110,6 +112,8 @@ internal object IdeToolCatalog {
             { p, s -> IdeTools(p, IdeActions(p, s), s).domain() },
             { p, s -> ActionTools(p, IdeActions(p, s)).domain() },
             { p, s -> WindowTools(p, IdeActions(p, s)).domain() },
+            { p, s -> ServiceViewTools(p, s).domain() },
+            { p, s -> RemoteTools(p, IdeActions(p, s), Reveal(p)).domain() },
             { p, _ -> NotifyTools(p).domain() },
             { p, _ -> DbTools(p).domain() },
             { p, s -> HttpTools(p, s, Reveal(p)).takeIf { it.available() }?.domain() },

@@ -147,6 +147,13 @@ internal object IdeRuleText {
             "as the user sees it; then fire it with ide_action and a target. Call appearance to flip presentation, " +
             "distraction-free, full-screen, zen, compact or the Presentation Assistant, and ui to show or hide the " +
             "toolbar, navigation bar, tool window bars, status bar or main menu; both say the state they left.",
+        IdeRule.OPS_SERVICE_VIEW to "For a Services node's console text (a container's log, a run's output) call service_data; " +
+            "to expand or extract a node in the Services window call service_expand or service_extract; to learn what " +
+            "changed among the services since you last looked call service_events with the last sequence number.",
+        IdeRule.OPS_REMOTE to "For the closed Tools entries call deployment (upload, download, sync, compare, browse, configure), " +
+            "ssh_session, qodana (results as data with the Qodana tab shown, run and open through the plugin's actions) and " +
+            "vulnerable_dependencies (the Package Checker's findings, and the IDE shows its Problems tab): each goes " +
+            "through the actions that plugin registers on this IDE and is refused when the plugin is missing.",
         IdeRule.OPS_WINDOW to "Call tabs to see the editor's tab groups or to close, pin, split or move a tab as the Window " +
             "menu would; layout to store, restore or hide the tool window layout; zoom to zoom the editor's font or the " +
             "whole IDE; editor_settings to show or hide line numbers, whitespace, soft wraps or gutter icons in every " +
