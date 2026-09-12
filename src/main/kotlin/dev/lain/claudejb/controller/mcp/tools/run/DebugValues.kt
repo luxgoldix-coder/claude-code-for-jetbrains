@@ -18,6 +18,7 @@ import com.intellij.xdebugger.frame.XValueModifier
 import com.intellij.xdebugger.frame.XValueNode
 import com.intellij.xdebugger.frame.XValuePlace
 import com.intellij.xdebugger.frame.presentation.XValuePresentation
+import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants
 import dev.lain.claudejb.model.mcp.ToolException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.withTimeoutOrNull
@@ -137,12 +138,17 @@ internal object DebugValues {
         target.computePresentation(
             object : XValueNode {
                 override fun setPresentation(icon: Icon?, type: String?, value: String, hasChildren: Boolean) {
-                    done.complete(Presented(type ?: "", value, hasChildren))
+                    settle(type, value, hasChildren)
                 }
 
                 override fun setPresentation(icon: Icon?, presentation: XValuePresentation, hasChildren: Boolean) {
-                    val rendered = RenderedText().also(presentation::renderValue)
-                    done.complete(Presented(presentation.type ?: "", rendered.text, hasChildren))
+                    settle(presentation.type, RenderedText().also(presentation::renderValue).text, hasChildren)
+                }
+
+                private fun settle(type: String?, value: String, hasChildren: Boolean) {
+                    if (value.trim('"') != XDebuggerUIConstants.getCollectingDataMessage()) {
+                        done.complete(Presented(type ?: "", value, hasChildren))
+                    }
                 }
 
                 override fun setFullValueEvaluator(fullValueEvaluator: XFullValueEvaluator) = Unit
