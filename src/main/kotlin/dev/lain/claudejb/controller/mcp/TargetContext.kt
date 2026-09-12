@@ -18,6 +18,7 @@ import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToHash
 import com.intellij.vcs.log.impl.VcsProjectLog
 import dev.lain.claudejb.controller.git.GitHistoryService
+import dev.lain.claudejb.controller.git.GitLogNavigator
 import dev.lain.claudejb.controller.mcp.tools.code.Locations
 import dev.lain.claudejb.controller.mcp.tools.ops.ServiceActions
 import dev.lain.claudejb.controller.mcp.tools.ops.ServiceTree
@@ -87,6 +88,7 @@ internal class TargetContext(private val project: Project) {
     private suspend fun commit(hash: String): DataContext {
         val context = CompletableDeferred<DataContext>()
         withContext(Dispatchers.EDT) {
+            FocusKeeper.keeping(project) { GitLogNavigator.showLog(project, focus = false) }
             VcsProjectLog.runInMainLog(project) { ui ->
                 val jump = ui.jumpToHash(hash, false, false)
                 jump.addListener({ context.complete(DataManager.getInstance().getDataContext(ui.table)) }, EdtExecutorService.getInstance())
