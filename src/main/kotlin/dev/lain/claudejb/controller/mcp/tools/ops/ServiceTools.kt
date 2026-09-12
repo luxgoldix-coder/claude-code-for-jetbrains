@@ -58,16 +58,17 @@ internal class ServiceTools(private val project: Project, private val scope: Cor
         val path = args.string("path")
         val max = args.int("max", DEFAULT_MAX)
         val node = withContext(Dispatchers.Default) { tree.find(path) }
-        val entries = withContext(Dispatchers.EDT) {
+        val (entries, fromTree) = withContext(Dispatchers.EDT) {
             ServiceActions(project, node).run {
                 reveal()
-                list()
+                list() to fromTree
             }
         }
         val rows = entries.take(max)
         return ToolResult.toon(
             buildJsonObject {
                 put("path", node.path)
+                put("context", if (fromTree) "tree" else "synthetic")
                 put("count", entries.size)
                 put("truncated", entries.size > rows.size)
                 put(

@@ -84,7 +84,13 @@ internal class ServiceActions(private val project: Project, private val node: Se
         }
     }
 
+    var fromTree: Boolean = false
+        private set
+
     fun context(): DataContext {
+        val shown = viewContext()
+        fromTree = shown != null
+        if (shown != null) return shown
         val roots: Set<ServiceViewContributor<*>> = ServiceViewContributor.CONTRIBUTOR_EP_NAME.extensionList.toSet()
         val base = SimpleDataContext.builder()
             .add(CommonDataKeys.PROJECT, project)
@@ -93,13 +99,7 @@ internal class ServiceActions(private val project: Project, private val node: Se
             .add(ServiceViewActionUtils.CONTRIBUTORS_KEY, roots)
             .build()
         val rootDescriptor = node.root.getViewDescriptor(project)
-        val shown = viewContext()
-        return CustomizedDataContext.withSnapshot(shown ?: base) { sink ->
-            if (shown != null) {
-                sink[PlatformCoreDataKeys.SELECTED_ITEM] = node.value
-                sink[PlatformCoreDataKeys.SELECTED_ITEMS] = arrayOf(node.value)
-                sink[ServiceViewActionUtils.CONTRIBUTORS_KEY] = roots
-            }
+        return CustomizedDataContext.withSnapshot(base) { sink ->
             (rootDescriptor as? UiDataProvider)?.let(sink::uiDataSnapshot)
             (node.descriptor as? UiDataProvider)?.let(sink::uiDataSnapshot)
             node.descriptor.navigatable?.let { sink[CommonDataKeys.NAVIGATABLE] = it }
@@ -109,12 +109,16 @@ internal class ServiceActions(private val project: Project, private val node: Se
     private fun viewContext(): DataContext? {
         val id = ServiceViewManager.getInstance(project).getToolWindowId(node.root.javaClass) ?: ToolWindowId.SERVICES
         val contents = ToolWindowManager.getInstance(project).getToolWindow(id)?.contentManager?.contents ?: return null
-        return contents.asSequence()
+        val selected = contents.asSequence()
             .flatMap { UIUtil.findComponentsOfType(it.component, JTree::class.java) }
             .filter { it.selectionCount > 0 }
             .map { DataManager.getInstance().getDataContext(it) }
-            .firstOrNull { PlatformCoreDataKeys.SELECTED_ITEM.getData(it) == node.value }
+            .filter { PlatformCoreDataKeys.SELECTED_ITEM.getData(it) != null }
+            .toList()
+        return selected.firstOrNull { sameItem(PlatformCoreDataKeys.SELECTED_ITEM.getData(it)) } ?: selected.singleOrNull()
     }
+
+    private fun sameItem(item: Any?): Boolean = item == node.value || item.toString() == node.value.toString()
 
     private companion object {
         const val MAX_GROUP_DEPTH = 4
