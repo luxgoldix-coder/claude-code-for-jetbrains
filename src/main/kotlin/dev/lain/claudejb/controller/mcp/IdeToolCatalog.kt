@@ -30,9 +30,12 @@ import dev.lain.claudejb.controller.mcp.tools.run.DebugTools
 import dev.lain.claudejb.controller.mcp.tools.run.RunTools
 import dev.lain.claudejb.controller.mcp.tools.run.TerminalTools
 import dev.lain.claudejb.controller.mcp.tools.run.TestTools
+import dev.lain.claudejb.controller.mcp.tools.vcs.ChangesTools
 import dev.lain.claudejb.controller.mcp.tools.vcs.ForgeTools
 import dev.lain.claudejb.controller.mcp.tools.vcs.GitReadTools
 import dev.lain.claudejb.controller.mcp.tools.vcs.GitWriteTools
+import dev.lain.claudejb.controller.mcp.tools.vcs.HistoryTools
+import dev.lain.claudejb.controller.mcp.tools.vcs.LogOpsTools
 import dev.lain.claudejb.model.mcp.ToolCatalog
 import dev.lain.claudejb.model.mcp.ToolDomain
 import dev.lain.claudejb.model.session.launch.IdeServer
@@ -68,6 +71,9 @@ internal object IdeToolCatalog {
             { p, _ -> GitReadTools(p, Reveal(p)).domain() },
             { p, _ -> GitWriteTools(p).domain() },
             { p, s -> ForgeTools(p, IdeActions(p, s), Reveal(p)).domain() },
+            { p, s -> LogOpsTools(p, IdeActions(p, s)).domain() },
+            { p, s -> ChangesTools(p, IdeActions(p, s), Reveal(p)).domain() },
+            { p, s -> HistoryTools(p, IdeActions(p, s), Reveal(p)).domain() },
         ),
         IdeServer.OPS to listOf(
             { p, s -> ServiceTools(p, s, Reveal(p)).domain() },

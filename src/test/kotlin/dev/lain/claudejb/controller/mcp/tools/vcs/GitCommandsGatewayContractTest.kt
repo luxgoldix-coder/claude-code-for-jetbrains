@@ -92,9 +92,10 @@ class GitCommandsGatewayContractTest {
             "Git.getInstance",
             "GitFileUtils",
             "GitCheckinEnvironment",
+            "GitBrancher",
         )
 
-        val BANNED_SYMBOLS = listOf("GitFetchSupport", "GitBrancher", "GitImpl")
+        val BANNED_SYMBOLS = listOf("GitFetchSupport", "GitImpl")
 
         val SPAWN_SYMBOLS = listOf("ProcessBuilder", "GeneralCommandLine", "Runtime.getRuntime")
     }

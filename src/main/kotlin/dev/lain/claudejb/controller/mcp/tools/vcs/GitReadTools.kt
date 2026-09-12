@@ -145,13 +145,7 @@ internal class GitReadTools(
         put("type", type)
     }
 
-    private fun commitRow(commit: GitCommitInfo): JsonObject = buildJsonObject {
-        put("hash", commit.hash)
-        put("subject", commit.subject)
-        put("author", commit.authorName)
-        put("date", Instant.ofEpochMilli(commit.authoredAtMillis).toString())
-        put("files", commit.changedPaths.size)
-    }
+    private fun commitRow(commit: GitCommitInfo): JsonObject = commitRowOf(commit)
 
     private fun refRow(ref: GitRefInfo): JsonObject = buildJsonObject {
         put("name", ref.name)
@@ -161,6 +155,14 @@ internal class GitReadTools(
     }
 
     companion object {
+
+        fun commitRowOf(commit: GitCommitInfo): JsonObject = buildJsonObject {
+            put("hash", commit.hash)
+            put("subject", commit.subject)
+            put("author", commit.authorName)
+            put("date", Instant.ofEpochMilli(commit.authoredAtMillis).toString())
+            put("files", commit.changedPaths.size)
+        }
 
         private const val DEFAULT_STATUS_MAX = 200
         private const val DEFAULT_LOG_MAX = 20

@@ -141,6 +141,33 @@ Rules that hold for every tool:
 | `vcs_open` | Shows a VCS view: the Git log (at a `hash`, or only a `range` such as `v5.8.1..HEAD`), a file's history, the Commit window, or the pull-requests view. | "open the log", "compare the branch with the last release". `vcs ▸ vcs_open {view: "log", range: "v5.8.1..HEAD"}` |
 | `vcs_action` *mutates* | Every entry of the Git menu and its GitHub/GitLab submenus by name: pull, push, fetch, merge, rebase (+abort/continue/skip), cherry-pick continue/abort, revert_abort, branches, new_branch, rename_branch, compare_with_branch, stash, unstash, stash_silently, show_stash, shelve, show_shelf, rollback, annotate, compare_same_version, file_history, tag, reset, resolve_conflicts, commit, update, unshallow, worktrees, new_worktree, configure_remotes, clone, init, create_pull_request, pull_requests, share_on_github, clone_github, sync_fork, create_gist, github_accounts, create_merge_request, merge_requests, clone_gitlab, create_snippet, gitlab_accounts; `path` or `hash` for entries that act on a file or a commit. | When the user must confirm in the IDE. `vcs ▸ vcs_action {action: "annotate", path: "A.kt"}` |
 
+### log_ops
+
+| Tool | Capability | When · example |
+|---|---|---|
+| `commit_action` *mutates* | The Log's commit menu on a hash: cherry_pick, checkout, browse_at_revision, compare_with_local, reset_to, revert, undo, reword, fixup, squash_into, squash, drop, interactive_rebase, push_up_to, add_to_remote_branch, new_branch, new_tag, copy_revision, open_in_browser. The commit is selected in the Log first. | "cherry-pick that commit". `vcs ▸ commit_action {action: "cherry_pick", hash: "d20afbe"}` |
+| `branch_op` *mutates* | The Branches popup through `GitBrancher`: merge, rebase, rebase_onto, compare, diff_with_local, rename, delete, checkout, checkout_as_new, new_tag; `target` is the other name. | "merge develop into this branch". `vcs ▸ branch_op {action: "merge", ref: "develop"}` |
+| `worktrees` *mutates* | list, add (path, optional new branch) or remove a working tree. | "add a worktree for the hotfix". `vcs ▸ worktrees {action: "add", path: "../hotfix", branch: "hotfix/x"}` |
+| `remotes` *mutates* | list, add, remove or rename a remote (`url` carries the new name for rename). | "add the upstream remote". `vcs ▸ remotes {action: "add", name: "upstream", url: "git@github.com:org/repo.git"}` |
+
+### changes
+
+| Tool | Capability | When · example |
+|---|---|---|
+| `stash` *mutates* | list, save (with message), pop, apply, drop through the IDE's Git; the stash list after. | "stash this while I check main". `vcs ▸ stash {action: "save", message: "wip"}` |
+| `shelve` *mutates* | The IDE's shelf: list, shelve (name, optional `paths`) with rollback, unshelve by name. | "shelve these two files". `vcs ▸ shelve {action: "shelve", name: "spike", paths: ["A.kt", "B.kt"]}` |
+| `patch` *mutates* | create writes the changes (or `paths`) as a unified diff to `path`; apply opens the IDE's Apply Patch dialog. | "make me a patch". `vcs ▸ patch {action: "create", path: "wip.patch"}` |
+| `rollback` *mutates* | The IDE's Rollback on the given changed files, one call, undoable from Local History. | "throw away my changes to A.kt". `vcs ▸ rollback {paths: ["A.kt"]}` |
+
+### history
+
+| Tool | Capability | When · example |
+|---|---|---|
+| `blame` | Line, commit, author, date for lines `from`..`to` from the IDE's annotations; the gutter is shown. | "who wrote this". `vcs ▸ blame {path: "A.kt", from: 10, to: 20}` |
+| `file_history` | The commits that touched a file, renames followed; the history tab is shown. | "when did this change". `vcs ▸ file_history {path: "A.kt"}` |
+| `local_history` *mutates* | show the IDE's Local History of a file; label the project before a risky change; revert a file to a label of this session. | Before a big refactor. `vcs ▸ local_history {path: "A.kt", action: "label", label: "before-rename"}` |
+| `file_at` | A file's content at a ref, and the IDE's diff of it against the working tree. | "how was this on main". `vcs ▸ file_at {path: "A.kt", ref: "main"}` |
+
 ## `ops` — the Services panel, the project, the IDE, data
 
 | Tool | Capability | When · example |
@@ -223,9 +250,9 @@ mirrored in the IDE without taking the user's focus.
 
 | Capability | Tools (domain) | Status |
 |---|---|---|
-| The commit context menu on a hash; branch operations through `GitBrancher`; worktrees; remotes | `commit_action`, `branch_op`, `worktrees`, `remotes` (`log_ops`) | ☐ |
-| Stash, shelve, patches, rollback | `stash`, `shelve`, `patch`, `rollback` (`changes`) | ☐ |
-| Blame, file history, local history, a file at a ref | `blame`, `file_history`, `local_history`, `file_at` (`history`) | ☐ |
+| The commit context menu on a hash; branch operations through `GitBrancher`; worktrees; remotes | `commit_action`, `branch_op`, `worktrees`, `remotes` (`log_ops`) | ☑ |
+| Stash, shelve, patches, rollback | `stash`, `shelve`, `patch`, `rollback` (`changes`) | ☑ (patch apply is the IDE's dialog: `ApplyPatchUtil` is Internal) |
+| Blame, file history, local history, a file at a ref | `blame`, `file_history`, `local_history`, `file_at` (`history`) | ☑ (revert uses `Label.revert`, marked Obsolete with no replacement) |
 
 ### P3 — pull and merge requests as data
 

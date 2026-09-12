@@ -67,6 +67,21 @@ internal object IdeRuleText {
             "continue, branches, stash, shelve, tag, reset, worktrees, annotate, clone, pull and merge requests, gists, " +
             "accounts) for the user to finish, with path or hash when the entry acts on a file or a commit. Never gh or " +
             "glab.",
+        IdeRule.VCS_LOG_OPS to "For what the Log's commit menu offers on a commit (cherry-pick, checkout, browse at revision, " +
+            "compare with local, reset, revert, undo, reword, fixup, squash, drop, interactive rebase, push up to, new " +
+            "branch or tag, copy revision, open in browser) call commit_action with the hash: the commit is selected in " +
+            "the Log and the action runs as the menu would. For what the Branches popup offers (merge, rebase, compare, " +
+            "diff with local, rename, delete, checkout, checkout as new, new tag) call branch_op: the IDE's own branch " +
+            "machinery with its progress and conflict handling. Call worktrees and remotes to list, add or remove " +
+            "working trees and remotes through the IDE's Git.",
+        IdeRule.VCS_CHANGES to "For the uncommitted work call stash (save, pop, apply, drop, list through the IDE's Git), " +
+            "shelve (the IDE's shelf: list, shelve by name, unshelve), patch (create writes the changes as a unified diff, " +
+            "apply opens the IDE's Apply Patch dialog) and rollback (the IDE's Rollback on the given files, undoable from " +
+            "Local History); paths go all in one call.",
+        IdeRule.VCS_HISTORY to "To know who wrote a line call blame: the IDE's annotations, and the gutter is shown. For the " +
+            "commits that touched a file call file_history, and the history tab is shown. For the IDE's Local History " +
+            "call local_history: show its view, put a label before a risky change, revert to a label. For a file's content " +
+            "at a branch, tag or commit call file_at: the IDE's diff against the working tree is shown.",
         IdeRule.OPS_SERVICES to "The Services window is the DevOps panel: call services to see its tree as the user does, " +
             "service_actions to see what the IDE offers on a node, service_action to perform one exactly as clicking it " +
             "would, service_open to reveal the node. Never kubectl, docker or podman.",

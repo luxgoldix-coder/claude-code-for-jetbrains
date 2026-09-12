@@ -48,6 +48,14 @@ enum class IdeRule(val key: String, val server: IdeServer?, val label: String, v
     VCS_READ("vcs.read", IdeServer.VCS, "Git through the IDE", setOf("git_status", "git_diff", "git_log", "git_branches")),
     VCS_WRITE("vcs.write", IdeServer.VCS, "Commit through the IDE", setOf("git_stage", "git_commit", "git_branch", "git_remote")),
     VCS_FORGE("vcs.forge", IdeServer.VCS, "The forge through the IDE's views", setOf("vcs_open", "vcs_action")),
+    VCS_LOG_OPS(
+        "vcs.log_ops",
+        IdeServer.VCS,
+        "The Log's commit menu and the Branches popup",
+        setOf("commit_action", "branch_op", "worktrees", "remotes"),
+    ),
+    VCS_CHANGES("vcs.changes", IdeServer.VCS, "Stash, shelve, patch, rollback", setOf("stash", "shelve", "patch", "rollback")),
+    VCS_HISTORY("vcs.history", IdeServer.VCS, "A file's past", setOf("blame", "file_history", "local_history", "file_at")),
     OPS_SERVICES(
         "ops.services",
         IdeServer.OPS,

@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import dev.lain.claudejb.controller.git.GitAvailability
 import dev.lain.claudejb.controller.git.GitHistoryService
 import dev.lain.claudejb.model.mcp.ToolException
+import git4idea.branch.GitBrancher
 import git4idea.checkin.GitCheckinEnvironment
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
@@ -108,6 +109,87 @@ internal class GitCommands(private val project: Project) {
         return remote.name
     }
 
+    fun stash(action: String, message: String?): List<String> {
+        requireGit()
+        val repository = repository()
+        val params = when (action) {
+            "save" -> listOfNotNull("push", message?.let { "-m" }, message)
+            "pop", "apply", "drop", "list" -> listOf(action)
+            else -> throw ToolException("action must be save, pop, apply, drop or list")
+        }
+        val output = run(repository, GitCommand.STASH, params)
+        if (action != "list") refresh(repository, worktree = true)
+        return output
+    }
+
+    fun worktrees(action: String, path: String?, branch: String?): List<String> {
+        requireGit()
+        val repository = repository()
+        val params = when (action) {
+            "list" -> listOf("list", "--porcelain")
+            "add" -> listOfNotNull("add", branch?.let { "-b" }, branch, needed(action, "path", path))
+            "remove" -> listOf("remove", needed(action, "path", path))
+            else -> throw ToolException("action must be list, add or remove")
+        }
+        val output = run(repository, GitCommand.WORKTREE, params)
+        if (action != "list") refresh(repository, worktree = false)
+        return output
+    }
+
+    fun remotes(action: String, name: String?, url: String?): List<String> {
+        requireGit()
+        val repository = repository()
+        val params = when (action) {
+            "list" -> listOf("-v")
+            "add" -> listOf("add", needed(action, "name", name), needed(action, "url", url))
+            "remove" -> listOf("remove", needed(action, "name", name))
+            "rename" -> listOf("rename", needed(action, "name", name), needed(action, "url (the new name)", url))
+            else -> throw ToolException("action must be list, add, remove or rename")
+        }
+        val output = run(repository, GitCommand.REMOTE, params)
+        if (action != "list") refresh(repository, worktree = false)
+        return output
+    }
+
+    private fun needed(action: String, key: String, value: String?): String = value ?: throw ToolException("action=$action needs $key")
+
+    fun show(reference: String, path: String): List<String> {
+        requireGit()
+        return run(repository(), GitCommand.SHOW, listOf("$reference:$path"))
+    }
+
+    fun branchOp(action: String, reference: String, target: String?) {
+        requireGit()
+        val repository = repository()
+        val repositories = listOf(repository)
+        val brancher = GitBrancher.getInstance(project)
+        val other = { needed(action, "target", target) }
+        when (action) {
+            "merge" -> brancher.merge(branch(repository, reference), GitBrancher.DeleteOnMergeOption.NOTHING, repositories)
+            "rebase" -> brancher.rebase(repositories, reference)
+            "rebase_onto" -> brancher.rebase(repositories, other(), reference)
+            "compare" -> brancher.compare(reference, repositories)
+            "diff_with_local" -> brancher.showDiffWithLocal(reference, repositories)
+            "rename" -> brancher.renameBranch(reference, other(), repositories)
+            "delete" -> brancher.deleteBranch(reference, repositories)
+            "checkout" -> brancher.checkout(reference, false, repositories, null)
+            "checkout_as_new" -> brancher.checkoutNewBranchStartingFrom(other(), reference, repositories, null)
+            "new_tag" -> brancher.createNewTag(other(), reference, repositories, null)
+            else -> throw ToolException("action must be one of $BRANCH_ACTIONS")
+        }
+    }
+
+    private fun branch(repository: GitRepository, name: String) =
+        repository.branches.findBranchByName(name) ?: throw ToolException("no branch named $name in this repository")
+
+    private fun run(repository: GitRepository, command: GitCommand, params: List<String>): List<String> {
+        val handler = GitLineHandler(project, repository.root, command)
+        handler.addParameters(params)
+        val result = Git.getInstance().runCommand(handler)
+        checked(result)
+        return result.output
+    }
+
     private fun repository(): GitRepository {
         val wanted = project.service<GitHistoryService>().primaryRepositoryRoot()
         return GitRepositoryManager.getInstance(project).repositories.firstOrNull { it.root.path == wanted }
@@ -149,5 +231,8 @@ internal class GitCommands(private val project: Project) {
     companion object {
         private const val CONFLICT = "CONFLICT"
         private const val CONFLICT_HINT = "resolve the conflicts in the IDE with vcs_action(action=resolve_conflicts)"
+
+        const val BRANCH_ACTIONS =
+            "merge, rebase, rebase_onto, compare, diff_with_local, rename, delete, checkout, checkout_as_new or new_tag"
     }
 }

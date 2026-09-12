@@ -36,7 +36,7 @@ object LaunchDefaults {
 
     const val DEFAULT_IDE_RULES =
         "code.read,code.search,code.navigate,code.edit,code.edit_ops,code.refactor,code.format,code.diagnostics,code.editor," +
-            "code.recent,run.build,run.run,run.terminal,run.debug,vcs.read,vcs.write,vcs.forge," +
+            "code.recent,run.build,run.run,run.terminal,run.debug,vcs.read,vcs.write,vcs.forge,vcs.log_ops,vcs.changes,vcs.history," +
             "ops.services,ops.project,ops.ide,ops.actions,ops.window,ops.data," +
             "common.show,common.query,common.prs,common.batch,common.agents,common.tools,common.fallback,common.report"
 
