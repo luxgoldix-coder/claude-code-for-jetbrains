@@ -293,6 +293,24 @@ Rules that hold for every tool:
 | `local_history` *mutates* | show the IDE's Local History of a file; label the project before a risky change; revert a file to a label of this session. | Before a big refactor. `vcs ▸ local_history {path: "A.kt", action: "label", label: "before-rename"}` |
 | `file_at` | A file's content at a ref, and the IDE's diff of it against the working tree. | "how was this on main". `vcs ▸ file_at {path: "A.kt", ref: "main"}` |
 
+### pull_request_ops
+
+| Tool | Capability | When · example |
+|---|---|---|
+| `pr_create` *mutates* | Opens a pull request through the IDE's GitHub account: base, head, title, body, draft; the Pull Requests view is shown. | "open the PR to develop". `vcs ▸ pr_create {base: "develop", head: "feature/x", title: "…", body: "…"}` |
+| `pr_comment` *mutates* | A comment on a pull request's conversation, as the IDE's account. | "leave a note on #74". `vcs ▸ pr_comment {number: 74, body: "…"}` |
+| `pr_checks` | Mergeability and every check on the head commit, polled every 10 s until nothing is pending or `wait` runs out; `settled` and `can_merge` say where it stands. | "is the CI green". `vcs ▸ pr_checks {number: 74, wait: 110}` |
+| `pr_merge` *mutates* | A merge commit through the IDE's account, only when the checks have settled green and the merge state is clean; refuses otherwise, naming the blocker. Merging into a branch that publishes on merge publishes. | "merge it". `vcs ▸ pr_merge {number: 74}` |
+
+### release
+
+| Tool | Capability | When · example |
+|---|---|---|
+| `tags` | The repository's tags on GitHub with their commits. | "is v6.0.0 tagged". `vcs ▸ tags {max: 5}` |
+| `workflow_runs` | GitHub Actions runs, optionally of one branch: status, conclusion, url. | "did the release job pass". `vcs ▸ workflow_runs {branch: "main", max: 5}` |
+| `release` | The GitHub Release of a tag with its assets. | "is the Release out, with the zip and the signatures". `vcs ▸ release {tag: "v6.0.0"}` |
+| `marketplace` | The plugin's versions on the JetBrains Marketplace, from the public API, no account. | "is 6.0.0 on the Marketplace". `vcs ▸ marketplace {}` |
+
 ## `ops` — the Services panel, the project, the IDE, data
 
 | Tool | Capability | When · example |
@@ -399,7 +417,8 @@ mirrored in the IDE without taking the user's focus.
 
 | Capability | Tools (domain) | Status |
 |---|---|---|
-| GitHub pull requests listed and opened through the IDE's GitHub plugin | `pull_requests`, `pull_request` (`forge`), `GitHubGateway` | ☑ (data through the IDE's account; opening a request selects nothing in the IDE's view because `GHPRProjectViewModel` is Internal at 262, so `open` shows the view and the browser) |
+| GitHub pull requests listed and opened through the IDE's GitHub plugin | `pull_requests`, `pull_request` (`forge`), `GitHubGateway` | ☑ (data through the IDE's account; `open` selects the request in the IDE's Pull Requests view by selecting its row and firing the view's own action, the browser only when the view does not list it) |
+| The release driven from the IDE: create, comment, watch and merge pull requests; verify tags, runs, the Release and the Marketplace | `pr_create`, `pr_comment`, `pr_checks`, `pr_merge` (`pull_request_ops`); `tags`, `workflow_runs`, `release`, `marketplace` (`release`); `MarketplaceGateway` | ☑ (GitHub through the IDE's account; the Marketplace through its public API) |
 | GitLab merge requests: actions and view; data if a public path exists | `vcs_action`, `GitLabGateway` | ☑ actions only: `GitLabAccountManager` and `GitLabProjectViewModel` are Internal, so no data path exists; `vcs_action(merge_requests, create_merge_request, clone_gitlab, create_snippet, gitlab_accounts)` covers the submenu |
 
 ### P4 — analysis, views, files, refactorings

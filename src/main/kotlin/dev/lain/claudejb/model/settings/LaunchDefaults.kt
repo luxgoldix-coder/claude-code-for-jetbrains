@@ -39,6 +39,7 @@ object LaunchDefaults {
             "code.analyze,code.analysis,code.views,code.files,code.refactor_ops,code.templates,code.language,code.bookmarks," +
             "code.psi,code.index,code.uast,code.workspace,code.markup,code.presence,code.recent," +
             "run.build,run.run,run.terminal,run.ops,run.debug,vcs.read,vcs.write,vcs.forge,vcs.log_ops,vcs.changes,vcs.history," +
+            "vcs.pr_ops,vcs.release," +
             "ops.services,ops.project,ops.ide,ops.actions,ops.service_view,ops.remote,ops.tools_menu,ops.consoles,ops.window," +
             "ops.data," +
             "common.show,common.query,common.prs,common.batch,common.agents,common.tools,common.fallback,common.report"

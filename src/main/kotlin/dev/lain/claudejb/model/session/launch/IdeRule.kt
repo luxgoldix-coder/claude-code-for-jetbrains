@@ -106,6 +106,8 @@ enum class IdeRule(val key: String, val server: IdeServer?, val label: String, v
     ),
     VCS_CHANGES("vcs.changes", IdeServer.VCS, "Stash, shelve, patch, rollback", setOf("stash", "shelve", "patch", "rollback")),
     VCS_HISTORY("vcs.history", IdeServer.VCS, "A file's past", setOf("blame", "file_history", "local_history", "file_at")),
+    VCS_PR_OPS("vcs.pr_ops", IdeServer.VCS, "Pull requests as data", setOf("pr_create", "pr_comment", "pr_checks", "pr_merge")),
+    VCS_RELEASE("vcs.release", IdeServer.VCS, "What a release left behind", setOf("tags", "workflow_runs", "release", "marketplace")),
     OPS_SERVICES(
         "ops.services",
         IdeServer.OPS,

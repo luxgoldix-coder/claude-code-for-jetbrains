@@ -56,6 +56,8 @@ import dev.lain.claudejb.controller.mcp.tools.vcs.GitReadTools
 import dev.lain.claudejb.controller.mcp.tools.vcs.GitWriteTools
 import dev.lain.claudejb.controller.mcp.tools.vcs.HistoryTools
 import dev.lain.claudejb.controller.mcp.tools.vcs.LogOpsTools
+import dev.lain.claudejb.controller.mcp.tools.vcs.PullRequestOpsTools
+import dev.lain.claudejb.controller.mcp.tools.vcs.ReleaseTools
 import dev.lain.claudejb.model.mcp.ToolCatalog
 import dev.lain.claudejb.model.mcp.ToolDomain
 import dev.lain.claudejb.model.session.launch.IdeServer
@@ -109,6 +111,8 @@ internal object IdeToolCatalog {
             { p, s -> LogOpsTools(p, IdeActions(p, s)).domain() },
             { p, s -> ChangesTools(p, IdeActions(p, s), Reveal(p)).domain() },
             { p, s -> HistoryTools(p, IdeActions(p, s), Reveal(p)).domain() },
+            { p, _ -> PullRequestOpsTools(p, Reveal(p)).domain() },
+            { p, _ -> ReleaseTools(p).domain() },
         ),
         IdeServer.OPS to listOf(
             { p, s -> ServiceTools(p, s).domain() },

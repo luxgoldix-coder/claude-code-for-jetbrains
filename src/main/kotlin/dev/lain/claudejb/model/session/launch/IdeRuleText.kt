@@ -142,6 +142,17 @@ internal object IdeRuleText {
             "commits that touched a file call file_history, and the history tab is shown. For the IDE's Local History " +
             "call local_history: show its view, put a label before a risky change, revert to a label. For a file's content " +
             "at a branch, tag or commit call file_at: the IDE's diff against the working tree is shown.",
+        IdeRule.VCS_PR_OPS to "A pull request is driven as data through the IDE's GitHub account, never through gh: call " +
+            "pr_create with base, head, title and body once the head branch is pushed (the Pull Requests view is shown), " +
+            "pr_comment to post on its conversation, pr_checks to read its mergeability and every check on its head " +
+            "commit, polling until they settle or wait runs out (call again while settled is false), and pr_merge to " +
+            "merge it with a merge commit once can_merge is true; it refuses and names what blocks it otherwise. A merge " +
+            "into a branch that publishes on merge publishes: say so before calling it.",
+        IdeRule.VCS_RELEASE to "To verify what a release left behind call tags for the repository's tags with their commits, " +
+            "workflow_runs for the GitHub Actions runs of a branch with status and conclusion (call again while a run is " +
+            "queued or in_progress), release for the GitHub Release of a tag with its assets, and marketplace for the " +
+            "plugin's versions on the JetBrains Marketplace; the first three go through the IDE's GitHub account, the " +
+            "last through the public Marketplace API. Never gh.",
         IdeRule.OPS_SERVICES to "The Services window is the DevOps panel: call services to see its tree as the user does, " +
             "service_actions to see what the IDE offers on a node, service_action to perform one exactly as clicking it " +
             "would, service_open to reveal the node. Never kubectl, docker or podman.",
