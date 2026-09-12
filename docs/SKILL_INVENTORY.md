@@ -152,32 +152,106 @@ Rules that hold for every tool:
 - **The rules block**: the `<ide-integration>` fragment rides the system prompt and a hook every turn and
   names which tool replaces which native one; each rule is a switch in Settings ▸ Claude Code.
 
-## Pending — what the roadmap still owes
+## Board — phase 1, "Claude on JetBrains"
 
-From [`MCP_ROADMAP.md`](MCP_ROADMAP.md), horizon 2 and 3, plus what horizon 1 left open. Nothing here is
-written without its platform API read in source first.
+The order of this phase. **Legend**: ☐ to do · ◐ in progress · ☑ done and committed. A row moves in the
+same commit that lands its tools, and the tools enter the tables above in that commit. Every domain holds
+at most four tools; a capability that needs more is a new domain. Two laws close the surface: every
+registered action is reachable through `actions` + `ide_action(target)`, and every action Claude takes is
+mirrored in the IDE without taking the user's focus.
 
-| Capability | Tools | Status |
+### P0 — foundations and the reported bugs
+
+| Capability | Where | Status |
 |---|---|---|
-| Pull requests as data | `pull_requests` (list: number, title, state, draft, author, branches), `pull_request(number)` (detail, opened in the IDE's view) in `forge` | Next. Through the IDE's GitHub plugin — its account, credential and request executor — in a `GitHubGateway`, optional dependency. |
-| Tests from a file when a project has several `Test` tasks over one source set | `run_tests(path)` | Open: the IDE's Gradle test launcher passes the filter to every task and fails when one matches nothing (`checkDrift` here). Either a source set of its own for drift, or the JUnit producer when Gradle cannot narrow. |
-| Quick fixes | `quickfix` | Held: `ShowIntentionsPass` lives in an implementation module. |
-| Completion | `completion` | Conditional, may never enter: needs `CompletionParameters` with a public constructor; the comfortable path is test-framework only. |
-| Live templates and file templates | `templates`, `template_apply`, `file_templates`, `file_from_template` | Horizon 2 — R1. |
-| Injected languages and documentation | `injections`, `inject_at`, `docs` | Horizon 2 — R2. |
-| Bookmarks and the project view | `bookmarks`, `bookmark_add`, `project_view_select`, `structure_select` | Horizon 2 — R3. |
-| The workspace model, read-only | `workspace` | Horizon 2 — R4. |
-| PSI as a tree | `psi_tree`, `psi_at`, `psi_replace`, `psi_insert` | Horizon 2 — R5. |
-| The IDE's indexes as a query surface | `index_keys`, `index_query`, `stub_query` | Horizon 2 — R6. |
-| UAST, one shape for JVM languages | `uast_tree`, `uast_at` | Horizon 2 — R7. |
-| Editor markup: highlights, gutter icons, inline hints | `mark_add`, `mark_remove`, `marks`, `hint_add` | Horizon 3 — S1. |
-| The editor banner as a channel | `banner_show`, `banner_clear` | Horizon 3 — S2. |
-| Diffs, scratches and the status bar | `diff_show`, `scratch_create`, `status` | Horizon 3 — S3. |
-| One edit, one undo entry, one history label | — | Horizon 3 — S4, pulled into horizon 1. |
-| The products the user actually has (DataGrip, Spring, Tomcat, …) | one degradable domain each | Horizon 3 — S5. |
-| Split mode and remote development | — | Horizon 3 — S6: a local socket may not be where the client is. |
-| Any MCP client drives the IDE | client adapter and published configuration | Q10; a minimal client in the repo is the proof still owed. |
+| An own call made by a subagent gets its card, nested under the agent | `ToolEvents` | ☐ |
+| Permission popup, approval rows and guard log name the tool (`code ▸ read_file ▸ path`), not `run` | `OwnTools.label` on every surface | ☐ |
+| An agent still reasoning is never shown as completed | `AgentRegistry` | ☐ |
+| The rules block has no length limit; the test asserts coverage and prints the size | `IdeMcpPrompt`, `IdeRule`, `IdeMcpPromptTest` | ☐ |
+| 250 lines per file, imports not counted | `FileSizeContractTest` | ☐ |
+| Reveal without focus on every existing tool; `FocusKeeper` returns the focus the platform steals; the terminal is never focused nor its tab switched | `FocusKeeper`, every domain, a contract test | ☐ |
+| Live mirror with one switch (Settings ▸ Claude Code, ON): reads in the preview tab, edits in a real tab, commits in the log, nodes in Services, problems in their tab, runs in their window | `Reveal`, `IdeMcpState.mirror`, Settings section | ☐ |
+| `vcs_open(log, range)` off the deprecated `openLogTab` | `GitLogNavigator` | ☐ |
+| `run_tests(path)` prefers the framework producer over Gradle | `TestTools` | ☐ |
 
-**Out of scope, on record**: LSP (commercial IDEs only), `sdk_set` (a global change that goes through the
-dialog), and the third-party server tools discarded in the roadmap's coverage matrix — change signature,
-super methods, structural search and replace, module and project lifecycle, plugin install, IDE restart.
+### P1 — every action, with its target
+
+| Capability | Tools (domain) | Status |
+|---|---|---|
+| The action catalogue of the user's IDE, enabled-in-context; the main menu tree | `actions`, `menu` (`actions`) | ☐ |
+| Appearance and UI toggles | `appearance`, `ui` (`actions`) | ☐ |
+| `ide_action` with a target: file/position, commit, Services node | `ide_action` +`path`/`line`/`column`/`hash`/`node` (`ide`) | ☐ |
+| Code menu editing actions at a position | `editor_action` (`editor`) | ☐ |
+| Undo, redo, replace in path, line operations | `undo`, `redo`, `search_replace`, `line_ops` (`edit_ops`) | ☐ |
+| Recent files/locations/changes, back/forward, clipboard compare, schemes | `recent`, `navigate_history`, `compare_clipboard`, `scheme` (`recent`) | ☐ |
+| Editor tabs, layouts, zoom, editor settings | `tabs`, `layout`, `zoom`, `editor_settings` (`window`) | ☐ |
+| Every Git-menu dialog by name | `vcs_action` table extended (`forge`) | ☐ |
+
+### P2 — Git as the log and the branches panel do it
+
+| Capability | Tools (domain) | Status |
+|---|---|---|
+| The commit context menu on a hash; branch operations through `GitBrancher`; worktrees; remotes | `commit_action`, `branch_op`, `worktrees`, `remotes` (`log_ops`) | ☐ |
+| Stash, shelve, patches, rollback | `stash`, `shelve`, `patch`, `rollback` (`changes`) | ☐ |
+| Blame, file history, local history, a file at a ref | `blame`, `file_history`, `local_history`, `file_at` (`history`) | ☐ |
+
+### P3 — pull and merge requests as data
+
+| Capability | Tools (domain) | Status |
+|---|---|---|
+| GitHub pull requests listed and opened through the IDE's GitHub plugin | `pull_requests`, `pull_request` (`forge`), `GitHubGateway` | ☐ |
+| GitLab merge requests: actions and view; data if a public path exists | `vcs_action`, `GitLabGateway` | ☐ |
+
+### P4 — analysis, views, files, refactorings
+
+| Capability | Tools (domain) | Status |
+|---|---|---|
+| Inspect a scope, code cleanup, dependency analysis, data flow | `inspect_scope`, `cleanup`, `dependencies`, `dataflow` (`analyze`) | ☐ |
+| Stack traces, duplicates, nullity, related symbols | `stack_trace`, `duplicates`, `infer_nullity`, `related` (`analysis`) | ☐ |
+| Diffs, compare, mark directory as, open in | `diff_show`, `compare`, `mark_as`, `open_in` (`views`) | ☐ |
+| Copy path, file type, ignore files, delete | `copy_path`, `file_type`, `ignore`, `delete_file` (`files`) | ☐ |
+| The Refactor menu beyond rename/move/safe-delete | `introduce`, `extract`, `inline`, `members` (`refactor_ops`) | ☐ |
+
+### P5 — roadmap horizon 2
+
+| Capability | Tools (domain) | Status |
+|---|---|---|
+| Live and file templates (R1) | `templates`, `template_apply`, `file_templates`, `file_from_template` (`templates`) | ☐ |
+| Injected languages, quick documentation (R2; `docs` reveals the popup, `DocumentationTarget` is override-only) | `injections`, `inject_at`, `docs` (`language`) | ☐ |
+| Bookmarks and the project view (R3; Structure follows the caret) | `bookmarks`, `bookmark_add`, `bookmark_remove`, `project_view` (`bookmarks`) | ☐ |
+| The workspace model, read-only (R4) | `workspace` (`workspace`) | ☐ |
+| PSI as a tree (R5) | `psi_tree`, `psi_at`, `psi_replace`, `psi_insert` (`psi`) | ☐ |
+| The IDE's indexes (R6) | `index_keys`, `index_query`, `stub_query` (`index`) | ☐ |
+| UAST (R7) | `uast_tree`, `uast_at` (`uast`) | ☐ |
+
+### P6 — roadmap horizon 3, presence
+
+| Capability | Tools (domain) | Status |
+|---|---|---|
+| Editor markup: highlights, gutter icons, inline hints (S1) | `mark_add`, `mark_remove`, `marks`, `hint_add` (`markup`) | ☐ |
+| Banners, status bar, scratches (S2, S3) | `banner_show`, `banner_clear`, `status`, `scratch_create` (`presence`) | ☐ |
+| One edit, one undo entry, one history label (S4) | `edit` domain | ☐ |
+
+### P7 — Services in depth, the closed plugins
+
+| Capability | Tools (domain) | Status |
+|---|---|---|
+| A node's data, extract, expand, events | `service_data`, `service_extract`, `service_expand`, `service_events` (`service_view`), `ServiceContentGateway` | ☐ |
+| Deployment, SSH sessions, Qodana, vulnerable dependencies (S5) | `deployment`, `ssh_session`, `qodana`, `vulnerable_dependencies` (`remote`) | ☐ |
+
+### P8 — run, tools, consoles, the client
+
+| Capability | Tools (domain) | Status |
+|---|---|---|
+| Build a module or a file; run with coverage; more step kinds; watches | `build` +`kind`, `run_configuration` +`executor`, `step` +kinds, `watch` (`run`, `debug`) | ☐ |
+| Edit configurations, attach, profile, coverage | `edit_configuration`, `attach`, `profile`, `coverage` (`run_ops`) | ☐ |
+| Terminal tabs | `terminal_tabs` (`terminal`) | ☐ |
+| Javadoc, launchers, XML, Markdown | `javadoc`, `launcher`, `xml`, `markdown` (`tools_menu`) | ☐ |
+| Groovy console, Kotlin bytecode and configuration, Python console | `groovy_console`, `kotlin_bytecode`, `kotlin_configure`, `python_console` (`consoles`) | ☐ |
+| Any MCP client drives the IDE (Q10); split mode (S6) | a minimal client in the repo; runtime detection | ☐ |
+
+**Out, on record**: `completion` (its parameters have no public constructor), LSP (commercial IDEs; runtime
+detection if ever needed), `sdk_set` (a global change that goes through the dialog), `structure_select`
+(no public accessor; the Structure window follows the caret), and the third-party server tools discarded in
+the roadmap's coverage matrix — change signature as data, super methods, structural search and replace,
+module and project lifecycle, plugin install, IDE restart.
