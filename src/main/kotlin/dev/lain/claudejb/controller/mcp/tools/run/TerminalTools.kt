@@ -7,6 +7,7 @@ import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutputType
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -17,6 +18,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.terminal.TerminalExecutionConsole
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
+import com.intellij.ui.content.ContentManager
 import dev.lain.claudejb.controller.mcp.FocusKeeper
 import dev.lain.claudejb.controller.mcp.tools.code.ReadTools
 import dev.lain.claudejb.model.mcp.Param
@@ -28,7 +30,11 @@ import dev.lain.claudejb.model.mcp.ToolResult
 import dev.lain.claudejb.model.mcp.ToolSpec
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import java.nio.file.Path
 
 internal class TerminalTools(private val project: Project, scope: CoroutineScope) {
@@ -37,9 +43,43 @@ internal class TerminalTools(private val project: Project, scope: CoroutineScope
 
     fun domain(): ToolDomain = ToolDomain(
         "terminal",
-        "A command in the IDE's Terminal tool window, with its console and exit code",
-        listOf(Tool(SHELL, ::shell)),
+        "A command in the IDE's Terminal tool window, with its console and exit code, and the window's tabs",
+        listOf(Tool(SHELL, ::shell), Tool(TERMINAL_TABS, ::tabs)),
     )
+
+    private suspend fun tabs(args: ToolArgs): ToolResult {
+        val action = args.optionalString("action") ?: "list"
+        val name = closing(action, args.optionalString("name"))
+        val rows = withContext(Dispatchers.EDT) {
+            val manager = ToolWindowManager.getInstance(project).getToolWindow(TERMINAL_WINDOW)?.contentManager
+                ?: throw ToolException("this IDE has no Terminal tool window")
+            if (action == "close") manager.removeContent(tabNamed(manager, name.orEmpty()), true)
+            manager.contents.map { content ->
+                buildJsonObject {
+                    put("name", content.displayName ?: "")
+                    put("selected", manager.isSelected(content))
+                    put("ours", content.getUserData(TAB) != null)
+                    put("running", content.getUserData(TAB)?.handler?.isProcessTerminated == false)
+                }
+            }
+        }
+        return ToolResult.toon(
+            buildJsonObject {
+                put("action", action)
+                put("count", rows.size)
+                put("tabs", buildJsonArray { rows.forEach { add(it) } })
+            },
+        )
+    }
+
+    private fun closing(action: String, name: String?): String? = when {
+        action != "list" && action != "close" -> throw ToolException("action must be list or close")
+        action == "close" && name == null -> throw ToolException("action=close needs name")
+        else -> name
+    }
+
+    private fun tabNamed(manager: ContentManager, name: String): Content = manager.contents.firstOrNull { it.displayName == name }
+        ?: throw ToolException("no terminal tab named $name; action=list names them")
 
     private suspend fun shell(args: ToolArgs): ToolResult {
         val tailLines = OutputTail.lines(args)
@@ -127,6 +167,18 @@ internal class TerminalTools(private val project: Project, scope: CoroutineScope
         private const val TERMINAL_WINDOW = "Terminal"
         private const val TAB_TITLE = "Claude"
         private val TAB: Key<Tab> = Key.create("claude.terminal.tab")
+
+        val TERMINAL_TABS = ToolSpec(
+            "terminal_tabs",
+            "The tabs of the Terminal tool window: name, whether selected, whether it is Claude's and whether a command " +
+                "still runs in it (action=list, the default); action=close closes a tab by name. The user's tab is never " +
+                "selected or focused.",
+            listOf(
+                Param("action", "list (default) or close", required = false),
+                Param("name", "The tab name to close", required = false),
+            ),
+            mutates = true,
+        )
 
         val SHELL = ToolSpec(
             "shell",

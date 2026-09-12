@@ -1,5 +1,7 @@
 package dev.lain.claudejb.controller.mcp.tools.run
 
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
@@ -85,15 +87,15 @@ internal class DebugTools(private val project: Project) {
         val kind = args.string("kind")
         val session = sessions.resolve(args.optionalString("name"))
         val wait = DebugSpecs.waitSeconds(args, DEFAULT_STEP_WAIT)
+        if (kind == "mute") {
+            withContext(Dispatchers.EDT) { session.setBreakpointMuted(!session.areBreakpointsMuted()) }
+            return ToolResult.toon(sessions.status(session, STEP_FRAMES, DEFAULT_VARIABLES))
+        }
         val move: ((XDebugSession) -> Unit)? = when (kind) {
             "wait" -> null
             "pause" -> if (session.isSuspended) null else XDebugSession::pause
-            "resume" -> XDebugSession::resume
-            "over" -> { s -> s.stepOver(false) }
-            "into" -> XDebugSession::stepInto
-            "out" -> XDebugSession::stepOut
             "run_to" -> runTo(args)
-            else -> throw ToolException("kind must be over, into, out, resume, pause, run_to or wait, not $kind")
+            else -> MOVES[kind] ?: throw ToolException("kind must be one of ${DebugSpecs.STEP_KINDS}, not $kind")
         }
         if (move != null && kind != "pause" && !session.isSuspended) throw ToolException(DebugSpecs.RUNNING)
         sessions.awaitPause(session, wait, move?.let { act -> suspend { withContext(Dispatchers.EDT) { act(session) } } })
@@ -211,5 +213,21 @@ internal class DebugTools(private val project: Project) {
 
     private companion object {
         const val LOOKUP = 500
+        const val SMART_STEP_INTO = "SmartStepInto"
+
+        val MOVES: Map<String, (XDebugSession) -> Unit> = mapOf(
+            "resume" to XDebugSession::resume,
+            "over" to { s -> s.stepOver(false) },
+            "into" to XDebugSession::stepInto,
+            "out" to XDebugSession::stepOut,
+            "force_into" to XDebugSession::forceStepInto,
+            "smart_into" to { _ -> smartStepInto() },
+        )
+
+        fun smartStepInto() {
+            val action = ActionManager.getInstance().getAction(SMART_STEP_INTO)
+                ?: throw ToolException("this IDE has no $SMART_STEP_INTO action")
+            ActionManager.getInstance().tryToExecute(action, null, null, ActionPlaces.DEBUGGER_TOOLBAR, true)
+        }
     }
 }

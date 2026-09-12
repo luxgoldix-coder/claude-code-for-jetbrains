@@ -83,9 +83,13 @@ internal class RunTools(private val project: Project, scope: CoroutineScope) {
         if (deadline.expired()) throw ToolException(Jobs.NOT_STARTED)
         val settings = readAction { RunManager.getInstance(project).findConfigurationByName(name) }
             ?: throw ToolException("no run configuration named $name; run_configurations lists them")
+        val executor = executor(args)
         val tail = OutputTail.toCard(project, args)
-        return jobs.start(tail) { processRun.run(settings, tail) }
+        return jobs.start(tail) { processRun.run(settings, tail, executor) }
     }
+
+    private fun executor(args: ToolArgs): String = EXECUTORS[args.optionalString("executor") ?: "run"]
+        ?: throw ToolException("executor must be one of ${EXECUTORS.keys.joinToString()}")
 
     private suspend fun processes(args: ToolArgs): ToolResult = when (val action = args.optionalString("action") ?: "list") {
         "list" -> list(args.int("max", DEFAULT_MAX))
@@ -134,6 +138,9 @@ internal class RunTools(private val project: Project, scope: CoroutineScope) {
 
         private const val DEFAULT_MAX = 50
 
+        val EXECUTORS: Map<String, String> =
+            linkedMapOf("run" to "Run", "debug" to "Debug", "coverage" to "Coverage", "profile" to "Profiler")
+
         val RUN_CONFIGURATIONS = ToolSpec(
             "run_configurations",
             "Lists the project's run configurations as the Run/Debug combo shows them: name, type, folder, whether temporary " +
@@ -144,10 +151,12 @@ internal class RunTools(private val project: Project, scope: CoroutineScope) {
         val RUN_CONFIGURATION = ToolSpec(
             "run_configuration",
             "Starts a run configuration exactly as the Run button does, before-launch tasks included, and returns its exit code " +
-                "and the end of its console; several in a row with names. Output streams to the chat while it runs; status " +
-                "running means call again with job.",
+                "and the end of its console; several in a row with names. executor picks the button: run (default), debug, " +
+                "coverage (the Coverage window afterwards) or profile (the Profiler, where installed). Output streams to the " +
+                "chat while it runs; status running means call again with job.",
             listOf(
                 Param("name", "The configuration name as run_configurations lists it (not needed with job)", required = false),
+                Param("executor", "run (default), debug, coverage or profile", required = false),
                 Batch.param(Batch.RUN_NAMES, "Several configurations, run one after another within one wait, one result each"),
                 Jobs.WAIT,
                 OutputTail.TAIL,

@@ -3,6 +3,7 @@ package dev.lain.claudejb.controller.mcp.tools.run
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.ExecutionListener
 import com.intellij.execution.ExecutionManager
+import com.intellij.execution.ExecutorRegistry
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.process.ProcessEvent
@@ -29,12 +30,17 @@ internal class ProcessRun(private val project: Project) {
         val external = AtomicReference<ExternalTaskOutput?>()
     }
 
-    suspend fun run(settings: RunnerAndConfigurationSettings, tail: OutputTail, onHandler: (ProcessHandler) -> Unit = {}): Int {
+    suspend fun run(
+        settings: RunnerAndConfigurationSettings,
+        tail: OutputTail,
+        executorId: String = DefaultRunExecutor.EXECUTOR_ID,
+        onHandler: (ProcessHandler) -> Unit = {},
+    ): Int {
         val pending = Pending()
         val connection = project.messageBus.connect()
         try {
             connection.subscribe(ExecutionManager.EXECUTION_TOPIC, listener(settings, tail, onHandler, pending))
-            withContext(Dispatchers.EDT) { launch(settings) }
+            withContext(Dispatchers.EDT) { launch(settings, executorId) }
             withTimeoutOrNull(START_TIMEOUT_MILLIS) { pending.started.await() }
                 ?: throw ToolException(
                     "${settings.name} did not start within ${START_TIMEOUT_MILLIS / MILLIS} s: a before-launch task may have " +
@@ -47,9 +53,11 @@ internal class ProcessRun(private val project: Project) {
         }
     }
 
-    private fun launch(settings: RunnerAndConfigurationSettings) {
+    private fun launch(settings: RunnerAndConfigurationSettings, executorId: String) {
+        val executor = ExecutorRegistry.getInstance().getExecutorById(executorId)
+            ?: throw ToolException("this IDE has no executor $executorId; is its plugin (Coverage, Profiler) installed?")
         val environment = try {
-            ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), settings).activeTarget().build()
+            ExecutionEnvironmentBuilder.create(executor, settings).activeTarget().build()
         } catch (e: ExecutionException) {
             throw ToolException("${settings.name} cannot run: ${e.message}", e)
         }

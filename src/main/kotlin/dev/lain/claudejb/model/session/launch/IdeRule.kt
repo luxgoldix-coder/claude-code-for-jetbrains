@@ -82,7 +82,8 @@ enum class IdeRule(val key: String, val server: IdeServer?, val label: String, v
         "Run configurations, not commands; create one when the task has none",
         setOf("run_configurations", "run_configuration", "processes"),
     ),
-    RUN_TERMINAL("run.terminal", IdeServer.RUN, "Commands run in the IDE's terminal", setOf("shell")),
+    RUN_TERMINAL("run.terminal", IdeServer.RUN, "Commands run in the IDE's terminal", setOf("shell", "terminal_tabs")),
+    RUN_OPS("run.ops", IdeServer.RUN, "The Run menu beyond starting", setOf("edit_configuration", "attach", "coverage")),
     RUN_DEBUG(
         "run.debug",
         IdeServer.RUN,
@@ -130,6 +131,13 @@ enum class IdeRule(val key: String, val server: IdeServer?, val label: String, v
         IdeServer.OPS,
         "The closed Tools entries",
         setOf("deployment", "ssh_session", "qodana", "vulnerable_dependencies"),
+    ),
+    OPS_TOOLS_MENU("ops.tools_menu", IdeServer.OPS, "Javadoc, launcher, XML, Markdown", setOf("javadoc", "launcher", "xml", "markdown")),
+    OPS_CONSOLES(
+        "ops.consoles",
+        IdeServer.OPS,
+        "Language consoles",
+        setOf("groovy_console", "kotlin_bytecode", "kotlin_configure", "python_console"),
     ),
     OPS_WINDOW("ops.window", IdeServer.OPS, "Tabs, layout, zoom and editor settings", setOf("tabs", "layout", "zoom", "editor_settings")),
     OPS_DATA(

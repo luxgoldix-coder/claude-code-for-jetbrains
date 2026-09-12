@@ -31,6 +31,7 @@ import dev.lain.claudejb.controller.mcp.tools.code.UastTools
 import dev.lain.claudejb.controller.mcp.tools.code.ViewTools
 import dev.lain.claudejb.controller.mcp.tools.code.WorkspaceTools
 import dev.lain.claudejb.controller.mcp.tools.ops.ActionTools
+import dev.lain.claudejb.controller.mcp.tools.ops.ConsoleTools
 import dev.lain.claudejb.controller.mcp.tools.ops.DbTools
 import dev.lain.claudejb.controller.mcp.tools.ops.HttpTools
 import dev.lain.claudejb.controller.mcp.tools.ops.IdeTools
@@ -40,10 +41,12 @@ import dev.lain.claudejb.controller.mcp.tools.ops.RemoteTools
 import dev.lain.claudejb.controller.mcp.tools.ops.ServiceTools
 import dev.lain.claudejb.controller.mcp.tools.ops.ServiceViewTools
 import dev.lain.claudejb.controller.mcp.tools.ops.SshTools
+import dev.lain.claudejb.controller.mcp.tools.ops.ToolsMenuTools
 import dev.lain.claudejb.controller.mcp.tools.ops.WindowTools
 import dev.lain.claudejb.controller.mcp.tools.run.BreakpointTools
 import dev.lain.claudejb.controller.mcp.tools.run.BuildTools
 import dev.lain.claudejb.controller.mcp.tools.run.DebugTools
+import dev.lain.claudejb.controller.mcp.tools.run.RunOpsTools
 import dev.lain.claudejb.controller.mcp.tools.run.RunTools
 import dev.lain.claudejb.controller.mcp.tools.run.TerminalTools
 import dev.lain.claudejb.controller.mcp.tools.run.TestTools
@@ -97,6 +100,7 @@ internal object IdeToolCatalog {
             { p, s -> TerminalTools(p, s).domain() },
             { p, _ -> DebugTools(p).domain() },
             { p, _ -> BreakpointTools(p).domain() },
+            { p, s -> RunOpsTools(p, IdeActions(p, s), Reveal(p)).domain() },
         ),
         IdeServer.VCS to listOf(
             { p, _ -> GitReadTools(p, Reveal(p)).domain() },
@@ -114,6 +118,8 @@ internal object IdeToolCatalog {
             { p, s -> WindowTools(p, IdeActions(p, s)).domain() },
             { p, s -> ServiceViewTools(p, s).domain() },
             { p, s -> RemoteTools(p, IdeActions(p, s), Reveal(p)).domain() },
+            { p, s -> ToolsMenuTools(p, IdeActions(p, s)).domain() },
+            { p, s -> ConsoleTools(p, IdeActions(p, s)).domain() },
             { p, _ -> NotifyTools(p).domain() },
             { p, _ -> DbTools(p).domain() },
             { p, s -> HttpTools(p, s, Reveal(p)).takeIf { it.available() }?.domain() },

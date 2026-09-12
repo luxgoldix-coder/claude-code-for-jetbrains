@@ -38,8 +38,9 @@ object LaunchDefaults {
         "code.read,code.search,code.navigate,code.edit,code.edit_ops,code.refactor,code.format,code.diagnostics,code.editor," +
             "code.analyze,code.analysis,code.views,code.files,code.refactor_ops,code.templates,code.language,code.bookmarks," +
             "code.psi,code.index,code.uast,code.workspace,code.markup,code.presence,code.recent," +
-            "run.build,run.run,run.terminal,run.debug,vcs.read,vcs.write,vcs.forge,vcs.log_ops,vcs.changes,vcs.history," +
-            "ops.services,ops.project,ops.ide,ops.actions,ops.service_view,ops.remote,ops.window,ops.data," +
+            "run.build,run.run,run.terminal,run.ops,run.debug,vcs.read,vcs.write,vcs.forge,vcs.log_ops,vcs.changes,vcs.history," +
+            "ops.services,ops.project,ops.ide,ops.actions,ops.service_view,ops.remote,ops.tools_menu,ops.consoles,ops.window," +
+            "ops.data," +
             "common.show,common.query,common.prs,common.batch,common.agents,common.tools,common.fallback,common.report"
 
     fun isValidMcpConfig(text: String): Boolean =

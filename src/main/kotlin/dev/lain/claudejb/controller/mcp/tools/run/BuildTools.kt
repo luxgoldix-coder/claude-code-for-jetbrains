@@ -8,11 +8,14 @@ import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.OutputBuildEvent
 import com.intellij.build.events.StartBuildEvent
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.task.ProjectTaskListener
 import com.intellij.task.ProjectTaskManager
+import dev.lain.claudejb.controller.mcp.tools.code.ReadTools
 import dev.lain.claudejb.model.mcp.Param
 import dev.lain.claudejb.model.mcp.Tool
 import dev.lain.claudejb.model.mcp.ToolArgs
@@ -52,11 +55,12 @@ internal class BuildTools(private val project: Project, scope: CoroutineScope) {
 
     private suspend fun build(args: ToolArgs): ToolResult {
         val kind = args.optionalString("kind") ?: "build"
-        if (kind != "build" && kind != "rebuild") throw ToolException("kind must be build or rebuild")
+        if (kind !in KINDS) throw ToolException("kind must be one of ${KINDS.joinToString()}")
         val max = args.int("max", DEFAULT_MAX)
         val tailLines = OutputTail.lines(args)
+        val scope = scope(kind, args)
         val job = args.optionalString("job")?.let { jobs.find(it) }
-            ?: OutputTail.toCard(project, args).let { tail -> jobs.start(tail) { run(kind, tail) } }
+            ?: OutputTail.toCard(project, args).let { tail -> jobs.start(tail) { run(kind, scope, tail) } }
         val outcome = jobs.await(job, Jobs.waitMillis(args))
         return ToolResult.toon(
             buildJsonObject {
@@ -75,7 +79,25 @@ internal class BuildTools(private val project: Project, scope: CoroutineScope) {
         )
     }
 
-    private suspend fun run(kind: String, tail: OutputTail): BuildOutcome {
+    private suspend fun scope(kind: String, args: ToolArgs): (ProjectTaskManager) -> Unit = when (kind) {
+        "module" -> {
+            val name = args.string("module")
+            val module = ModuleManager.getInstance(project).findModuleByName(name)
+                ?: throw ToolException("no module named $name; modules lists them")
+            ({ it.build(module) })
+        }
+
+        "file" -> {
+            val file = readAction { ReadTools.resolveFile(project, args.string("path")) }
+            ({ it.compile(file) })
+        }
+
+        "rebuild" -> ({ it.rebuildAllModules() })
+
+        else -> ({ it.buildAllModules() })
+    }
+
+    private suspend fun run(kind: String, scope: (ProjectTaskManager) -> Unit, tail: OutputTail): BuildOutcome {
         val finished = CompletableDeferred<ProjectTaskManager.Result>()
         val events = BuildEvents(project, tail)
         val disposable = Disposer.newDisposable("Claude build")
@@ -89,10 +111,8 @@ internal class BuildTools(private val project: Project, scope: CoroutineScope) {
                 },
             )
             project.service<BuildViewManager>().addListener(events, disposable)
-            withContext(Dispatchers.EDT) {
-                val manager = ProjectTaskManager.getInstance(project)
-                if (kind == "rebuild") manager.rebuildAllModules() else manager.buildAllModules()
-            }
+            tail.text("$ build $kind\n")
+            withContext(Dispatchers.EDT) { scope(ProjectTaskManager.getInstance(project)) }
             val result = finished.await()
             return BuildOutcome(
                 aborted = result.isAborted,
@@ -156,12 +176,18 @@ internal class BuildTools(private val project: Project, scope: CoroutineScope) {
         private const val DEFAULT_MAX = 50
         private const val MAX_STORED = 200
 
+        val KINDS: List<String> = listOf("build", "rebuild", "module", "file")
+
         val BUILD = ToolSpec(
             "build",
-            "Builds the project as the Build menu does and reports the compiler's errors with file, line and column. " +
-                "Output streams to the chat while it runs; answer status running means it is still going, call again with job.",
+            "Builds as the Build menu does and reports the compiler's errors with file, line and column: the whole project " +
+                "(kind=build, incremental, or rebuild from scratch), one module (kind=module with module) or one file " +
+                "(kind=file with path, as Recompile does). Output streams to the chat while it runs; answer status running " +
+                "means it is still going, call again with job.",
             listOf(
-                Param("kind", "build (incremental, default) or rebuild (from scratch)", required = false),
+                Param("kind", "build (default), rebuild, module or file", required = false),
+                Param("module", "The module name (kind=module)", required = false),
+                Param("path", "The file to recompile, relative to the project root (kind=file)", required = false),
                 Jobs.WAIT,
                 OutputTail.TAIL,
                 Param("max", "Maximum errors to return (default $DEFAULT_MAX)", type = "integer", required = false),

@@ -40,12 +40,16 @@ internal object DebugSpecs {
         mutates = true,
     )
 
+    const val STEP_KINDS = "over, into, out, force_into, smart_into, resume, pause, mute, run_to or wait"
+
     val STEP = ToolSpec(
         "step",
-        "Moves the suspended session and waits for the next stop: over, into, out, resume, pause, run_to (a path and line) " +
-            "or wait (only waits). Answers with the session status; suspended false means nothing stopped within wait.",
+        "Moves the suspended session and waits for the next stop: over, into, out, force_into (into a library), smart_into " +
+            "(the IDE's chooser when a line holds several calls), resume, pause, run_to (a path and line) or wait (only " +
+            "waits); mute toggles every breakpoint. Answers with the session status; suspended false means nothing " +
+            "stopped within wait.",
         listOf(
-            Param("kind", "over, into, out, resume, pause, run_to or wait"),
+            Param("kind", STEP_KINDS),
             Param("path", "File path for run_to, absolute or relative to the project root", required = false),
             Param("line", "1-based line for run_to", type = "integer", required = false),
             SESSION_NAME,

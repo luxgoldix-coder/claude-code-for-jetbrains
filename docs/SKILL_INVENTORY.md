@@ -232,15 +232,19 @@ Rules that hold for every tool:
 
 | Tool | Capability | When · example |
 |---|---|---|
-| `build` *mutates* | The IDE's build, incremental or `rebuild`, with the compiler's errors and positions; streamed. | "does it compile". `run ▸ build {kind: "build", wait: 110}` |
+| `build` *mutates* | The IDE's build, incremental or `rebuild`, a `module` or one `file`, with the compiler's errors and positions; streamed. | "does it compile". `run ▸ build {kind: "module", module: "app", wait: 110}` |
 | `run_configurations` | The run configurations as the Run combo shows them: name, type, temporary, selected. | Before running anything. `run ▸ run_configurations {}` |
-| `run_configuration` *mutates* | Starts one as the Run button does, before-launch tasks included; exit code and console tail; several with `names`. | "run the gates", any project script that already has a configuration. `run ▸ run_configuration {name: "Tool: lint", wait: 110}` |
+| `run_configuration` *mutates* | Starts one as the Run button does, before-launch tasks included; `executor` run, debug, coverage or profile; exit code and console tail; several with `names`. | "run the gates", any project script that already has a configuration. `run ▸ run_configuration {name: "Tool: lint", wait: 110}` |
 | `processes` *mutates* | The Run tool window's tabs, or stops one by name. | "is it still running", "stop it". `run ▸ processes {action: "stop", name: "Kotlin tests"}` |
 | `run_tests` *mutates* | Tests through the IDE's runner: a file, several, the test at a line, or a named configuration; pass/fail/ignored and each failure's message and frame. | "run this test". `run ▸ run_tests {name: "ToolModelTest", wait: 110}` |
 | `tests` | The test classes and methods the IDE's frameworks recognise in a file, with lines. | "what tests are in here". `run ▸ tests {path: "src/test/X.kt"}` |
 | `shell` *mutates* | A command in the user's shell inside a Terminal tab; exit code and tail. Replaces Bash. | Any command; several chained in one call. `run ▸ shell {command: "git log -3 --oneline", wait: 20}` |
+| `terminal_tabs` *mutates* | The Terminal window's tabs (name, selected, ours, running) or close one by name. | "close your tab". `run ▸ terminal_tabs {action: "close", name: "Claude"}` |
+| `edit_configuration` *mutates* | Run ▸ Edit Configurations at a configuration. | `run ▸ edit_configuration {name: "Kotlin tests"}` |
+| `attach` *mutates* | Run ▸ Attach to Process chooser. | `run ▸ attach {}` |
+| `coverage` *mutates* | The Coverage window; switch, hide, report, import. | After `executor: "coverage"`. `run ▸ coverage {action: "report"}` |
 | `session` *mutates* | Start a configuration under the debugger and wait for the first stop; status with frames and variables; stop; list. | "debug this test". `run ▸ session {action: "start", name: "ToolModelTest"}` |
-| `step` *mutates* | over, into, out, resume, pause, run_to a line, or wait; answers with the session status. | Once suspended. `run ▸ step {kind: "run_to", path: "A.kt", line: 22}` |
+| `step` *mutates* | over, into, out, force_into, smart_into, resume, pause, mute, run_to a line, or wait; answers with the session status. | Once suspended. `run ▸ step {kind: "run_to", path: "A.kt", line: 22}` |
 | `frames` | Threads and the stack of one; `frame` selects the current frame for `values`. | "where is it stopped". `run ▸ frames {max: 5}` |
 | `values` *mutates* | Variables of the current frame; `eval` an expression; `set` a variable. | "what is x here". `run ▸ values {action: "eval", code: "tools.size"}` |
 | `breakpoint` *mutates* | Add (with `condition`, `temporary`), remove or list line breakpoints. | Before `session`. `run ▸ breakpoint {action: "add", path: "A.kt", line: 21}` |
@@ -314,6 +318,14 @@ Rules that hold for every tool:
 | `ssh_session` *mutates* | Tools ▸ Start SSH Session. | `ops ▸ ssh_session {}` |
 | `qodana` *mutates* | Qodana results as data with the tab shown; run/open through the plugin. | `ops ▸ qodana {action: "results"}` |
 | `vulnerable_dependencies` | The Package Checker's findings, tab shown. | `ops ▸ vulnerable_dependencies {}` |
+| `javadoc` *mutates* | Tools ▸ Generate JavaDoc dialog, scoped to a path. | `ops ▸ javadoc {path: "src/main/java"}` |
+| `launcher` *mutates* | Create Command-line Launcher or Desktop Entry. | `ops ▸ launcher {action: "script"}` |
+| `xml` *mutates* | Validate an XML file, generate a DTD or an XSD schema. | `ops ▸ xml {action: "validate", path: "pom.xml"}` |
+| `markdown` *mutates* | Import a docx, export, table of contents, pandoc settings. | `ops ▸ markdown {action: "export", path: "README.md"}` |
+| `groovy_console` *mutates* | Tools ▸ Groovy Console. | `ops ▸ groovy_console {}` |
+| `kotlin_bytecode` *mutates* | Show Kotlin Bytecode for a file. | `ops ▸ kotlin_bytecode {path: "A.kt"}` |
+| `kotlin_configure` *mutates* | Configure Kotlin in Project. | `ops ▸ kotlin_configure {}` |
+| `python_console` *mutates* | The Python console. | `ops ▸ python_console {}` |
 | `tabs` *mutates* | The editor's tab groups with tabs, selection and pins; or close, close_others, close_all, pin, split_right, split_down, unsplit, move_to_opposite on a tab. | "split the editor with A.kt on the right". `ops ▸ tabs {action: "split_right", path: "A.kt"}` |
 | `layout` *mutates* | save_default, restore_default or hide_all for the tool window layout. | "hide everything". `ops ▸ layout {action: "hide_all"}` |
 | `zoom` *mutates* | in, out or reset on the selected editor's font (`scope=editor`) or the whole IDE (`ide`). | "make it bigger". `ops ▸ zoom {action: "in", scope: "ide"}` |
@@ -431,11 +443,11 @@ mirrored in the IDE without taking the user's focus.
 
 | Capability | Tools (domain) | Status |
 |---|---|---|
-| Build a module or a file; run with coverage; more step kinds; watches | `build` +`kind`, `run_configuration` +`executor`, `step` +kinds, `watch` (`run`, `debug`) | ☐ |
-| Edit configurations, attach, profile, coverage | `edit_configuration`, `attach`, `profile`, `coverage` (`run_ops`) | ☐ |
-| Terminal tabs | `terminal_tabs` (`terminal`) | ☐ |
-| Javadoc, launchers, XML, Markdown | `javadoc`, `launcher`, `xml`, `markdown` (`tools_menu`) | ☐ |
-| Groovy console, Kotlin bytecode and configuration, Python console | `groovy_console`, `kotlin_bytecode`, `kotlin_configure`, `python_console` (`consoles`) | ☐ |
+| Build a module or a file; run with coverage; more step kinds; watches | `build` +`kind` (module, file), `run_configuration` +`executor` (run, debug, coverage, profile), `step` +`force_into`, `smart_into`, `mute` (`run`, `debug`) | ☑ except watches: the watches model (`XDebugSessionData`, the watches manager) is Internal at 262, so `values(expression)` is the evaluation path |
+| Edit configurations, attach, profile, coverage | `edit_configuration`, `attach`, `coverage` (`run_ops`); profile = `run_configuration(executor=profile)` | ☑ |
+| Terminal tabs | `terminal_tabs` (`terminal`) | ☑ |
+| Javadoc, launchers, XML, Markdown | `javadoc`, `launcher`, `xml`, `markdown` (`tools_menu`) | ☑ (dialogs the user finishes; javadoc headless needs the Java plugin's `JavadocGeneratorRunProfile`, which is not public) |
+| Groovy console, Kotlin bytecode and configuration, Python console | `groovy_console`, `kotlin_bytecode`, `kotlin_configure`, `python_console` (`consoles`) | ☑ by action, discovered where the Kotlin and Python ids are plugin-defined; the bytecode text stays in the IDE's panel (no public document accessor) |
 | Any MCP client drives the IDE (Q10); split mode (S6) | a minimal client in the repo; runtime detection | ☐ |
 
 **Out, on record**: `completion` (its parameters have no public constructor), LSP (commercial IDEs; runtime

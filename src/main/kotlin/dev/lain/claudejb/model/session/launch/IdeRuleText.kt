@@ -90,18 +90,25 @@ internal object IdeRuleText {
             "clipboard against a file call compare_clipboard: the IDE's diff window opens without focus. To list or " +
             "switch the theme, the color scheme, the keymap or the code style call scheme.",
         IdeRule.RUN_BUILD to "To build call build: the IDE's own build with the compiler's errors and their positions, shown " +
-            "in the Build window. To run tests call run_tests with a path, a name or a class and read the tree it " +
-            "returns; tests lists what the project has. Never a shell, a script or Gradle by hand to build or test.",
+            "in the Build window, for the project, a module or one file. To run tests call run_tests with a path, a " +
+            "name or a class and read the tree it returns; tests lists what the project has. Never a command line, a " +
+            "script or Gradle by hand to build or test.",
         IdeRule.RUN_RUN to "Call run_configurations to see what the project already runs and run_configuration to run one, " +
-            "exactly as the Run button does, output streaming to the chat and to the Run window; a utility that has no " +
+            "exactly as the Run button does, with executor for debug, coverage or the profiler, output streaming to the " +
+            "chat and to the Run window; a utility that has no " +
             "configuration gets one under .idea/runConfigurations named Tool: <name>. Call processes to list or stop " +
             "what is running.",
         IdeRule.RUN_TERMINAL to "A command goes through shell, never Bash: it runs over the socket in the Terminal window " +
             "the user sees, in a tab named Claude, with its exit code and the end of its output, while a new process " +
             "would cost a guard pass and a permission. Several commands go in one call, chained with ; or &&. The tab is " +
-            "shown without focus and never switched while the user is in the Terminal.",
+            "shown without focus and never switched while the user is in the Terminal; terminal_tabs lists the window's " +
+            "tabs and closes one of Claude's by name.",
+        IdeRule.RUN_OPS to "Call edit_configuration to open the IDE's run configuration editor at a configuration for the " +
+            "user, attach to open its Attach to Process chooser, and coverage to show the Coverage window or switch, " +
+            "hide, report or import a suite after a run with executor=coverage.",
         IdeRule.RUN_DEBUG to "To debug call session to start a run configuration under the debugger, breakpoint to set or " +
-            "clear breakpoints, step to step over, into or out, frames for the stack and values for the variables of a " +
+            "clear breakpoints, step to step over, into, out, force or smart into, or mute them, frames for the stack and " +
+            "values for the variables of a " +
             "frame: the IDE shows the execution point as you go. Never prints. Call session with stop when done.",
         IdeRule.VCS_READ to "Before deciding anything about the tree call git_status, git_diff, git_log and git_branches: " +
             "git as the IDE sees it, read-only. git_log with hashes returns each commit and selects it in the Log.",
@@ -154,6 +161,12 @@ internal object IdeRuleText {
             "ssh_session, qodana (results as data with the Qodana tab shown, run and open through the plugin's actions) and " +
             "vulnerable_dependencies (the Package Checker's findings, and the IDE shows its Problems tab): each goes " +
             "through the actions that plugin registers on this IDE and is refused when the plugin is missing.",
+        IdeRule.OPS_TOOLS_MENU to "For the Tools menu's generators call javadoc (the IDE's Generate JavaDoc dialog), launcher " +
+            "(the command-line launcher or desktop entry), xml (validate a file into the Problems view, generate a DTD or " +
+            "a schema) and markdown (import a docx, export, table of contents, pandoc): each opens the IDE's own dialog " +
+            "for the user.",
+        IdeRule.OPS_CONSOLES to "Call groovy_console, kotlin_bytecode (the bytecode panel beside a file), kotlin_configure and " +
+            "python_console to open the IDE's language consoles and tools; each is refused when its plugin is missing.",
         IdeRule.OPS_WINDOW to "Call tabs to see the editor's tab groups or to close, pin, split or move a tab as the Window " +
             "menu would; layout to store, restore or hide the tool window layout; zoom to zoom the editor's font or the " +
             "whole IDE; editor_settings to show or hide line numbers, whitespace, soft wraps or gutter icons in every " +
