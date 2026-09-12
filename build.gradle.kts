@@ -453,6 +453,7 @@ intellijPlatform {
         // 'JetBrains' in the plugin name is a Marketplace naming lint, not an API problem; muting it lets
         // the verifier proceed to the actual binary-compatibility / internal-API checks we care about.
         freeArgs = listOf("-mute", "TemplateWordInPluginName")
+        externalPrefixes = listOf("org.jetbrains.uast")
 
         // The "zero deprecations" rule, ENFORCED rather than merely written down.
         //

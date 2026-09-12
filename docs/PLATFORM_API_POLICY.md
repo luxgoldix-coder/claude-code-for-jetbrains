@@ -67,6 +67,14 @@ The project task execution environment factory; the file editor manager's curren
 the project-scoped JDK table getter; the module manager's all-module descriptions; the service view
 descriptor's unique id; the bookmarks manager; and the terminal tool window tabs manager with its builders.
 
+## What the verifier is told to leave alone
+
+One class-name prefix, `org.jetbrains.uast`, is declared external to the verifier. UAST ships inside the Java
+plugin, which this plugin depends on optionally; on an IDE without Java the package does not exist, the
+UAST domain is never registered, and the verifier would still count the unresolved package as a
+compatibility problem. The compile against the floor and the availability check are what cover that
+package instead.
+
 ## Watch list
 
 Not annotated today, but worth isolating in a single file so a change lands in one place: the public
