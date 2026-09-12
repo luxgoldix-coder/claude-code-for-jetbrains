@@ -61,7 +61,8 @@ internal class BreakpointTools(private val project: Project) {
         file: VirtualFile,
         line: Int,
         temporary: Boolean,
-    ): XLineBreakpoint<P> = addLineBreakpoint(type, file.url, line, type.createBreakpointProperties(file, line), temporary)
+    ): XLineBreakpoint<P> = addLineBreakpoint(type, file.url, line, type.createBreakpointProperties(file, line))
+        .also { it.isTemporary = temporary }
 
     private suspend fun remove(args: ToolArgs): ToolResult {
         val path = args.string("path")
