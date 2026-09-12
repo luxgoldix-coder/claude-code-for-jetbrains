@@ -7,10 +7,10 @@ import com.intellij.ide.actions.RevealFileAction
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import dev.lain.claudejb.controller.mcp.FocusKeeper
@@ -87,7 +87,7 @@ internal class ViewTools(private val project: Project, private val actions: IdeA
         val kind = args.string("kind")
         if (kind !in ROOT_KINDS) throw ToolException("kind must be one of ${ROOT_KINDS.joinToString()}")
         val dir = readAction { ReadTools.resolveDirectory(project, path) }
-        val module = readAction { ModuleUtilCore.findModuleForFile(dir, project) }
+        val module = readAction { ProjectFileIndex.getInstance(project).getModuleForFile(dir, false) }
             ?: throw ToolException("$path belongs to no module; mark roots inside a module's content")
         ModuleRootModificationUtil.updateModel(module) { model -> mark(model, dir, kind) }
         return ToolResult.toon(
