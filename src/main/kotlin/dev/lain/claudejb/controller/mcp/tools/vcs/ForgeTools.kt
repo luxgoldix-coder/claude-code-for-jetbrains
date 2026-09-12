@@ -30,10 +30,11 @@ internal class ForgeTools(private val project: Project, private val actions: Ide
     private suspend fun open(args: ToolArgs): ToolResult {
         val view = args.string("view")
         val hash = args.optionalString("hash").orEmpty()
+        val range = args.optionalString("range").orEmpty()
         val path = args.optionalString("path").orEmpty()
         val opened = withContext(Dispatchers.EDT) {
             when (view) {
-                "log" -> if (hash.isEmpty()) GitLogNavigator.showLog(project) else GitLogNavigator.showCommit(project, commitHash(hash))
+                "log" -> showLog(hash, range)
                 "history" -> GitLogNavigator.showFileHistory(project, historyPath(path))
                 "commit" -> showCommitWindow()
                 "pull_requests" -> ForgeViewNavigator.open(project)
@@ -46,9 +47,16 @@ internal class ForgeTools(private val project: Project, private val actions: Ide
                 put("view", view)
                 put("opened", true)
                 put("hash", hash)
+                put("range", range)
                 put("path", path)
             },
         )
+    }
+
+    private fun showLog(hash: String, range: String): Boolean = when {
+        range.isNotEmpty() -> refRange(range).let { (exclusive, inclusive) -> GitLogNavigator.showRange(project, exclusive, inclusive) }
+        hash.isNotEmpty() -> GitLogNavigator.showCommit(project, commitHash(hash))
+        else -> GitLogNavigator.showLog(project)
     }
 
     private fun showCommitWindow(): Boolean {
@@ -85,6 +93,21 @@ internal class ForgeTools(private val project: Project, private val actions: Ide
         private const val MIN_HASH_LENGTH = 4
         private const val MAX_HASH_LENGTH = 64
         private val HASH = Regex("[0-9a-fA-F]{$MIN_HASH_LENGTH,$MAX_HASH_LENGTH}")
+        private const val RANGE_SEPARATOR = ".."
+        private const val HEAD = "HEAD"
+        private val REF = Regex("[A-Za-z0-9_][A-Za-z0-9._/@{}~^-]*")
+
+        fun refRange(range: String): Pair<String, String> {
+            val refs = range.split(RANGE_SEPARATOR)
+            val exclusive = refs.first()
+            val inclusive = if (refs.size == 1) HEAD else refs[1]
+            if (refs.size > 2 || !REF.matches(exclusive) || !REF.matches(inclusive)) {
+                throw ToolException(
+                    "range must be exclusive..inclusive, two refs or hashes as git log takes them; the second defaults to " + HEAD,
+                )
+            }
+            return exclusive to inclusive
+        }
 
         val ACTIONS: Map<String, String> = linkedMapOf(
             "pull" to "Git.Pull",
@@ -107,7 +130,8 @@ internal class ForgeTools(private val project: Project, private val actions: Ide
         )
 
         private val MISSING: Map<String, String> = mapOf(
-            "log" to "the IDE has no Version Control tool window, or this project is not a Git working copy",
+            "log" to "the IDE has no Version Control tool window, this project is not a Git working copy, or the Git log is " +
+                "still loading: retry in a moment",
             "history" to "the path is outside the project, or the IDE has no history for it",
             "commit" to "this IDE has no Commit tool window",
             "pull_requests" to "neither the GitHub nor the GitLab plugin is installed, so there is no requests view",
@@ -115,11 +139,18 @@ internal class ForgeTools(private val project: Project, private val actions: Ide
 
         val VCS_OPEN = ToolSpec(
             "vcs_open",
-            "Shows one of the IDE's VCS views: the Git log (at a commit when hash is given), a file's history, the Commit " +
-                "tool window, or the GitHub/GitLab pull or merge requests view. Use it to put what you found in front of the user.",
+            "Shows one of the IDE's VCS views: the Git log (at a commit when hash is given, or only the commits of a range), " +
+                "a file's history, the Commit tool window, or the GitHub/GitLab pull or merge requests view. Use it to put what " +
+                "you found in front of the user, and range to compare a branch with a tag or a release with the previous one.",
             listOf(
                 Param("view", "log, history, commit or pull_requests"),
                 Param("hash", "Commit to select in the log, 4 to 64 hex characters (view=log only)", required = false),
+                Param(
+                    "range",
+                    "exclusive..inclusive as git log takes it, e.g. v1.2.0..HEAD; inclusive defaults to HEAD. Opens a log tab " +
+                        "with only those commits (view=log only)",
+                    required = false,
+                ),
                 Param("path", "File whose history to show, absolute or relative to the project root (view=history)", required = false),
             ),
         )

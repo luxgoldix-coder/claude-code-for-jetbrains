@@ -1,6 +1,7 @@
 package dev.lain.claudejb.controller.mcp.tools.vcs
 
 import dev.lain.claudejb.controller.mcp.tools.code.DiagnosticsTools
+import dev.lain.claudejb.model.mcp.ToolException
 import dev.lain.claudejb.model.mcp.ToolSpec
 import dev.lain.claudejb.model.permission.scan.ToolInputScanner
 import kotlinx.serialization.json.buildJsonObject
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 class VcsToolSpecsTest {
 
@@ -81,6 +83,20 @@ class VcsToolSpecsTest {
             ForgeTools.ACTIONS,
         )
         ForgeTools.ACTIONS.keys.forEach { assertTrue(it in ForgeTools.VCS_ACTION.description, "vcs_action does not list $it") }
+    }
+
+    @Test
+    fun `a range is two refs as git takes them, the second defaulting to HEAD`() {
+        assertEquals(Pair("v5.8.1", "HEAD"), ForgeTools.refRange("v5.8.1"))
+        assertEquals(Pair("v5.8.1", "feature/x"), ForgeTools.refRange("v5.8.1..feature/x"))
+        assertEquals(Pair("abc123", "HEAD~2"), ForgeTools.refRange("abc123..HEAD~2"))
+    }
+
+    @Test
+    fun `a range never reaches git as an option, a third ref or a blank`() {
+        listOf("-x..HEAD", "HEAD..--all", "a..b..c", "a b", "", "..", "a..").forEach { range ->
+            assertThrows<ToolException>(range) { ForgeTools.refRange(range) }
+        }
     }
 
     @Test

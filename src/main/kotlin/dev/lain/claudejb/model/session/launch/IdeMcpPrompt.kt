@@ -76,7 +76,7 @@ object IdeMcpPrompt {
         IdeRule.RUN_DEBUG to "session, breakpoint, step, frames, values, not prints; session(stop) when done.",
         IdeRule.VCS_READ to "git_status, git_diff, git_log, git_branches before deciding anything about the tree.",
         IdeRule.VCS_WRITE to "git_stage, git_commit, git_branch, git_remote to stage, commit, branch, sync.",
-        IdeRule.VCS_FORGE to "vcs_open and vcs_action for the Log, Commit and Pull Requests views; no gh, no glab.",
+        IdeRule.VCS_FORGE to "vcs_open and vcs_action for the Log (range=A..B), Commit and Pull Requests views; no gh, no glab.",
         IdeRule.OPS_SERVICES to "services, service_actions, service_action for containers and clusters; never kubectl or docker.",
         IdeRule.OPS_PROJECT to "project, modules, dependencies, dependency_add for structure; plugins for what is installed.",
         IdeRule.OPS_IDE to "tool_window, settings_open, ide_action, notify move the IDE for the user.",

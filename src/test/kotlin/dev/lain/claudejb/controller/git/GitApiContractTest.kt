@@ -175,6 +175,16 @@ class GitApiContractTest {
     }
 
     @Test
+    fun `a log tab filtered by a ref range is still two public calls, neither deprecated`() {
+        load("com.intellij.vcs.log.visible.filters.VcsLogFilterObject")
+            .getMethod("fromRange", String::class.java, String::class.java)
+            .assertNotDeprecated()
+        load("com.intellij.vcs.log.impl.VcsProjectLog")
+            .getMethod("openLogTab", load("com.intellij.vcs.log.VcsLogFilterCollection"))
+            .assertNotDeprecated()
+    }
+
+    @Test
     fun `the Version Control tool window is still where the Git Log lives, and can still be activated`() {
         val toolWindow = load("com.intellij.openapi.wm.ToolWindow")
         toolWindow.getMethod("activate", Runnable::class.java, java.lang.Boolean.TYPE).assertNotDeprecated()
