@@ -12,12 +12,12 @@ class ClaudeLoginFlow(
     private val spawn: (List<String>, Map<String, String>, String?) -> Process = ::spawnPty,
 ) {
 
-    private companion object {
-        const val PTY_COLUMNS = 1000
+    companion object {
+        private const val PTY_COLUMNS = 1000
 
-        const val PTY_ROWS = 50
+        private const val PTY_ROWS = 50
 
-        const val READ_BUFFER_BYTES = 4096
+        private const val READ_BUFFER_BYTES = 4096
 
         fun spawnPty(command: List<String>, env: Map<String, String>, cwd: String?): Process {
             val builder = PtyProcessBuilder(command.toTypedArray())

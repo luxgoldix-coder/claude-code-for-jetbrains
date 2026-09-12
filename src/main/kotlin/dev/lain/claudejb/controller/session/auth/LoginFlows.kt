@@ -16,6 +16,7 @@ class LoginAttempt(
     private val mode: LoginCoordinator.Mode,
     private val ui: LoginCoordinator.LoginUi,
     private val host: Host,
+    private val spawn: (List<String>, Map<String, String>, String?) -> Process = ClaudeLoginFlow::spawnPty,
 ) {
 
     interface Host {
@@ -32,7 +33,7 @@ class LoginAttempt(
 
     fun start(): Boolean {
         val env = System.getenv() + ClaudeSettings.getInstance(project).resolveEnv()
-        val flow = ClaudeLoginFlow(binary.absolutePath, project.basePath, env, args = mode.args)
+        val flow = ClaudeLoginFlow(binary.absolutePath, project.basePath, env, args = mode.args, spawn = spawn)
         val started = flow.start(listener)
         if (started) pty = flow
         return started

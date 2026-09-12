@@ -15,6 +15,9 @@ class LoginCoordinator(
     private val edt: (() -> Unit) -> Unit,
     private val notifier: SessionNotifier,
     private val restartSession: () -> Unit,
+    private val attempts: (File, Mode, LoginUi, LoginAttempt.Host) -> LoginAttempt = { binary, mode, ui, host ->
+        LoginAttempt(project, edt, binary, mode, ui, host)
+    },
 ) {
 
     private val log = thisLogger()
@@ -120,7 +123,7 @@ class LoginCoordinator(
     private fun beginPty(binary: File, mode: Mode, loginUi: LoginUi, onStarted: () -> Unit = {}, fallback: () -> Unit) {
         if (signingIn) return
         signingIn = true
-        val next = LoginAttempt(project, edt, binary, mode, loginUi, host)
+        val next = attempts(binary, mode, loginUi, host)
         ApplicationManager.getApplication().executeOnPooledThread {
             val started = next.start()
             edt {
