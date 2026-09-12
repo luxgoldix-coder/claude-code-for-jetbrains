@@ -106,7 +106,8 @@ restructured, the page is TypeScript, the plugin can be traced, and the bugs fou
 - **A write through the IDE tools stays inside the project.** `write_file`, `create_file`, `replace_text`,
   `insert_text`, `move_file`, `file_from_template` and `worktrees add` refuse a destination outside the
   project root, and the guard judges an own call with its arguments in front of it, exactly as it judges the
-  native `Write`. The socket directory's parent is private to the user, like the directory itself.
+  native `Write`. The socket files and the parent of their directory are private to the user, like the
+  directory itself.
 - **A path that is only mentioned, does not exist and is not written is a parameter, not a reach**, so
   an API endpoint or a flag that looks like a path no longer trips the outside-the-project rule; a path
   that exists, or that the command creates or writes, is judged as before.

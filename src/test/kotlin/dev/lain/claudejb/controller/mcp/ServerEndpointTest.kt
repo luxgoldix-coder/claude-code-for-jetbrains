@@ -35,7 +35,9 @@ import java.net.StandardProtocolFamily
 import java.net.UnixDomainSocketAddress
 import java.nio.channels.Channels
 import java.nio.channels.SocketChannel
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.attribute.PosixFilePermissions
 
 class ServerEndpointTest {
 
@@ -65,6 +67,11 @@ class ServerEndpointTest {
     fun stop() {
         endpoint.close()
         scope.cancel()
+    }
+
+    @Test
+    fun `the socket file is reachable by its owner only`() {
+        assertEquals("rw-------", PosixFilePermissions.toString(Files.getPosixFilePermissions(dir.resolve("code.sock"))))
     }
 
     @Test

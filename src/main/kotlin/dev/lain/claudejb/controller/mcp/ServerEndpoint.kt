@@ -28,7 +28,10 @@ import java.net.UnixDomainSocketAddress
 import java.nio.channels.Channels
 import java.nio.channels.ServerSocketChannel
 import java.nio.channels.SocketChannel
+import java.nio.file.FileSystems
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.attribute.PosixFilePermissions
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -43,6 +46,7 @@ internal class ServerEndpoint(
 ) {
     private val log = thisLogger()
     private val channel = ServerSocketChannel.open(StandardProtocolFamily.UNIX).bind(UnixDomainSocketAddress.of(socket))
+        .also { ownerOnly(socket) }
     private val inFlight = AtomicInteger()
 
     fun start(): Job = scope.launch(io) {
@@ -134,5 +138,10 @@ internal class ServerEndpoint(
         const val QUEUE_DEPTH = 16
         const val REJECTED = "request rejected"
         private const val CANCELLED = "notifications/cancelled"
+        private val OWNER_ONLY = PosixFilePermissions.fromString("rw-------")
+
+        private fun ownerOnly(socket: Path) {
+            if (FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) Files.setPosixFilePermissions(socket, OWNER_ONLY)
+        }
     }
 }
