@@ -63,7 +63,7 @@ internal class IdeTools(private val project: Project, private val actions: IdeAc
                 manager.toolWindowIds.sorted().mapNotNull(manager::getToolWindow)
             } else {
                 val window = window(manager, id)
-                if (action == "open") FocusKeeper.keeping(project) { window.show() } else window.hide()
+                if (action == "open") FocusKeeper.keeping(project) { window.activate(null, false) } else window.hide()
                 listOf(window)
             }
             windows.map(::row)

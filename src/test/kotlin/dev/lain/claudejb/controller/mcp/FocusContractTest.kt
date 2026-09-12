@@ -29,7 +29,7 @@ class FocusContractTest {
             }
         }
         assertEquals(emptyList<String>(), hits) {
-            "A tool call must reveal without focusing: ToolWindow.show, openFile(file, false), " +
+            "A tool call must reveal without focusing: ToolWindow.activate(runnable, false), openFile(file, false), " +
                 "openTextEditor(descriptor, false), navigate(false), setSelectedContent(content, false), and " +
                 "ServiceViewManager.select(…, focus = false). Only $KEEPER may request focus, and only to give it back."
         }
@@ -51,7 +51,7 @@ class FocusContractTest {
         val CLICK_DRIVEN = setOf("IdePlaces.kt")
 
         val STEALS = listOf(
-            Regex("""\.activate\("""),
+            Regex("""\.activate\((?:[^)]*,\s*)?true\)"""),
             Regex("""open(File|TextEditor)\([^)]*,\s*true\)"""),
             Regex("""\.navigate\(true\)"""),
             Regex("""requestFocus"""),

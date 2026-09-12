@@ -19,7 +19,7 @@ object GitLogNavigator {
 
     fun showLog(project: Project, focus: Boolean): Boolean {
         val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS) ?: return false
-        if (focus) toolWindow.activate(null, true) else toolWindow.show()
+        toolWindow.activate(null, focus)
         return true
     }
 

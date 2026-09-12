@@ -23,14 +23,14 @@ internal class Reveal(private val project: Project) {
             manager.openTextEditor(descriptor, false) != null || manager.openFile(file, false).isNotEmpty()
         }
 
-    suspend fun toolWindow(id: String): Boolean = FocusKeeper.keep(project) { window(id)?.also { it.show() } != null }
+    suspend fun toolWindow(id: String): Boolean = FocusKeeper.keep(project) { window(id)?.also { it.activate(null, false) } != null }
 
     suspend fun content(windowId: String, name: String): Boolean = FocusKeeper.keep(project) {
         val window = window(windowId) ?: return@keep false
         val manager = window.contentManager
         val content = manager.contents.firstOrNull { it.displayName == name } ?: return@keep false
         val userIsThere = window.isActive
-        window.show { if (!userIsThere) manager.setSelectedContent(content, false) }
+        window.activate({ if (!userIsThere) manager.setSelectedContent(content, false) }, false)
         true
     }
 
@@ -48,7 +48,7 @@ internal class Reveal(private val project: Project) {
     suspend fun problems(tab: String): Boolean = FocusKeeper.keep(project) {
         val window = ProblemsViewToolWindowUtils.getToolWindow(project) ?: return@keep false
         val content = if (tab.isEmpty()) null else ProblemsViewToolWindowUtils.getContentById(project, tab) ?: return@keep false
-        window.show { if (content != null) window.contentManager.setSelectedContent(content, false) }
+        window.activate({ if (content != null) window.contentManager.setSelectedContent(content, false) }, false)
         true
     }
 

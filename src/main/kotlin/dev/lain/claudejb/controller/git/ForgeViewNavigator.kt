@@ -14,7 +14,7 @@ object ForgeViewNavigator {
 
     fun open(project: Project, focus: Boolean): Boolean {
         val toolWindow = found(project) ?: return false
-        if (focus) toolWindow.activate(null, true) else toolWindow.show()
+        toolWindow.activate(null, focus)
         return true
     }
 
