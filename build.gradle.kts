@@ -469,19 +469,19 @@ intellijPlatform {
         // experimental API is acceptable with a reason; a deprecated one is not acceptable at all, because
         // it has an announced removal date and the plugin has to keep working across the IDE range.
         //
-        // MISSING_DEPENDENCIES is here for a reason found the hard way, and it is the most load-bearing entry
-        // in this list: a mandatory `<depends>` that the target IDE cannot satisfy means **the plugin does not
-        // load at all** — not a degraded feature, not a warning, nothing. The verifier detects it perfectly
-        // (pointed at 253.28294.334 it says "1 missing mandatory dependency" in as many words) and, without
-        // this line, still finished with BUILD SUCCESSFUL. A gate that finds the fault and passes anyway is
-        // worse than no gate: it is a green tick over a plugin that cannot start.
+        // MISSING_DEPENDENCIES is deliberately NOT here either. A mandatory `<depends>` the target IDE cannot
+        // satisfy means the plugin does not load at all, and the verifier does detect it — but the Gradle plugin
+        // (2.16.0, and 2.18.1 alike) parses the verifier's stdout by the "Missing dependencies" heading and
+        // cannot tell `(optional): Unavailable` from a mandatory gap, so with that level on, every PyCharm
+        // target fails on the optional com.intellij.modules.java dependency that PyCharm lacks by design.
+        // The protection that level gave lives in PluginDependenciesContractTest instead: every non-optional
+        // <depends> must be a platform module every IntelliJ-based IDE ships.
         failureLevel =
             listOf(
                 VerifyPluginTask.FailureLevel.COMPATIBILITY_PROBLEMS,
                 VerifyPluginTask.FailureLevel.INTERNAL_API_USAGES,
                 VerifyPluginTask.FailureLevel.OVERRIDE_ONLY_API_USAGES,
                 VerifyPluginTask.FailureLevel.DEPRECATED_API_USAGES,
-                VerifyPluginTask.FailureLevel.MISSING_DEPENDENCIES,
             )
         ides {
             // No hardcoded path in the repo: a developer can point the verifier at local IDE installs to skip the
